@@ -2,4 +2,36 @@
 <resources>
     <string name="hello">Hello World, IMrekActivity!</string>
     <string name="app_name">IMrek</string>
+    
+    <!-- Preferences -->
+    <string name="category_one">Category #1</string>
+    <string name="category_two">Category #2</string>
+    
+    <string name="pref_one">Preference #1</string>
+    <string name="summary_one">Summary #1</string>
+    
+    <string name="pref_two">Preference #2</string>
+    <string name="summary_two">Summary #2</string>
+    <string name="dialog_title_two">Dialog Title #2</string>
+    
+    <string name="pref_three">Preference #3</string>
+    <string name="summary_three">Summary #3</string>
+    <string-array name="entries_list_three">
+        <item>Item #1</item>
+        <item>Item #2</item>
+        <item>Item #3</item>
+        <item>Item #4</item>
+        <item>Item #5</item>
+        <item>Item #6</item>
+    </string-array>
+    <string-array name="entryvalues_three">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+    </string-array>
+    <string name="dialog_title_three">Dialog Title #3</string>
+    
 </resources>

@@ -2,11 +2,41 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="@string/hello"
-    />
+    android:layout_height="fill_parent" >
+     
+    <TextView android:id="@+id/targetlabel_text" 
+	     android:text = "Target"   
+	     android:layout_width="wrap_content" 
+	     android:layout_height="wrap_content" 
+         android:layout_gravity="center_horizontal"
+         android:layout_marginTop="5dip" />    
+
+    <TextView android:id="@+id/target_text" 
+	     android:layout_width="wrap_content" 
+	     android:layout_height="wrap_content" 
+         android:textAppearance="?android:attr/textAppearanceLarge"
+         android:layout_gravity="center_horizontal"
+         android:layout_marginTop="5dip"    
+         android:textStyle="bold" /> 
+    
+     <Button android:id="@+id/start_button" 
+          android:text="Start Service" 
+          android:layout_width="wrap_content" 
+          android:layout_height="wrap_content" 
+          android:layout_gravity="center_horizontal"
+          android:layout_marginTop="5dip" /> 
+          
+     <Button android:id="@+id/stop_button" 
+          android:text="Stop Service" 
+          android:layout_width="wrap_content" 
+          android:layout_height="wrap_content" 
+          android:layout_gravity="center_horizontal"
+          android:layout_marginTop="5dip" /> 
+          
+    <TextView android:id="@+id/aboutlabel_text" 
+	     android:text = "About"   
+	     android:layout_width="wrap_content" 
+	     android:layout_height="wrap_content" 
+         android:layout_gravity="center_horizontal"
+         android:layout_marginTop="5dip" />
 </LinearLayout>

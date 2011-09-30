@@ -95,7 +95,7 @@ public class PushService extends Service
 	private static final int		NOTIF_CONNECTED = 0;	
 		
 	// This is the instance of an MQTT connection.
-	private MQTTConnection			mConnection;
+	public MQTTConnection			mConnection;
 	private long					mStartTime;
 	
 
@@ -277,7 +277,7 @@ public class PushService extends Service
 			log("Device ID not found.");
 		} else {
 			try {
-				mConnection = new MQTTConnection(MQTT_HOST, deviceID);
+				mConnection = new MQTTConnection(MQTT_HOST);
 			} catch (MqttException e) {
 				// Schedule a reconnect, if we failed to connect
 				log("MqttException: " + (e.getMessage() != null ? e.getMessage() : "NULL"));
@@ -430,11 +430,11 @@ public class PushService extends Service
 	}
 	
 	// This inner class is a wrapper on top of MQTT client.
-	private class MQTTConnection implements MqttSimpleCallback {
+	public class MQTTConnection implements MqttSimpleCallback {
 		IMqttClient mqttClient = null;
 		
 		// Creates a new connection given the broker address and initial topic
-		public MQTTConnection(String brokerHostName, String initTopic) throws MqttException {
+		public MQTTConnection(String brokerHostName) throws MqttException {
 			// Create connection spec
 	    	String mqttConnSpec = "tcp://" + brokerHostName + "@" + MQTT_BROKER_PORT_NUM;
 	        	// Create the client and connect
@@ -444,12 +444,8 @@ public class PushService extends Service
 
 		        // register this client app has being able to receive messages
 				mqttClient.registerSimpleHandler(this);
-				
-				// Subscribe to an initial topic, which is combination of client ID and device ID.
-				initTopic = MQTT_CLIENT_ID + "/" + initTopic;
-				subscribeToTopic(initTopic);
 		
-				log("Connection established to " + brokerHostName + " on topic " + initTopic);
+				//log("Connection established to " + brokerHostName + " on topic " + initTopic);
 		
 				// Save start time
 				mStartTime = System.currentTimeMillis();
@@ -470,7 +466,7 @@ public class PushService extends Service
 		 * Send a request to the message broker to be sent messages published with 
 		 *  the specified topic name. Wildcards are allowed.	
 		 */
-		private void subscribeToTopic(String topicName) throws MqttException {
+		public void subscribeToTopic(String topicName) throws MqttException {
 			
 			if ((mqttClient == null) || (mqttClient.isConnected() == false)) {
 				// quick sanity check - don't try and subscribe if we don't have
@@ -485,7 +481,7 @@ public class PushService extends Service
 		 * Sends a message to the message broker, requesting that it be published
 		 *  to the specified topic.
 		 */
-		private void publishToTopic(String topicName, String message) throws MqttException {		
+		public void publishToTopic(String topicName, String message) throws MqttException {		
 			if ((mqttClient == null) || (mqttClient.isConnected() == false)) {
 				// quick sanity check - don't try and publish if we don't have
 				//  a connection				

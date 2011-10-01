@@ -22,14 +22,14 @@ public class ConnectionLog
 	  throws IOException
 	{
 		File sdcard = Environment.getExternalStorageDirectory();
-        File logDir = new File(sdcard, "tokudu/log/");
+        File logDir = new File(sdcard, "tectrialog/");
         if (!logDir.exists()) {
         	logDir.mkdirs();
         	// do not allow media scan
             new File(logDir, ".nomedia").createNewFile();
         }        
 		
-		open(logDir.getAbsolutePath() + "/push.log");
+		open(logDir.getAbsolutePath() + "/push.txt");
 	}
 
 	public ConnectionLog(String basePath)

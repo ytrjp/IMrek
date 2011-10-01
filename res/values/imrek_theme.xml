@@ -1,0 +1,10 @@
+<resources>
+    <style name="IMrekWindowTitleBackground">
+        <item name="android:background">#414240</item>
+    </style>
+ 
+    <style name="IMrek" parent="android:Theme.Black">
+        <item name="android:windowTitleSize">27dip</item>
+        <item name="android:windowTitleBackgroundStyle">@style/IMrekWindowTitleBackground</item>
+    </style>
+</resources>

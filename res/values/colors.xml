@@ -1,0 +1,4 @@
+<resources>
+	<color name="connectedColor">#b2d44f</color>
+	<color name="disconnectedColor">#d54143</color>
+</resources>

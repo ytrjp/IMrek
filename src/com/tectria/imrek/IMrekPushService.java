@@ -2,12 +2,19 @@ package com.tectria.imrek;
 
 import java.io.IOException;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.ibm.mqtt.IMqttClient;
 import com.ibm.mqtt.MqttClient;
 import com.ibm.mqtt.MqttException;
 import com.ibm.mqtt.MqttPersistence;
 import com.ibm.mqtt.MqttPersistenceException;
 import com.ibm.mqtt.MqttSimpleCallback;
+
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.JsonHttpResponseHandler;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -22,6 +29,7 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 /* 
@@ -29,13 +37,13 @@ import android.util.Log;
  * Most of the logic is borrowed from KeepAliveService.
  * http://code.google.com/p/android-random/source/browse/trunk/TestKeepAlive/src/org/devtcg/demo/keepalive/KeepAliveService.java?r=219
  */
-public class PushService extends Service
+public class IMrekPushService extends Service
 {
 	// this is the log tag
-	public static final String		TAG = "IMrek";
+	public static final String		TAG = "IMrekPushService";
 
 	// the IP address, where your MQTT broker is running.
-	private static final String		MQTT_HOST = "209.124.50.174";
+	private static final String		MQTT_HOST = "69.164.216.146";
 	// the port at which the broker is running. 
 	private static int				MQTT_BROKER_PORT_NUM      = 1883;
 	// Let's not use the MQTT persistence.
@@ -53,7 +61,7 @@ public class PushService extends Service
 		
 	// MQTT client ID, which is given the broker. In this example, I also use this for the topic header. 
 	// You can use this to run push notifications for multiple apps with one MQTT broker. 
-	public static String			MQTT_CLIENT_ID = "tokudu";
+	public static String			MQTT_CLIENT_ID = "me";
 
 	// These are the actions for the service (name are descriptive enough)
 	private static final String		ACTION_START = MQTT_CLIENT_ID + ".START";
@@ -68,6 +76,8 @@ public class PushService extends Service
 	private ConnectivityManager		mConnMan;
 	// Notification manager to displaying arrived push notifications 
 	private NotificationManager		mNotifMan;
+	
+	AsyncHttpClient HttpClient = new AsyncHttpClient();
 
 	// Whether or not the service has been started.	
 	private boolean 				mStarted;
@@ -90,32 +100,32 @@ public class PushService extends Service
 	public static final String		PREF_RETRY = "retryInterval";
 
 	// Notification title
-	public static String			NOTIF_TITLE = "Tokudu"; 	
+	public static String			NOTIF_TITLE = "IMrek"; 	
 	// Notification id
 	private static final int		NOTIF_CONNECTED = 0;	
 		
 	// This is the instance of an MQTT connection.
-	public MQTTConnection			mConnection;
+	private MQTTConnection			mConnection;
 	private long					mStartTime;
 	
 
 	// Static method to start the service
 	public static void actionStart(Context ctx) {
-		Intent i = new Intent(ctx, PushService.class);
+		Intent i = new Intent(ctx, IMrekPushService.class);
 		i.setAction(ACTION_START);
 		ctx.startService(i);
 	}
 
 	// Static method to stop the service
 	public static void actionStop(Context ctx) {
-		Intent i = new Intent(ctx, PushService.class);
+		Intent i = new Intent(ctx, IMrekPushService.class);
 		i.setAction(ACTION_STOP);
 		ctx.startService(i);
 	}
 	
 	// Static method to send a keep alive message
 	public static void actionPing(Context ctx) {
-		Intent i = new Intent(ctx, PushService.class);
+		Intent i = new Intent(ctx, IMrekPushService.class);
 		i.setAction(ACTION_KEEPALIVE);
 		ctx.startService(i);
 	}
@@ -135,7 +145,7 @@ public class PushService extends Service
 		}
 
 		// Get instances of preferences, connectivity manager and notification manager
-		mPrefs = getSharedPreferences(TAG, MODE_PRIVATE);
+		mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 		mConnMan = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
 		mNotifMan = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 	
@@ -277,7 +287,7 @@ public class PushService extends Service
 			log("Device ID not found.");
 		} else {
 			try {
-				mConnection = new MQTTConnection(MQTT_HOST);
+				mConnection = new MQTTConnection(MQTT_HOST, deviceID);
 			} catch (MqttException e) {
 				// Schedule a reconnect, if we failed to connect
 				log("MqttException: " + (e.getMessage() != null ? e.getMessage() : "NULL"));
@@ -288,6 +298,23 @@ public class PushService extends Service
 			setStarted(true);
 		}
 	}
+	
+	public void postData() {
+		HttpClient.get("statuses/public_timeline.json", null, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(JSONArray timeline) {
+                try {
+                    JSONObject firstEvent = (JSONObject)timeline.get(0);
+                    String tweetText = firstEvent.getString("text");
+
+                    // Do something with the response
+                    System.out.println(tweetText);
+                } catch(JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+	} 
 
 	private synchronized void keepAlive() {
 		try {
@@ -307,7 +334,7 @@ public class PushService extends Service
 	// Schedule application level keep-alives using the AlarmManager
 	private void startKeepAlives() {
 		Intent i = new Intent();
-		i.setClass(this, PushService.class);
+		i.setClass(this, IMrekPushService.class);
 		i.setAction(ACTION_KEEPALIVE);
 		PendingIntent pi = PendingIntent.getService(this, 0, i, 0);
 		AlarmManager alarmMgr = (AlarmManager)getSystemService(ALARM_SERVICE);
@@ -319,7 +346,7 @@ public class PushService extends Service
 	// Remove all scheduled keep alives
 	private void stopKeepAlives() {
 		Intent i = new Intent();
-		i.setClass(this, PushService.class);
+		i.setClass(this, IMrekPushService.class);
 		i.setAction(ACTION_KEEPALIVE);
 		PendingIntent pi = PendingIntent.getService(this, 0, i, 0);
 		AlarmManager alarmMgr = (AlarmManager)getSystemService(ALARM_SERVICE);
@@ -350,7 +377,7 @@ public class PushService extends Service
 
 		// Schedule a reconnect using the alarm manager.
 		Intent i = new Intent();
-		i.setClass(this, PushService.class);
+		i.setClass(this, IMrekPushService.class);
 		i.setAction(ACTION_RECONNECT);
 		PendingIntent pi = PendingIntent.getService(this, 0, i, 0);
 		AlarmManager alarmMgr = (AlarmManager)getSystemService(ALARM_SERVICE);
@@ -360,7 +387,7 @@ public class PushService extends Service
 	// Remove the scheduled reconnect
 	public void cancelReconnect() {
 		Intent i = new Intent();
-		i.setClass(this, PushService.class);
+		i.setClass(this, IMrekPushService.class);
 		i.setAction(ACTION_RECONNECT);
 		PendingIntent pi = PendingIntent.getService(this, 0, i, 0);
 		AlarmManager alarmMgr = (AlarmManager)getSystemService(ALARM_SERVICE);
@@ -374,7 +401,7 @@ public class PushService extends Service
 		}
 	}
 
-	// This receiver listeners for network changes and updates the MQTT connection
+	// This receiver listens for network changes and updates the MQTT connection
 	// accordingly
 	private BroadcastReceiver mConnectivityChanged = new BroadcastReceiver() {
 		@Override
@@ -430,22 +457,26 @@ public class PushService extends Service
 	}
 	
 	// This inner class is a wrapper on top of MQTT client.
-	public class MQTTConnection implements MqttSimpleCallback {
+	private class MQTTConnection implements MqttSimpleCallback {
 		IMqttClient mqttClient = null;
 		
 		// Creates a new connection given the broker address and initial topic
-		public MQTTConnection(String brokerHostName) throws MqttException {
+		public MQTTConnection(String brokerHostName, String initTopic) throws MqttException {
 			// Create connection spec
 	    	String mqttConnSpec = "tcp://" + brokerHostName + "@" + MQTT_BROKER_PORT_NUM;
 	        	// Create the client and connect
 	        	mqttClient = MqttClient.createMqttClient(mqttConnSpec, MQTT_PERSISTENCE);
-	        	String clientID = MQTT_CLIENT_ID + "/" + mPrefs.getString(PREF_DEVICE_ID, "");
+	        	String clientID = mPrefs.getString(PREF_DEVICE_ID, "");
 	        	mqttClient.connect(clientID, MQTT_CLEAN_START, MQTT_KEEP_ALIVE);
 
 		        // register this client app has being able to receive messages
 				mqttClient.registerSimpleHandler(this);
+				
+				// Subscribe to an initial topic, which is me/deviceID
+				initTopic = MQTT_CLIENT_ID + "/" + initTopic;
+				subscribeToTopic(initTopic);
 		
-				//log("Connection established to " + brokerHostName + " on topic " + initTopic);
+				log("Connection established to " + brokerHostName + " on topic " + initTopic);
 		
 				// Save start time
 				mStartTime = System.currentTimeMillis();
@@ -466,7 +497,7 @@ public class PushService extends Service
 		 * Send a request to the message broker to be sent messages published with 
 		 *  the specified topic name. Wildcards are allowed.	
 		 */
-		public void subscribeToTopic(String topicName) throws MqttException {
+		private void subscribeToTopic(String topicName) throws MqttException {
 			
 			if ((mqttClient == null) || (mqttClient.isConnected() == false)) {
 				// quick sanity check - don't try and subscribe if we don't have
@@ -481,11 +512,11 @@ public class PushService extends Service
 		 * Sends a message to the message broker, requesting that it be published
 		 *  to the specified topic.
 		 */
-		public void publishToTopic(String topicName, String message) throws MqttException {		
+		private void publishToTopic(String topicName, String message) throws MqttException {		
 			if ((mqttClient == null) || (mqttClient.isConnected() == false)) {
 				// quick sanity check - don't try and publish if we don't have
 				//  a connection				
-				log("No connection to public to");		
+				log("No connection to publish to");		
 			} else {
 				mqttClient.publish(topicName, 
 								   message.getBytes(),

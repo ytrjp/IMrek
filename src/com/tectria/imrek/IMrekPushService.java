@@ -456,6 +456,27 @@ public class IMrekPushService extends Service
 		return info.isConnected();
 	}
 	
+	public boolean addChannel(String name) {
+		try {
+			mConnection.subscribeToTopic(name);
+		} catch (MqttException e) {
+			return false;
+		}
+		return true;
+	}
+	
+	public boolean sendMessage(String channel, String message) {
+		try {
+			mConnection.publishToTopic(channel, message);
+		} catch (MqttException e) {
+			return false;
+		}
+		return true;
+	}
+	
+	
+	
+	
 	// This inner class is a wrapper on top of MQTT client.
 	private class MQTTConnection implements MqttSimpleCallback {
 		IMqttClient mqttClient = null;
@@ -474,9 +495,9 @@ public class IMrekPushService extends Service
 				
 				// Subscribe to an initial topic, which is me/deviceID
 				initTopic = MQTT_CLIENT_ID + "/" + initTopic;
-				subscribeToTopic(initTopic);
+				//subscribeToTopic(initTopic);
 		
-				log("Connection established to " + brokerHostName + " on topic " + initTopic);
+				//log("Connection established to " + brokerHostName + " on topic " + initTopic);
 		
 				// Save start time
 				mStartTime = System.currentTimeMillis();
@@ -497,7 +518,7 @@ public class IMrekPushService extends Service
 		 * Send a request to the message broker to be sent messages published with 
 		 *  the specified topic name. Wildcards are allowed.	
 		 */
-		private void subscribeToTopic(String topicName) throws MqttException {
+		public void subscribeToTopic(String topicName) throws MqttException {
 			
 			if ((mqttClient == null) || (mqttClient.isConnected() == false)) {
 				// quick sanity check - don't try and subscribe if we don't have
@@ -512,7 +533,7 @@ public class IMrekPushService extends Service
 		 * Sends a message to the message broker, requesting that it be published
 		 *  to the specified topic.
 		 */
-		private void publishToTopic(String topicName, String message) throws MqttException {		
+		public void publishToTopic(String topicName, String message) throws MqttException {		
 			if ((mqttClient == null) || (mqttClient.isConnected() == false)) {
 				// quick sanity check - don't try and publish if we don't have
 				//  a connection				

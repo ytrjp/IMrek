@@ -5,7 +5,8 @@ import android.os.Bundle;
 import android.widget.TextView;
 
 public class ConversationViewActivity extends Activity {
-    public void onCreate(Bundle savedInstanceState) {
+    @Override
+	public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         TextView name = new TextView(this);

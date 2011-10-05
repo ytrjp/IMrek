@@ -5,13 +5,18 @@
       android:versionName="1.0">
     <uses-sdk android:minSdkVersion="8" />
 
-    <application android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@style/IMrek" android:debuggable="true">
-        <activity android:name=".IMrekActivity"
-                  android:label="@string/app_name">
+    <application android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@android:style/Theme.Black.NoTitleBar" android:debuggable="true">
+        <activity android:name=".IMrekSplashLoginActivity"
+			android:label="@string/app_name"
+			android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".IMrekActivity"
+        	android:theme="@style/IMrek"
+        	android:label="@string/app_name">
         </activity>
         <activity android:name=".FriendsListActivity" android:label="Friends List" android:theme="@android:style/Theme.Black.NoTitleBar">
         </activity>
@@ -19,7 +24,7 @@
         </activity>
         <activity android:name=".PreferencesActivity" android:label="IMrek Preferences" android:theme="@style/IMrek">
         </activity>
-		<service android:name=".IMrekPushService" android:label="IMrek Push Notification Service"></service>
+		<service android:name=".util.IMrekPushService" android:label="IMrek Push Notification Service"></service>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.VIBRATE" />	

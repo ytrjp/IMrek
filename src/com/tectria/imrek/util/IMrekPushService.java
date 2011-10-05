@@ -1,4 +1,4 @@
-package com.tectria.imrek;
+package com.tectria.imrek.util;
 
 import java.io.IOException;
 
@@ -15,7 +15,7 @@ import com.ibm.mqtt.MqttSimpleCallback;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
-
+import com.tectria.imrek.IMrekActivity;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -26,8 +26,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -61,7 +63,7 @@ public class IMrekPushService extends Service
 		
 	// MQTT client ID, which is given the broker. In this example, I also use this for the topic header. 
 	// You can use this to run push notifications for multiple apps with one MQTT broker. 
-	public static String			MQTT_CLIENT_ID = "me";
+	public static String			MQTT_CLIENT_ID = "";
 
 	// These are the actions for the service (name are descriptive enough)
 	private static final String		ACTION_START = MQTT_CLIENT_ID + ".START";
@@ -93,9 +95,11 @@ public class IMrekPushService extends Service
 	// Preferences instance 
 	private SharedPreferences 		mPrefs;
 	// We store in the preferences, whether or not the service has been started
-	public static final String		PREF_STARTED = "isStarted";
+	public static final String		PREF_STARTED = "started";
+	
 	// We also store the deviceID (target)
-	public static final String		PREF_DEVICE_ID = "deviceID";
+	//public static final String		PREF_DEVICE_ID = "deviceID";
+	
 	// We store the last retry interval
 	public static final String		PREF_RETRY = "retryInterval";
 
@@ -110,8 +114,10 @@ public class IMrekPushService extends Service
 	
 
 	// Static method to start the service
-	public static void actionStart(Context ctx) {
+	public static void actionStart(Context ctx, String user, String pass) {
 		Intent i = new Intent(ctx, IMrekPushService.class);
+		i.putExtra("user", user);
+		i.putExtra("pass", pass);
 		i.setAction(ACTION_START);
 		ctx.startService(i);
 	}
@@ -164,7 +170,7 @@ public class IMrekPushService extends Service
 			stopKeepAlives(); 
 				
 			// Do a clean start
-			start();
+			start(mPrefs.getString("last_user", ""), mPrefs.getString("last_pass", ""));
 		}
 	}
 	
@@ -193,7 +199,14 @@ public class IMrekPushService extends Service
 			stop();
 			stopSelf();
 		} else if (intent.getAction().equals(ACTION_START) == true) {
-			start();
+			Bundle extras = intent.getExtras();
+			
+			Editor editor = mPrefs.edit();
+			editor.putString("last_user", extras.getString("user"));
+			editor.putString("last_pass", extras.getString("pass"));
+			editor.commit();
+			
+			start(extras.getString("user"), extras.getString("pass"));
 		} else if (intent.getAction().equals(ACTION_KEEPALIVE) == true) {
 			keepAlive();
 		} else if (intent.getAction().equals(ACTION_RECONNECT) == true) {
@@ -239,7 +252,7 @@ public class IMrekPushService extends Service
 		mStarted = started;
 	}
 
-	private synchronized void start() {
+	private synchronized void start(String user, String pass) {
 		log("Starting service...");
 		
 		// Do nothing, if the service is already running.
@@ -249,7 +262,7 @@ public class IMrekPushService extends Service
 		}
 		
 		// Establish an MQTT connection
-		connect();
+		connect(user, pass);
 		
 		// Register a connectivity listener
 		registerReceiver(mConnectivityChanged, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));		
@@ -278,16 +291,17 @@ public class IMrekPushService extends Service
 	}
 	
 	// 
-	private synchronized void connect() {		
+	private synchronized void connect(String user, String pass) {		
 		log("Connecting...");
 		// fetch the device ID from the preferences.
-		String deviceID = mPrefs.getString(PREF_DEVICE_ID, null);
+		//String deviceID = mPrefs.getString(PREF_DEVICE_ID, null);
+		
 		// Create a new connection only if the device id is not NULL
-		if (deviceID == null) {
+		/*if (deviceID == null) {
 			log("Device ID not found.");
-		} else {
+		} else {*/
 			try {
-				mConnection = new MQTTConnection(MQTT_HOST, deviceID);
+				mConnection = new MQTTConnection(MQTT_HOST, user);
 			} catch (MqttException e) {
 				// Schedule a reconnect, if we failed to connect
 				log("MqttException: " + (e.getMessage() != null ? e.getMessage() : "NULL"));
@@ -296,7 +310,7 @@ public class IMrekPushService extends Service
 	        	}
 			}
 			setStarted(true);
-		}
+		//}
 	}
 	
 	public void postData() {
@@ -397,7 +411,7 @@ public class IMrekPushService extends Service
 	private synchronized void reconnectIfNecessary() {		
 		if (mStarted == true && mConnection == null) {
 			log("Reconnecting...");
-			connect();
+			connect(mPrefs.getString("last_user", ""), mPrefs.getString("last_pass", ""));
 		}
 	}
 
@@ -487,7 +501,7 @@ public class IMrekPushService extends Service
 	    	String mqttConnSpec = "tcp://" + brokerHostName + "@" + MQTT_BROKER_PORT_NUM;
 	        	// Create the client and connect
 	        	mqttClient = MqttClient.createMqttClient(mqttConnSpec, MQTT_PERSISTENCE);
-	        	String clientID = mPrefs.getString(PREF_DEVICE_ID, "");
+	        	String clientID = mPrefs.getString("last_user", "");;
 	        	mqttClient.connect(clientID, MQTT_CLEAN_START, MQTT_KEEP_ALIVE);
 
 		        // register this client app has being able to receive messages
@@ -549,6 +563,7 @@ public class IMrekPushService extends Service
 		/*
 		 * Called if the application loses it's connection to the message broker.
 		 */
+		@Override
 		public void connectionLost() throws Exception {
 			log("Loss of connection" + "connection downed");
 			stopKeepAlives();
@@ -562,6 +577,7 @@ public class IMrekPushService extends Service
 		/*
 		 * Called when we receive a message from the message broker. 
 		 */
+		@Override
 		public void publishArrived(String topicName, byte[] payload, int qos, boolean retained) {
 			// Show a notification
 			String s = new String(payload);
@@ -572,7 +588,7 @@ public class IMrekPushService extends Service
 		public void sendKeepAlive() throws MqttException {
 			log("Sending keep alive");
 			// publish to a keep-alive topic
-			publishToTopic(MQTT_CLIENT_ID + "/keepalive", mPrefs.getString(PREF_DEVICE_ID, ""));
+			publishToTopic(MQTT_CLIENT_ID + "/keepalive", mPrefs.getString("last_user", ""));
 		}		
 	}
 }

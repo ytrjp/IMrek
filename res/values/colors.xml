@@ -1,4 +1,5 @@
 <resources>
 	<color name="connectedColor">#b2d44f</color>
 	<color name="disconnectedColor">#d54143</color>
+	<color name="backgroundColor">#414240</color>
 </resources>

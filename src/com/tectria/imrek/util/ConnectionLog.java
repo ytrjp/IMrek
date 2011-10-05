@@ -1,4 +1,4 @@
-package com.tectria.imrek;
+package com.tectria.imrek.util;
 
 import java.io.BufferedWriter;
 import java.io.File;

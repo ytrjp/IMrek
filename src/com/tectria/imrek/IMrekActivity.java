@@ -1,5 +1,7 @@
 package com.tectria.imrek;
 
+import com.tectria.imrek.util.IMrekPushService;
+
 import android.app.TabActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -7,7 +9,6 @@ import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.provider.Settings.Secure;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -16,12 +17,16 @@ import android.widget.*;
 
 public class IMrekActivity extends TabActivity {
 	
-	private String deviceID;
 	private boolean started;
 	private SharedPreferences prefs;
 	private Editor editor;
 	private TextView status;
 	private ImageView statusicon;
+	
+	private Bundle extras;
+	
+	private String user;
+	private String pass;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -36,16 +41,23 @@ public class IMrekActivity extends TabActivity {
         
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         
-        started = prefs.getBoolean(IMrekPushService.PREF_STARTED, false);
-        deviceID = Secure.getString(this.getContentResolver(), Secure.ANDROID_ID);
-        boolean test = prefs.getBoolean("checkbox_preference", false);
+        if(!prefs.getBoolean("loggedin", false)) {
+        	extras = this.getIntent().getExtras();
+            if(extras.containsKey("user")) {
+            	user = extras.getString("user");
+            	pass = extras.getString("pass");
+            } else {
+            	user = prefs.getString("user", "");
+            	pass = prefs.getString("pass", "");
+            }
+        }
         
-        //if(!started) {
-        	/*editor = getSharedPreferences(IMrekPushService.TAG, MODE_PRIVATE).edit();
-        	editor.putString(IMrekPushService.PREF_DEVICE_ID, deviceID);
-	    	editor.commit();
-        	IMrekPushService.actionStart(getApplicationContext());*/
-        //}
+        started = prefs.getBoolean(IMrekPushService.PREF_STARTED, false);
+        
+        
+        if(!started) {
+        	IMrekPushService.actionStart(getApplicationContext(), user, pass);
+        }
         
         Resources res = getResources();
         TabHost tabHost = getTabHost();
@@ -69,16 +81,27 @@ public class IMrekActivity extends TabActivity {
     }
     
     @Override
-    protected void onResume() {
+    public void onResume() {
     	super.onResume();
     	started = prefs.getBoolean(IMrekPushService.PREF_STARTED, false);
         
-        //if(!started) {
-        	/*editor = getSharedPreferences(IMrekPushService.TAG, MODE_PRIVATE).edit();
-        	editor.putString(IMrekPushService.PREF_DEVICE_ID, deviceID);
-	    	editor.commit();
-        	IMrekPushService.actionStart(getApplicationContext());*/
-        //}
+        if(!started) {
+        	IMrekPushService.actionStart(getApplicationContext(), user, pass);
+        }
+    }
+    
+    @Override
+    public void onDestroy() {
+    	super.onDestroy();
+    	IMrekPushService.actionStop(getApplicationContext());
+    	editor = prefs.edit();
+    	editor.putBoolean("loggedin", false);
+    	editor.commit();
+    }
+    
+    @Override
+    public void onBackPressed() {
+    	return;
     }
     
     @Override

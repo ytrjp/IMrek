@@ -11,7 +11,8 @@ public class ConversationListActivity extends Activity {
 	ListView list = null;
 	String[] test = {"1", "2"};
 	
-    public void onCreate(Bundle savedInstanceState) {
+    @Override
+	public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.friendslist);
         

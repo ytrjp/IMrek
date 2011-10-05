@@ -2,30 +2,15 @@
 
 require 'config.php';
 require 'util.php';
+require 'BCrypt.class.php';
 
 //Always return JSON in the form of:
 // {'error': 1, 'message': 'Either error or success message', 'data': {...data...}}
 // Data should be omitted if no data needs to be returned
 
-switch(intval($_POST['action']) {
-	//Lookups can also be done via the broker, if we have PHP connected as a client.
-	// case 0:			// Lookup
-	// 	if (!isset($_POST['id'])) {
-	// 		echo "user";
-	// 		exit;
-	// 	}
-
-	// 	$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
-
-	// 	$sth = $db->prepare("SELECT username FROM users WHERE device_id = ?");
-
-	// 	$res = $sth->execute(array($_POST['id']));
-
-	// 	echo $res->fetch(PDO::FETCH_ASSOC)["username"];	
-	// 	exit;
-	// 	break;
+switch(intval($_POST['action'])) {
 	case 0: //Register
-		if (!isset($_POST['id']) || !isset($_POST['username']) || !isset($_POST['password'])) {
+		if(!isset($_POST['username']) || !isset($_POST['password'])) {
 			echo "invalid";
 			exit;
 		}
@@ -34,17 +19,17 @@ switch(intval($_POST['action']) {
 		$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
 
 		$bcrypt = new Bcrypt();
-		$password = $bcrypt->hash($_POST['pass']);
+		$password = $bcrypt->hash($_POST['password']);
 
-		$sth = $db->prepare("INSERT INTO users VALUES(?, ?, ?)");
+		$sth = $db->prepare("INSERT INTO users VALUES(?, ?)");
 
-		$res =  $sth->execute(array($_POST['id'], $_POST['user'], $password));
+		$res =  $sth->execute(array($_POST['username'], $password));
 
 		if (!$res) {
 			echo "{'error': 1, 'message':'Database Error'}";
 			exit;
 		} else {
-			addMqttUser($_POST['user'], $password);
+			addMqttUser($_POST['username'], $password);
 			sendReloadSignal();
 			echo "{'error': 0, 'message':'Successfully Reistered'}";
 			exit;
@@ -64,14 +49,15 @@ switch(intval($_POST['action']) {
 		
 		$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
 
-		$sth = $db->prepare("SELECT password FROM users WHERE device_id = ? AND username = ?");
+		$sth = $db->prepare("SELECT password FROM users WHERE username = ?");
 
-		$res = $sth->execute(array($_POST['id'], $_POST['username']));
+		$res = $sth->execute(array($_POST['username']));
 		if ($res->rowCount() != 1) {
 			echo "{'error': 1, 'message':'Username does not exist'}";
 			exit;
 		}
-		if (!$bcrypt->verify($_POST['password'], $res->fetch(PDO::FETCH_ASSOC)["password"])) {
+		$pass = $res->fetch(PDO::FETCH_ASSOC);
+		if (!$bcrypt->verify($_POST['password'], $pass["password"])) {
 			echo "{'error': 1, 'message':'Invalid password'}";
 			exit;
 		}
@@ -85,7 +71,7 @@ switch(intval($_POST['action']) {
 	case 3: //Deregister
 		exit;
 		break;
-	case default:
+	default:
 		echo "Unknown request";
 		break;
 }

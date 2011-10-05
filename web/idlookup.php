@@ -11,58 +11,69 @@ require 'BCrypt.class.php';
 switch(intval($_POST['action'])) {
 	case 0: //Register
 		if(!isset($_POST['username']) || !isset($_POST['password'])) {
-			echo "invalid";
+			echo json_encode(array("error"=>1, "message"=>"Invalid parameters"));
 			exit;
 		}
 		require 'BCrypt.class.php';
 
-		$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
-
 		$bcrypt = new Bcrypt();
 		$password = $bcrypt->hash($_POST['password']);
+		try {
+			$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
+			$sth = $db->prepare("INSERT INTO users VALUES(?, ?)");
 
-		$sth = $db->prepare("INSERT INTO users VALUES(?, ?)");
+			$res =  $sth->execute(array($_POST['username'], $password));
 
-		$res =  $sth->execute(array($_POST['username'], $password));
-
-		if (!$res) {
-			echo "{'error': 1, 'message':'Database Error'}";
-			exit;
-		} else {
-			addMqttUser($_POST['username'], $password);
-			sendReloadSignal();
-			echo "{'error': 0, 'message':'Successfully Reistered'}";
-			exit;
+			if (!$res) {
+				$err = $db->errorInfo();
+				echo json_encode(array("error"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
+				exit;
+			} else {
+				addMqttUser($_POST['username'], $_POST['password']);
+				sendReloadSignal();
+				echo json_encode(array("error"=>0, "message"=>"Successfully Registered"));
+				exit;
+			}
+		} catch (PDOException $e){
+			echo json_encode(array("error"=>1, "message"=>$e->getMessage()));
 		}
 		break;
 	//Logins are handled by the MQTT broker - we just need to update the password file when someone registers/deregisters
 	//This case handles checking to see if a user/password combo exists
 	case 1:
 		if (!isset($_POST['username']) || !isset($_POST['password'])) {
-			echo "{'error': 1, 'message':'An internal error occured'}";
+			//echo "{'error': 1, 'message':'An internal error occured'}";
+			echo json_encode(array("error"=>1, "message"=>"An internal error occured"));
 			exit;
 		}
+		try {
+			$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
 
-		$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
+			$bcrypt = new Bcrypt();
 
-		$bcrypt = new Bcrypt();
-		
-		$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
+			$sth = $db->prepare("SELECT password FROM users WHERE username = ?");
 
-		$sth = $db->prepare("SELECT password FROM users WHERE username = ?");
+			$ret = $sth->execute(array($_POST['username']));
 
-		$res = $sth->execute(array($_POST['username']));
-		if ($res->rowCount() != 1) {
-			echo "{'error': 1, 'message':'Username does not exist'}";
-			exit;
+			if (!$ret) {
+				$err = $db->errorInfo();
+				echo json_encode(array("error"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
+				exit;
+			} 
+			if ($sth->rowCount() != 1) {
+				echo json_encode(array("error"=>1, "message"=>"Username does not exist"));
+				exit;
+			}
+			$pass = $sth->fetch(PDO::FETCH_ASSOC);
+			if (!$bcrypt->verify($_POST['password'], $pass["password"])) {
+				echo json_encode(array("error"=>1, "message"=>"Invalid Password!"));
+				exit;
+			}
+
+			echo json_encode(array("error"=>0, "message"=>"User exists"));
+		} catch (PDOException $e) {
+			echo json_encode(array("error"=>1, "message"=>$e->getMessage()));
 		}
-		$pass = $res->fetch(PDO::FETCH_ASSOC);
-		if (!$bcrypt->verify($_POST['password'], $pass["password"])) {
-			echo "{'error': 1, 'message':'Invalid password'}";
-			exit;
-		}
-
-		echo "{'error': 0, 'message':'User exists'}";
 		exit;
 		break;
 	case 2: //Change Password or Username

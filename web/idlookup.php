@@ -14,17 +14,44 @@ switch(intval($_POST['action'])) {
 			echo json_encode(array("error"=>1, "message"=>"Invalid parameters"));
 			exit;
 		}
-		require 'BCrypt.class.php';
-
-		$bcrypt = new Bcrypt();
-		$password = $bcrypt->hash($_POST['password']);
+		// Make sure the username exists and is at least 6 characters
+		if (strlen($_POST['username']) < 5) {
+			echo json_encode(array("error"=>1, "message"=>"Invalid username. Must be at least 6 characters"));
+			exit;
+		} 
+		// Make sure the password exists and is at least 6 characters
+		if (strlen($_POST['password']) < 6) {
+			echo json_encode(array("error"=>1, "message"=>"Invalid password. Must be at least 6 characters"));
+			exit; 
+		} 
+		
 		try {
+			// Make sure username doesn't exist
 			$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
+
+			$sth = $db->prepare("SELECT username FROM users WHERE username = ?");
+
+			$ret = $sth->execute(array($_POST['username']));
+			if (!$ret) {
+				$err = $db->errorInfo();
+				echo json_encode(array("error"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
+				exit;
+			}
+
+			if ($sth->rowCount() > 0) {
+				echo json_encode(array("error"=>1, "message"=>"Username already exists"));
+				exit;
+			}
+
+			$bcrypt = new Bcrypt();
+			$password = $bcrypt->hash($_POST['password']);
+
+			
 			$sth = $db->prepare("INSERT INTO users VALUES(?, ?)");
 
-			$res =  $sth->execute(array($_POST['username'], $password));
+			$ret =  $sth->execute(array($_POST['username'], $password));
 
-			if (!$res) {
+			if (!$ret) {
 				$err = $db->errorInfo();
 				echo json_encode(array("error"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
 				exit;
@@ -46,6 +73,18 @@ switch(intval($_POST['action'])) {
 			echo json_encode(array("error"=>1, "message"=>"An internal error occured"));
 			exit;
 		}
+
+		// Make sure the username exists and is at least 6 characters
+		if (strlen($_POST['username']) < 5) {
+			echo json_encode(array("error"=>1, "message"=>"Invalid username. Must be at least 6 characters"));
+			exit;
+		} 
+		// Make sure the password exists and is at least 6 characters
+		if (strlen($_POST['password']) < 6) {
+			echo json_encode(array("error"=>1, "message"=>"Invalid password. Must be at least 6 characters"));
+			exit; 
+		} 
+				
 		try {
 			$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
 

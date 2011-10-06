@@ -78,16 +78,19 @@ switch(intval($_POST['action'])) {
 		}
 		try {
 			$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
-		// Make sure the username exists and is at least 6 characters
-		if (strlen($_POST['username']) < 5) {
-			echo json_encode(array("error"=>1, "message"=>"Invalid username. Must be at least 6 characters"));
-			exit;
-		} 
-		// Make sure the password exists and is at least 6 characters
-		if (strlen($_POST['password']) < 6) {
-			echo json_encode(array("error"=>1, "message"=>"Invalid password. Must be at least 6 characters"));
-			exit; 
-		} 
+			// Make sure the username exists and is at least 6 characters
+			if (strlen($_POST['username']) < 5) {
+				echo json_encode(array("error"=>1, "message"=>"Invalid username. Must be at least 6 characters"));
+				exit;
+			} 
+			// Make sure the password exists and is at least 6 characters
+			if (strlen($_POST['password']) < 6) {
+				echo json_encode(array("error"=>1, "message"=>"Invalid password. Must be at least 6 characters"));
+				exit; 
+			}
+		} catch (PDOException $e) {
+			echo json_encode(array("error"=>1, "message"=>$e->getMessage()));
+		}
 				
 		try {
 			$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
@@ -134,7 +137,7 @@ switch(intval($_POST['action'])) {
 		exit;
 		break;
 	default:
-		echo "Unknown request";
+		echo json_encode(array("error"=>1, "message"=>"Unknown Request"));
 		break;
 }
 

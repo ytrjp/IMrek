@@ -12,7 +12,7 @@ function addMqttUser($user, $pass) {
 	$exists = false;
 
 	//Split file lines into an array
-	$logins = file('/etc/mosquitto/', FILE_SKIP_EMPTY_LINES);
+	$logins = file('/etc/mosquitto/pwfile.pwds', FILE_SKIP_EMPTY_LINES);
 
 	//For each user:password combination
 	foreach($logins as $index => $login) {
@@ -20,15 +20,15 @@ function addMqttUser($user, $pass) {
 		//If the user exists
 		if($login[0] == $user) {
 			$exists = true;
-			$logins[$index] = implode(array($user, $pass));
+			$logins[$index] = implode(array($user, ':', $pass));
 		}
 	}
 
 	if(!$exists) {
-		$logins[] = implode(array($user, $pass));
+		$logins[] = implode(array($user, ':', $pass));
 	}
 
-	$file = fopen('/etc/mosquitto/mosquitto.conf');
+	$file = fopen('/etc/mosquitto/pwfile.pwds');
 	fwrite(implode($logins));
 	fclose($file);
 }

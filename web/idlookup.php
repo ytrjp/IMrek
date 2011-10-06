@@ -34,6 +34,8 @@ switch(intval($_POST['action'])) {
 			$ret = $sth->execute(array($_POST['username']));
 			if (!$ret) {
 				$err = $db->errorInfo();
+				//echo "check";
+				//print_r($err);
 				echo json_encode(array("error"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
 				exit;
 			}
@@ -53,6 +55,8 @@ switch(intval($_POST['action'])) {
 
 			if (!$ret) {
 				$err = $db->errorInfo();
+				//echo "insert";
+				//print_r($err);
 				echo json_encode(array("error"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
 				exit;
 			} else {
@@ -96,6 +100,7 @@ switch(intval($_POST['action'])) {
 
 			if (!$ret) {
 				$err = $db->errorInfo();
+				//print_r($err);
 				echo json_encode(array("error"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
 				exit;
 			} 
@@ -103,8 +108,15 @@ switch(intval($_POST['action'])) {
 				echo json_encode(array("error"=>1, "message"=>"Username does not exist"));
 				exit;
 			}
-			$pass = $sth->fetch(PDO::FETCH_ASSOC);
-			if (!$bcrypt->verify($_POST['password'], $pass["password"])) {
+			$pass = $sth->fetchColumn();
+			
+			$f = fopen("test.txt", "w+");
+
+			fwrite($f, "db: " . $pass . "\nPosted:" . $_POST['password'] . " \nHashed:" . $bcrypt->hash($_POST['password']));
+
+			fclose($f);
+
+			if (!$bcrypt->verify($_POST['password'], $pass)) {
 				echo json_encode(array("error"=>1, "message"=>"Invalid Password!"));
 				exit;
 			}

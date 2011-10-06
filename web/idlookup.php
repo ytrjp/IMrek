@@ -28,7 +28,6 @@ switch(intval($_POST['action'])) {
 		try {
 			// Make sure username doesn't exist
 			$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
-
 			$sth = $db->prepare("SELECT username FROM users WHERE username = ?");
 
 			$ret = $sth->execute(array($_POST['username']));
@@ -77,7 +76,8 @@ switch(intval($_POST['action'])) {
 			echo json_encode(array("error"=>1, "message"=>"An internal error occured"));
 			exit;
 		}
-
+		try {
+			$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
 		// Make sure the username exists and is at least 6 characters
 		if (strlen($_POST['username']) < 5) {
 			echo json_encode(array("error"=>1, "message"=>"Invalid username. Must be at least 6 characters"));

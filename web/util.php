@@ -27,9 +27,8 @@ function addMqttUser($user, $pass) {
 	if(!$exists) {
 		$logins[] = implode(array($user, ':', $pass));
 	}
-
-	$file = fopen('/etc/mosquitto/pwfile.pwds');
-	fwrite(implode($logins));
+	$file = fopen('/etc/mosquitto/pwfile.pwds', 'a');
+	fwrite($file, implode($logins));
 	fclose($file);
 }
 

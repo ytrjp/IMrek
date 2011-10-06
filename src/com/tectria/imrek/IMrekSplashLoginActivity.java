@@ -5,35 +5,37 @@ import org.json.*;
 import com.loopj.android.http.*;
 import com.tectria.imrek.util.IMrekHttpClient;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.SharedPreferences;
+import android.app.*;
+import android.content.*;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.view.LayoutInflater;
-import android.view.View;
+import android.provider.Settings.Secure;
+import android.view.*;
 import android.widget.*;
 import android.content.DialogInterface.OnCancelListener;
 
 public class IMrekSplashLoginActivity extends Activity {
 	
+	//Managers
 	private SharedPreferences prefs;
 	private Editor editor;
+	private LayoutInflater inflater;
+	
+	//Dialogs
 	private AlertDialog.Builder dialog;
 	private ProgressDialog progressdialog;
-	private LayoutInflater inflater;
 	private View dialogview;
 	
+	//Views
 	private EditText username;
 	private EditText password;
 	private CheckBox rememberme;
 	private CheckBox autologin;
 	private EditText confirm;
+	
+	//Misc
+	private String deviceid;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -47,6 +49,8 @@ public class IMrekSplashLoginActivity extends Activity {
     	
     	makeProgressDialog();
     	prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    	//Get our deviceid
+    	deviceid = prefs.getString("deviceid", getDeviceID());
     	inflater = (LayoutInflater)this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     	if(prefs.getBoolean("autologin", false) || prefs.getBoolean("loggedin", false)) {
     		startMain();
@@ -66,6 +70,17 @@ public class IMrekSplashLoginActivity extends Activity {
     	Intent intent = new Intent(getBaseContext(), IMrekSplashLoginActivity.class);
     	startActivity(intent);
     	finish();
+    }
+    
+    /*
+     * Get deviceid and save it to preferences
+     */
+    public String getDeviceID() {
+    	String id = Secure.getString(this.getContentResolver(), Secure.ANDROID_ID);
+    	editor = prefs.edit();
+    	editor.putString("deviceid", id);
+    	editor.commit();
+    	return id;
     }
     
     public void startMain() {

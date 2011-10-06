@@ -4,7 +4,7 @@ import com.loopj.android.http.*;
 
 public class IMrekHttpClient {
 	
-	private static final String base_url = "http://broker.wilhall.com/idlookup.php";
+	private static final String base_url = "http://broker.wilhall.com/stable/idlookup.php";
 	private static AsyncHttpClient client = new AsyncHttpClient();
 	
 	private static void get(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
@@ -30,5 +30,4 @@ public class IMrekHttpClient {
 		params.put("action", "1");
 		post(base_url, params, handler);
 	}
-	
 }

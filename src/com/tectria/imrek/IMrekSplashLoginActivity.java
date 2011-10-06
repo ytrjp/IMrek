@@ -3,6 +3,8 @@ package com.tectria.imrek;
 import org.json.*;
 
 import com.loopj.android.http.*;
+import com.tectria.imrek.util.IMrekHttpClient;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -61,7 +63,9 @@ public class IMrekSplashLoginActivity extends Activity {
     
     @Override
     public void onBackPressed() {
-       return;
+    	Intent intent = new Intent(getBaseContext(), IMrekSplashLoginActivity.class);
+    	startActivity(intent);
+    	finish();
     }
     
     public void startMain() {
@@ -81,8 +85,12 @@ public class IMrekSplashLoginActivity extends Activity {
     }
     
     public void makeHelloDialog() {
-    	if(progressdialog.isShowing()) {
-    		progressdialog.dismiss();
+    	try {
+	    	if(progressdialog.isShowing()) {
+	    		progressdialog.dismiss();
+	    	}
+    	} catch(Exception e) {
+    		//continue
     	}
     	
     	dialog = new AlertDialog.Builder(this);
@@ -110,6 +118,7 @@ public class IMrekSplashLoginActivity extends Activity {
     	}
     	dialogview = inflater.inflate(R.layout.registration_dialog, null);
     	dialog = new AlertDialog.Builder(this);
+    	dialog.setTitle("Registration");
     	dialog.setView(dialogview);
     	
     	username = (EditText)dialogview.findViewById(R.id.username);
@@ -156,15 +165,7 @@ public class IMrekSplashLoginActivity extends Activity {
 					return;
     			}
     			
-    			
-    			
-    			AsyncHttpClient http = new AsyncHttpClient();
-    			RequestParams params = new RequestParams();
-    			params.put("username", user);
-    			params.put("password", pass);
-    			params.put("action", "0");
-    			
-    			http.post("http://broker.wilhall.com/idlookup.php", params, new AsyncHttpResponseHandler() {
+    			IMrekHttpClient.register(user, pass, new AsyncHttpResponseHandler() {
     	            @Override
     	            public void onFailure(Throwable error) {
     					makeRegistrationDialog();
@@ -208,15 +209,13 @@ public class IMrekSplashLoginActivity extends Activity {
     	            }
     	        });
            }
-       });
+        });
     	
-    	dialog.setTitle("Registration");
-    	dialog.setCancelable(false);
     	dialog.setOnCancelListener(new OnCancelListener() {
 			@Override
 			public void onCancel(DialogInterface dialog) {
-				dialog.cancel();
-				makeRegistrationDialog();
+				dialog.dismiss();
+				makeHelloDialog();
 			}
     	
     	});
@@ -229,6 +228,7 @@ public class IMrekSplashLoginActivity extends Activity {
     	}
     	dialogview = inflater.inflate(R.layout.login_dialog, null);
     	dialog = new AlertDialog.Builder(this);
+    	dialog.setTitle("Login");
     	dialog.setView(dialogview);
     	
     	username = (EditText)dialogview.findViewById(R.id.username);
@@ -253,13 +253,7 @@ public class IMrekSplashLoginActivity extends Activity {
     			final String user = username.getText().toString();
     			final String pass = password.getText().toString();
     			
-    			AsyncHttpClient http = new AsyncHttpClient();
-    			RequestParams params = new RequestParams();
-    			params.put("username", user);
-    			params.put("password", pass);
-    			params.put("action", "1");
-    			
-    			http.post("http://broker.wilhall.com/idlookup.php", params, new AsyncHttpResponseHandler() {
+    			IMrekHttpClient.verify(user, pass, new AsyncHttpResponseHandler() {
     	            @Override
     	            public void onFailure(Throwable error) {
     					makeLoginDialog();
@@ -275,6 +269,7 @@ public class IMrekSplashLoginActivity extends Activity {
     	                		makeLoginDialog();
     	    					Toast toast = Toast.makeText(getApplicationContext(), "Error: " + data.getString("message"), Toast.LENGTH_LONG);
     	    					toast.show();
+    	    					return;
     	                	}
     	                	editor = prefs.edit();
     	    				editor.putBoolean("rememberme", rememberme.isChecked());
@@ -301,15 +296,13 @@ public class IMrekSplashLoginActivity extends Activity {
     	            }
     	        });
            }
-       });
+        });
     	
-    	dialog.setTitle("Login");
-    	dialog.setCancelable(false);
     	dialog.setOnCancelListener(new OnCancelListener() {
 			@Override
 			public void onCancel(DialogInterface dialog) {
-				dialog.cancel();
-				makeLoginDialog();
+				dialog.dismiss();
+				makeHelloDialog();
 			}
     	
     	});

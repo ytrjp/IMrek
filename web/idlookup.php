@@ -110,11 +110,11 @@ switch(intval($_POST['action'])) {
 			}
 			$pass = $sth->fetchColumn();
 			
-			$f = fopen("test.txt", "w+");
+			// $f = fopen("test.txt", "w+");
 
-			fwrite($f, "db: " . $pass . "\nPosted:" . $_POST['password'] . " \nHashed:" . $bcrypt->hash($_POST['password']));
+			// fwrite($f, "db: " . $pass . "\nPosted:" . $_POST['password'] . " \nHashed:" . $bcrypt->hash($_POST['password']));
 
-			fclose($f);
+			// fclose($f);
 
 			if (!$bcrypt->verify($_POST['password'], $pass)) {
 				echo json_encode(array("error"=>1, "message"=>"Invalid Password!"));

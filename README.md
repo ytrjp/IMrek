@@ -1,3 +1,9 @@
+FOLDERS
+=======
+1. jad/ - decompiled class files form wmqtt.jar that might be useful for implementing usernames and passwords
+2. resources/ - raw resources, not to be packaged with the application
+3. web/ - The server-side code, excluding the broker
+
 HOW TO EDIT wmqtt.jar
 =====================
 1. Create a new **java** project in eclipse to be used for recompiling .java files we decompile

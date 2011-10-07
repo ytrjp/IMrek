@@ -35,6 +35,7 @@ public class IMrekActivity extends TabActivity {
 	private String deviceid;
 	private String user;
 	private String pass;
+	private String token;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -52,6 +53,7 @@ public class IMrekActivity extends TabActivity {
         
         //Get our deviceid
         deviceid = prefs.getString("deviceid", getDeviceID());
+        token = prefs.getString("token", null);
         
         //Grab some views, used to change UI status to connected/disconnected
         status = (TextView)findViewById(R.id.status);

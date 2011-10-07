@@ -1,6 +1,7 @@
 <?php
 
-require_once 'config.php'
+require_once 'config.php';
+require_once 'BCrypt.class.php';
 
 function sendReloadSignal() {
 	//Get the process ID of the mosquitto broker
@@ -38,7 +39,7 @@ function addMqttUser($user, $pass) {
 // Generate a session token
 function generateToken($len) {
 	$str = array();
-	$chars = explode("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+	$chars = str_split("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
 	for ($i = 0; $i < $len; $i++) {
 		$str[] = $chars[mt_rand(0, count($chars)-1)];
 	}
@@ -60,19 +61,14 @@ function removeMqttUser($username) {
 	fclose($file);
 	$file = fopen('/etc/mosquitto/pwfile.pwds', 'w');
 	fwrite($file, implode('\n', $accum));
-	fclose($file)
+	fclose($file);
 }
 
 // Generate a token and store it, creating a session for a user
 function startSessionForUser($username, &$db) {
 	try {
 		// Wipe the database of any tokens already associated with this user.
-		$sth = $db->prepare("DELETE FROM session WHERE username = ?");
-		$ret = $sth->execute(array($username));
-		if (!$ret) {
-			$err = $sth->errorInfo();
-			return array("status"=>1, "message"=>$err[2]);
-		}
+		clearUserSession($username, &$db);
 
 		// Make token and store it with the username in the session table
 		$token = generateToken(30);
@@ -85,7 +81,7 @@ function startSessionForUser($username, &$db) {
 
 		// No errors, session token successfully stored, add user
 		addMqttUser($username, $token);
-		return array("status"=>0, "message"=>"Session started", "token"=>$token);
+		return array("status"=>0, "message"=>"Session started", "data"=>array("token"=>$token));
 
 	} catch (PDOException $e) {
 		return array("status"=>1, "message"=>$e->getMessage());
@@ -102,7 +98,7 @@ function checkUserDeviceId($username, $deviceid, &$db) {
 		}
 
 		// grab deviceid and compare it
-		$sth = $db->prepare("SELECT deviceid FROM users WHERE username = ?")
+		$sth = $db->prepare("SELECT deviceid FROM users WHERE username = ?");
 		$ret = $sth->execute(array($username));
 		if (!$ret) {
 			$err = $sth->errorInfo();
@@ -135,8 +131,8 @@ function isValidDeviceId($id) {
 	}
 
 	// Make sure all the characters are actual hex values
-	$chars = explode("0123456789ABCDEF");
-	$idchars = explode($id);
+	$chars = str_split("0123456789ABCDEF");
+	$idchars = str_split(strtoupper($id));
 	foreach ($idchars as $ch) {
 		if (!in_array($ch, $chars)) {
 			return false;
@@ -215,6 +211,59 @@ function setUserDeviceId($username, $deviceid, &$db) {
 		// everythings fine
 		return array("status"=>0, "message"=>"DeviceId changed");
 
+	} catch (PDOException $e) {
+		return array("status"=>1, "message"=>$e->getMessage());
+	}
+}
+
+// verify whether a user has the correct password on login
+// USE THIS TO ALSO CHECK IF THE USER EXISTS ON LOGIN
+// it will return an error if there's no user. this helps reduce db hits
+function verifyUserPassword($username, $password, &$db) {
+	try {
+		$sth = $db->prepare("SELECT password FROM users WHERE username = ?");
+		$ret = $sth->execute(array($username));
+		if (!$ret) {		// Whoops...
+			$err = $sth->errorInfo();
+			return array("status"=>1, "message"=>$err[2]);
+		}
+
+		// if there's no rows, that user doesn't exist
+		if ($sth->rowCount() == 0) {
+			return array("status"=>1, "message"=>"No such user");
+		}
+
+		// This fetches the only column of what should be the only row. which
+		// will contain the password hash
+		$passhash = $sth->fetchColumn();
+
+		$bcrypt = new Bcrypt();
+		if (!$bcrypt->verify($password, $passhash)) {
+			return array("status"=>1, "message"=>"Incorrect password");
+		}
+
+		return array("status"=>0, "message"=>"Password is valid");
+	} catch (PDOException $e) {
+		return array("status"=>1, "message"=>$e->getMessage());
+	}
+}
+
+// clean temporary user data
+function cleanUserData($username, &$db) {
+	removeMqttUser($username);
+	$check = clearUserSession($username, &$db);
+	return $check;
+}
+
+function clearUserSession($username, &$db) {
+	try {
+		$sth = $db->prepare("DELETE FROM session WHERE username = ?");
+		$ret = $sth->execute(array($username));
+		if (!$ret) {
+			$err = $sth->errorInfo();
+			return array("status"=>1, "message"=>$err[2]);
+		}
+		return array("status"=>0, "message"=>"Cleared successfully");		
 	} catch (PDOException $e) {
 		return array("status"=>1, "message"=>$e->getMessage());
 	}

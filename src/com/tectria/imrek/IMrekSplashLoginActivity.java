@@ -148,7 +148,6 @@ public class IMrekSplashLoginActivity extends Activity {
     	if(prefs.getBoolean("rememberme", false)) {
     		username.setText(prefs.getString("username", ""));
     	}
-    	
     	dialog.setPositiveButton("Register", new DialogInterface.OnClickListener() {
     		@Override
 			public void onClick(final DialogInterface dialog, int id) {
@@ -173,14 +172,14 @@ public class IMrekSplashLoginActivity extends Activity {
 					return;
     			}
     			
-    			if(user.length() < 6) {
+    			if(user.length() < 5) {
     				makeRegistrationDialog();
     				Toast toast = Toast.makeText(getApplicationContext(), "Username must be at least 6 characters", Toast.LENGTH_LONG);
 					toast.show();
 					return;
     			}
     			
-    			IMrekHttpClient.register(user, pass, new AsyncHttpResponseHandler() {
+    			IMrekHttpClient.register(user, pass, getDeviceID(), new AsyncHttpResponseHandler() {
     	            @Override
     	            public void onFailure(Throwable error) {
     					makeRegistrationDialog();
@@ -192,7 +191,7 @@ public class IMrekSplashLoginActivity extends Activity {
     	            public void onSuccess(String strdata) {
     	                try {
     	                	JSONObject data = new JSONObject(strdata);
-    	                	if(data.getInt("error") == 1) {
+    	                	if(data.getInt("status") == 1) {
     	                		makeRegistrationDialog();
     	    					Toast toast = Toast.makeText(getApplicationContext(), "Error: " + data.getString("message"), Toast.LENGTH_LONG);
     	    					toast.show();
@@ -202,6 +201,7 @@ public class IMrekSplashLoginActivity extends Activity {
     	    				editor.putBoolean("rememberme", rememberme.isChecked());
     	    				editor.putBoolean("autologin", autologin.isChecked());
     	    				editor.putBoolean("loggedin", true);
+    	    				editor.putString("token", data.getJSONObject("data").getString("token"));
     	    				if(autologin.isChecked()) {
     	    					editor.putString("username", user);
     	    					editor.putString("password", pass);
@@ -268,7 +268,7 @@ public class IMrekSplashLoginActivity extends Activity {
     			final String user = username.getText().toString();
     			final String pass = password.getText().toString();
     			
-    			IMrekHttpClient.verify(user, pass, new AsyncHttpResponseHandler() {
+    			IMrekHttpClient.verify(user, pass, getDeviceID(), new AsyncHttpResponseHandler() {
     	            @Override
     	            public void onFailure(Throwable error) {
     					makeLoginDialog();
@@ -280,7 +280,7 @@ public class IMrekSplashLoginActivity extends Activity {
     	            public void onSuccess(String strdata) {
     	                try {
     	                	JSONObject data = new JSONObject(strdata);
-    	                	if(data.getInt("error") == 1) {
+    	                	if(data.getInt("status") == 1) {
     	                		makeLoginDialog();
     	    					Toast toast = Toast.makeText(getApplicationContext(), "Error: " + data.getString("message"), Toast.LENGTH_LONG);
     	    					toast.show();
@@ -289,6 +289,7 @@ public class IMrekSplashLoginActivity extends Activity {
     	                	editor = prefs.edit();
     	    				editor.putBoolean("rememberme", rememberme.isChecked());
     	    				editor.putBoolean("autologin", autologin.isChecked());
+    	    				editor.putString("token", data.getJSONObject("data").getString("token"));
     	    				if(autologin.isChecked()) {
     	    					editor.putString("username", user);
     	    					editor.putString("password", pass);

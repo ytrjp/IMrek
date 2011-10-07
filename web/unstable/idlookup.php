@@ -10,20 +10,25 @@ require 'BCrypt.class.php';
 
 switch(intval($_POST['action'])) {
 	case 0: //Register
-		if(!isset($_POST['username']) || !isset($_POST['password'])) {
-			echo json_encode(array("error"=>1, "message"=>"Invalid parameters"));
+		if(!isset($_POST['username']) || !isset($_POST['password']) || !isset($_POST['deviceid'])) {
+			echo json_encode(array("status"=>1, "message"=>"Invalid parameters"));
 			exit;
 		}
 		// Make sure the username exists and is at least 6 characters
 		if (strlen($_POST['username']) < 5) {
-			echo json_encode(array("error"=>1, "message"=>"Invalid username. Must be at least 6 characters"));
+			echo json_encode(array("status"=>1, "message"=>"Invalid username. Must be at least 6 characters"));
 			exit;
 		} 
 		// Make sure the password exists and is at least 6 characters
 		if (strlen($_POST['password']) < 6) {
-			echo json_encode(array("error"=>1, "message"=>"Invalid password. Must be at least 6 characters"));
+			echo json_encode(array("status"=>1, "message"=>"Invalid password. Must be at least 6 characters"));
 			exit; 
 		} 
+
+		if (strlen($_POST['deviceid']) != 16) {
+			echo json_encode(array("status"=>1, "message"=>"Invalid DeviceId"));
+			exit;
+		}
 		
 		try {
 			// Make sure username doesn't exist
@@ -35,12 +40,12 @@ switch(intval($_POST['action'])) {
 				$err = $db->errorInfo();
 				//echo "check";
 				//print_r($err);
-				echo json_encode(array("error"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
+				echo json_encode(array("status"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
 				exit;
 			}
 
 			if ($sth->rowCount() > 0) {
-				echo json_encode(array("error"=>1, "message"=>"Username already exists"));
+				echo json_encode(array("status"=>1, "message"=>"Username already exists"));
 				exit;
 			}
 
@@ -48,24 +53,24 @@ switch(intval($_POST['action'])) {
 			$password = $bcrypt->hash($_POST['password']);
 
 			
-			$sth = $db->prepare("INSERT INTO users VALUES(?, ?)");
+			$sth = $db->prepare("INSERT INTO users VALUES(?, ?, ?)");
 
-			$ret =  $sth->execute(array($_POST['username'], $password));
+			$ret =  $sth->execute(array($_POST['username'], $password, $_POST['deviceid']));
 
 			if (!$ret) {
 				$err = $db->errorInfo();
 				//echo "insert";
 				//print_r($err);
-				echo json_encode(array("error"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
+				echo json_encode(array("status"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
 				exit;
 			} else {
 				addMqttUser($_POST['username'], $_POST['password']);
 				sendReloadSignal();
-				echo json_encode(array("error"=>0, "message"=>"Successfully Registered"));
+				echo json_encode(array("status"=>0, "message"=>"Successfully Registered"));
 				exit;
 			}
 		} catch (PDOException $e){
-			echo json_encode(array("error"=>1, "message"=>$e->getMessage()));
+			echo json_encode(array("status"=>1, "message"=>$e->getMessage()));
 		}
 		break;
 	//Logins are handled by the MQTT broker - we just need to update the password file when someone registers/deregisters
@@ -73,23 +78,23 @@ switch(intval($_POST['action'])) {
 	case 1:
 		if (!isset($_POST['username']) || !isset($_POST['password'])) {
 			//echo "{'error': 1, 'message':'An internal error occured'}";
-			echo json_encode(array("error"=>1, "message"=>"An internal error occured"));
+			echo json_encode(array("status"=>1, "message"=>"An internal error occured"));
 			exit;
 		}
 		try {
 			$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
 			// Make sure the username exists and is at least 6 characters
 			if (strlen($_POST['username']) < 5) {
-				echo json_encode(array("error"=>1, "message"=>"Invalid username. Must be at least 6 characters"));
+				echo json_encode(array("status"=>1, "message"=>"Invalid username. Must be at least 6 characters"));
 				exit;
 			} 
 			// Make sure the password exists and is at least 6 characters
 			if (strlen($_POST['password']) < 6) {
-				echo json_encode(array("error"=>1, "message"=>"Invalid password. Must be at least 6 characters"));
+				echo json_encode(array("status"=>1, "message"=>"Invalid password. Must be at least 6 characters"));
 				exit; 
 			}
 		} catch (PDOException $e) {
-			echo json_encode(array("error"=>1, "message"=>$e->getMessage()));
+			echo json_encode(array("status"=>1, "message"=>$e->getMessage()));
 		}
 				
 		try {
@@ -104,11 +109,11 @@ switch(intval($_POST['action'])) {
 			if (!$ret) {
 				$err = $db->errorInfo();
 				//print_r($err);
-				echo json_encode(array("error"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
+				echo json_encode(array("status"=>1, "message"=>$err[2]));	// 2 Is the error message in the returned array
 				exit;
 			} 
 			if ($sth->rowCount() != 1) {
-				echo json_encode(array("error"=>1, "message"=>"Username does not exist"));
+				echo json_encode(array("status"=>1, "message"=>"Username does not exist"));
 				exit;
 			}
 			$pass = $sth->fetchColumn();
@@ -120,13 +125,13 @@ switch(intval($_POST['action'])) {
 			// fclose($f);
 
 			if (!$bcrypt->verify($_POST['password'], $pass)) {
-				echo json_encode(array("error"=>1, "message"=>"Invalid Password!"));
+				echo json_encode(array("status"=>1, "message"=>"Invalid Password!"));
 				exit;
 			}
 
-			echo json_encode(array("error"=>0, "message"=>"User exists"));
+			echo json_encode(array("status"=>0, "message"=>"User exists"));
 		} catch (PDOException $e) {
-			echo json_encode(array("error"=>1, "message"=>$e->getMessage()));
+			echo json_encode(array("status"=>1, "message"=>$e->getMessage()));
 		}
 		exit;
 		break;
@@ -137,7 +142,7 @@ switch(intval($_POST['action'])) {
 		exit;
 		break;
 	default:
-		echo json_encode(array("error"=>1, "message"=>"Unknown Request"));
+		echo json_encode(array("status"=>1, "message"=>"Unknown Request"));
 		break;
 }
 

@@ -148,7 +148,6 @@ public class IMrekSplashLoginActivity extends Activity {
     	if(prefs.getBoolean("rememberme", false)) {
     		username.setText(prefs.getString("username", ""));
     	}
-    	
     	dialog.setPositiveButton("Register", new DialogInterface.OnClickListener() {
     		@Override
 			public void onClick(final DialogInterface dialog, int id) {
@@ -173,7 +172,7 @@ public class IMrekSplashLoginActivity extends Activity {
 					return;
     			}
     			
-    			if(user.length() < 6) {
+    			if(user.length() < 5) {
     				makeRegistrationDialog();
     				Toast toast = Toast.makeText(getApplicationContext(), "Username must be at least 6 characters", Toast.LENGTH_LONG);
 					toast.show();
@@ -202,6 +201,7 @@ public class IMrekSplashLoginActivity extends Activity {
     	    				editor.putBoolean("rememberme", rememberme.isChecked());
     	    				editor.putBoolean("autologin", autologin.isChecked());
     	    				editor.putBoolean("loggedin", true);
+    	    				editor.putString("token", data.getJSONObject("data").getString("token"));
     	    				if(autologin.isChecked()) {
     	    					editor.putString("username", user);
     	    					editor.putString("password", pass);
@@ -289,6 +289,7 @@ public class IMrekSplashLoginActivity extends Activity {
     	                	editor = prefs.edit();
     	    				editor.putBoolean("rememberme", rememberme.isChecked());
     	    				editor.putBoolean("autologin", autologin.isChecked());
+    	    				editor.putString("token", data.getJSONObject("data").getString("token"));
     	    				if(autologin.isChecked()) {
     	    					editor.putString("username", user);
     	    					editor.putString("password", pass);

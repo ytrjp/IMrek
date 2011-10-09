@@ -7,6 +7,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.ibm.mqtt.IMqttClient;
+import com.ibm.mqtt.MqttBaseClient;
 import com.ibm.mqtt.MqttClient;
 import com.ibm.mqtt.MqttException;
 import com.ibm.mqtt.MqttPersistence;
@@ -501,9 +502,10 @@ public class IMrekPushService extends Service
 	    	String mqttConnSpec = "tcp://" + brokerHostName + "@" + MQTT_BROKER_PORT_NUM;
 	        	// Create the client and connect
 	        	mqttClient = MqttClient.createMqttClient(mqttConnSpec, MQTT_PERSISTENCE);
-	        	String clientID = mPrefs.getString("last_user", "");;
+	        	String clientID = mPrefs.getString("last_user", "");
+	        	MqttBaseClient mqttBase;
 	        	mqttClient.connect(clientID, MQTT_CLEAN_START, MQTT_KEEP_ALIVE);
-
+	        	
 		        // register this client app has being able to receive messages
 				mqttClient.registerSimpleHandler(this);
 				

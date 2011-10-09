@@ -179,7 +179,7 @@ public class IMrekSplashLoginActivity extends Activity {
 					return;
     			}
     			
-    			IMrekHttpClient.register(user, pass, getDeviceID(), new AsyncHttpResponseHandler() {
+    			IMrekHttpClient.register(user, pass, deviceid, new AsyncHttpResponseHandler() {
     	            @Override
     	            public void onFailure(Throwable error) {
     					makeRegistrationDialog();
@@ -268,7 +268,7 @@ public class IMrekSplashLoginActivity extends Activity {
     			final String user = username.getText().toString();
     			final String pass = password.getText().toString();
     			
-    			IMrekHttpClient.verify(user, pass, getDeviceID(), new AsyncHttpResponseHandler() {
+    			IMrekHttpClient.login(user, pass, deviceid, new AsyncHttpResponseHandler() {
     	            @Override
     	            public void onFailure(Throwable error) {
     					makeLoginDialog();

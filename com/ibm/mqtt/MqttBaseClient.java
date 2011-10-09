@@ -1,21 +1,7 @@
-// Decompiled by Jad v1.5.8g. Copyright 2001 Pavel Kouznetsov.
-// Jad home page: http://www.kpdus.com/jad.html
-// Decompiler options: packimports(3) 
-
 package com.ibm.mqtt;
 
-import java.io.PrintStream;
 import java.util.Hashtable;
 import java.util.Vector;
-
-// Referenced classes of package com.ibm.mqtt:
-//            Mqtt, MqttHashTable, MqttTimedEventQueue, MqttConnect, 
-//            MqttRetry, MqttPingreq, MqttPublish, MqttPubrel, 
-//            MqttException, MqttDisconnect, MqttByteArray, MqttPersistenceException, 
-//            MqttPuback, MqttPubrec, MqttPubcomp, MqttReconn, 
-//            MqttSubscribe, MqttUnsubscribe, MqttNotConnectedException, MqttPersistence, 
-//            MqttPacket, MQeTrace, MqttConnack, MqttUtils, 
-//            MqttSuback, MqttUnsuback
 
 public abstract class MqttBaseClient extends Mqtt
     implements Runnable
@@ -58,10 +44,9 @@ public abstract class MqttBaseClient extends Mqtt
         else
             return;
     }
-
-    protected void connect(String s, boolean flag, boolean flag1, short word0, String s1, int i, String s2, 
-            boolean flag2)
-        throws MqttException, MqttPersistenceException
+    
+  //Now accepts user and pass strings
+    protected void connect(String s, boolean flag, boolean flag1, short word0, String s1, int i, String s2, boolean flag2, String user, String pass) throws MqttException, MqttPersistenceException
     {
         synchronized(outLock)
         {
@@ -69,6 +54,38 @@ public abstract class MqttBaseClient extends Mqtt
         }
         MqttConnect mqttconnect = new MqttConnect();
         mqttconnect.setClientId(s);
+        
+        //Set Username and password
+        mqttconnect.setUsername(user);
+        mqttconnect.setPassword(pass);
+        
+        mqttconnect.CleanStart = flag;
+        mqttconnect.TopicNameCompression = flag1;
+        mqttconnect.KeepAlive = word0;
+        if(s1 != null)
+        {
+            mqttconnect.Will = true;
+            mqttconnect.WillTopic = s1;
+            mqttconnect.WillQoS = i;
+            mqttconnect.WillRetain = flag2;
+            mqttconnect.WillMessage = s2;
+        } else
+        {
+            mqttconnect.Will = false;
+        }
+        setKeepAlive(word0);
+        doConnect(mqttconnect, flag, word0);
+    }
+    
+    protected void connect(String s, boolean flag, boolean flag1, short word0, String s1, int i, String s2, boolean flag2) throws MqttException, MqttPersistenceException
+    {
+        synchronized(outLock)
+        {
+            outLockNotified = false;
+        }
+        MqttConnect mqttconnect = new MqttConnect();
+        mqttconnect.setClientId(s);
+        
         mqttconnect.CleanStart = flag;
         mqttconnect.TopicNameCompression = flag1;
         mqttconnect.KeepAlive = word0;

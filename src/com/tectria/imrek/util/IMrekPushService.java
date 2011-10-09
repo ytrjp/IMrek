@@ -35,11 +35,6 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-/* 
- * PushService that does all of the work.
- * Most of the logic is borrowed from KeepAliveService.
- * http://code.google.com/p/android-random/source/browse/trunk/TestKeepAlive/src/org/devtcg/demo/keepalive/KeepAliveService.java?r=219
- */
 public class IMrekPushService extends Service
 {
 	// this is the log tag

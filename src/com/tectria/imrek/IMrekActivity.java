@@ -50,7 +50,7 @@ public class IMrekActivity extends TabActivity {
         
         //Get our preference manager
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        
+         
         //Get our deviceid
         deviceid = prefs.getString("deviceid", getDeviceID());
         token = prefs.getString("token", null);

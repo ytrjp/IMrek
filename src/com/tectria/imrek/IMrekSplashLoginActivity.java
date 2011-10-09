@@ -97,6 +97,7 @@ public class IMrekSplashLoginActivity extends Activity {
     
     public void makeProgressDialog() {
     	progressdialog = ProgressDialog.show(this, "", "Loading. Please wait...", true);
+    	progressdialog.getWindow().setGravity(Gravity.BOTTOM);
     }
     
     public void makeHelloDialog() {
@@ -124,7 +125,9 @@ public class IMrekSplashLoginActivity extends Activity {
     	   		makeLoginDialog();
     	   	}
        });
-    	dialog.show();
+    	AlertDialog dialogC = dialog.create();
+    	dialogC.getWindow().setGravity(Gravity.BOTTOM);
+    	dialogC.show();
     }
     
     public void makeRegistrationDialog() {

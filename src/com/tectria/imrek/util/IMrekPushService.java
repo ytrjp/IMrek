@@ -504,7 +504,7 @@ public class IMrekPushService extends Service
 	        	mqttClient = MqttClient.createMqttClient(mqttConnSpec, MQTT_PERSISTENCE);
 	        	String clientID = mPrefs.getString("last_user", "");
 	        	MqttBaseClient mqttBase;
-	        	mqttClient.connect(clientID, MQTT_CLEAN_START, MQTT_KEEP_ALIVE);
+	        	mqttClient.connect(clientID, MQTT_CLEAN_START, MQTT_KEEP_ALIVE, mPrefs.getString("last_user", ""), mPrefs.getString("last_pass", ""));
 	        	
 		        // register this client app has being able to receive messages
 				mqttClient.registerSimpleHandler(this);

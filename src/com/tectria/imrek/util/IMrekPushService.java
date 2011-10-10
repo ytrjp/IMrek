@@ -111,6 +111,11 @@ public class IMrekPushService extends Service
 
 	// Static method to start the service
 	public static void actionStart(Context ctx, String user, String token) {
+		
+		if(user.length() < 5 || token.length() < 12) {
+			return;
+		}
+		
 		Intent i = new Intent(ctx, IMrekPushService.class);
 		i.putExtra("user", user);
 		i.putExtra("token", token);

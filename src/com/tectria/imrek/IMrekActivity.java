@@ -1,5 +1,10 @@
 package com.tectria.imrek;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.tectria.imrek.util.IMrekHttpClient;
 import com.tectria.imrek.util.IMrekPushService;
 
 import android.app.TabActivity;
@@ -123,11 +128,11 @@ public class IMrekActivity extends TabActivity {
     /*
      * Make sure the service is started when we resume
      */
-    @Override
+/*    @Override
     public void onResume() {
     	super.onResume();
         connect(user, token);
-    }
+    }*/
     
     /*
      * Make sure service is started, as long as we aren't quitting via the menu
@@ -154,11 +159,11 @@ public class IMrekActivity extends TabActivity {
     /*
      * Make sure the service is started after we restart
      */
-    @Override
+/*    @Override
     public void onRestart() {
     	super.onRestart();
         connect(user, token);
-    }
+    }*/
     
     /*
      * Prevent the use of the back button within the tab manager activity.
@@ -185,8 +190,56 @@ public class IMrekActivity extends TabActivity {
 		case R.id.restart:
 			disconnect();
 			setLoggedOut();
-			connect(user, token);
-			setLoggedIn();
+			IMrekHttpClient.reconnect(user, token, deviceid, new AsyncHttpResponseHandler() {
+				@Override
+	            public void onFailure(Throwable error) {
+					Toast toast = Toast.makeText(getApplicationContext(), "An error occured contacting the server. Please try again.", Toast.LENGTH_LONG);
+					toast.show();
+	            }
+				
+				@Override
+	            public void onSuccess(String strdata) {
+	                try {
+	                	JSONObject data = new JSONObject(strdata);
+	                	if(data.getInt("status") == 1) {
+	    					IMrekHttpClient.login(user, pass, strdata, new AsyncHttpResponseHandler() {
+	    						@Override
+	    			            public void onFailure(Throwable error) {
+	    							Toast toast = Toast.makeText(getApplicationContext(), "An error occured contacting the server. Please try again.", Toast.LENGTH_LONG);
+	    							toast.show();
+	    			            }
+	    						
+	    						@Override
+	    			            public void onSuccess(String strdata) {
+	    			                try {
+	    			                	JSONObject data = new JSONObject(strdata);
+	    			                	if(data.getInt("status") == 1) {
+	    	    	    					Toast toast = Toast.makeText(getApplicationContext(), "Error: " + data.getString("message"), Toast.LENGTH_LONG);
+	    	    	    					toast.show();
+	    	    	    					return;
+	    			                	}
+	    			                	editor = prefs.edit();
+	    			                	editor.putString("token", data.getJSONObject("data").getString("token"));
+	    			                	editor.commit();
+	    			    				connect(user, token);
+	    			    				setLoggedIn();
+	    			                    
+	    			                } catch(JSONException e) {
+	    			                    Toast toast = Toast.makeText(getApplicationContext(), "Unknown error occured", Toast.LENGTH_LONG);
+	    			    				toast.show();
+	    			                }
+	    			            }
+	    					});
+	                	}
+	    				connect(user, token);
+	    				setLoggedIn();
+	                    
+	                } catch(JSONException e) {
+	                    Toast toast = Toast.makeText(getApplicationContext(), "Unknown error occured", Toast.LENGTH_LONG);
+	    				toast.show();
+	                }
+	            }
+			});
 			break;
 		case R.id.quit:
 			quitting = true;
@@ -243,21 +296,21 @@ public class IMrekActivity extends TabActivity {
     /*
      * Start the MQTT push service if it isn't already started, and update the UI accordingly
      */
-    public void connect(String mqtt_user, String mqtt_pass) {
+    public void connect(String mqtt_user, String mqtt_token) {
     	//Check is service is started
     	started = prefs.getBoolean(IMrekPushService.PREF_STARTED, false);
     	//Actually start the service
 		if(!started) {
-			IMrekPushService.actionStart(getApplicationContext(), mqtt_user, mqtt_pass);
+			IMrekPushService.actionStart(getApplicationContext(), mqtt_user, mqtt_token);
 		}
 		//Update UI to reflect service status
 		setUIConnected();
     }
     
     public void setUIConnected() {
-    	status.setTextColor(getResources().getColor(R.color.disconnectedColor));
-		status.setText("Disconnected");
-    	statusicon.setImageResource(R.drawable.icon_disconnected);
+    	status.setTextColor(getResources().getColor(R.color.connectedColor));
+		status.setText("Connected");
+    	statusicon.setImageResource(R.drawable.icon_connected);
     }
 	
     /*

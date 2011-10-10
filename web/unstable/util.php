@@ -4,11 +4,7 @@ require_once 'config.php';
 require_once 'BCrypt.class.php';
 
 function sendReloadSignal() {
-	//Get the process ID of the mosquitto broker
-	$pid = shell_exec('ps -ef | grep mosquitto | grep -v grep | awk \'{print $2}\'');
-
-	//Use the kill command to send a config reload signal
-	shell_exec('/bin/kill -s HUP 3147');
+	$pid = shell_exec('/bin/sh -c "/usr/bin/pkill -SIGHUP mosquitto" 2>&1');
 }
 
 // Add a new logging in user to the mosquitto passwords file
@@ -34,6 +30,7 @@ function addMqttUser($user, $pass) {
 	$file = fopen('/etc/mosquitto/pwfile.pwds', 'a');
 	fwrite($file, implode($logins));
 	fclose($file);
+	sendReloadSignal();
 }
 
 // Generate a session token
@@ -62,6 +59,7 @@ function removeMqttUser($username) {
 	$file = fopen('/etc/mosquitto/pwfile.pwds', 'w');
 	fwrite($file, implode('\n', $accum));
 	fclose($file);
+	sendReloadSignal();
 }
 
 // Generate a token and store it, creating a session for a user
@@ -71,7 +69,7 @@ function startSessionForUser($username, &$db) {
 		clearUserSession($username, &$db);
 
 		// Make token and store it with the username in the session table
-		$token = generateToken(30);
+		$token = generateToken(12);
 		$sth = $db->prepare("INSERT INTO session VALUES(?, ?, NULL)");
 		$ret = $sth->execute(array($username, $token));
 		if (!$ret) {
@@ -146,8 +144,9 @@ function isValidDeviceId($id) {
 // If there is an error (which will have something to do with the sql), it will return an array
 // containing a status and message.
 function isSessionTokenValid($username, $token, &$db) {
+	global $TOKEN_EXPIRY;
 	try {
-		$sth = $db->prepare("SELECT username, sesstoken, lastupdate a, (UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(a)) AS timediff FROM session WHERE username = ? and sesstoken = ?");
+		$sth = $db->prepare("SELECT username, sesstoken, lastupdate, (UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(lastupdate)) AS timediff FROM session WHERE username = ? AND sesstoken = ?");
 		$ret = $sth->execute(array($username, $token));
 		if (!$ret) {
 			$err = $sth->errorInfo();

@@ -1,8 +1,7 @@
 <?php
-$x = 100;
-while($x) {
-echo hash('adler32', uniqid("user", true));
-echo '<br />';
-$x--;
+function sendReloadSignal() {
+        $pid = shell_exec('/bin/sh -c "/usr/bin/pkill -SIGHUP mosquitto" 2>&1');
 }
+
+sendReloadSignal();
 ?>

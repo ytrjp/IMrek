@@ -20,14 +20,20 @@ switch(intval($_POST['action'])) {
 			exit;
 		}
 		// Make sure the username will fit in the db field
-		if ($usernamelen > 20) {
-			echo json_encode(array("status"=>1, "message"=>"Username is too long. Please limit it to 20 characters"));
+		if ($usernamelen > 12) {
+			echo json_encode(array("status"=>1, "message"=>"Username is too long. Please limit it to 12 characters"));
 			exit;
 		}
 
 		// Make sure password is not too short
 		if (strlen($_POST['password']) < 6) {
 			echo json_encode(array("status"=>1, "message"=>"Password is too short. Must be at least 6 characters"));
+			exit;
+		}
+
+		// Make sure password is not too long
+		if (strlen($_POST['password']) > 12) {
+			echo json_encode(array("status"=>1, "message"=>"Password is too long. Must be at under 12 characters"));
 			exit;
 		}
 
@@ -104,8 +110,8 @@ switch(intval($_POST['action'])) {
 			exit;
 		}
 		// Make sure the username will fit in the db field
-		if ($usernamelen > 20) {
-			echo json_encode(array("status"=>1, "message"=>"Username is too long. Please limit it to 20 characters"));
+		if ($usernamelen > 12) {
+			echo json_encode(array("status"=>1, "message"=>"Username is too long. Please limit it to 12 characters"));
 			exit;
 		}
 
@@ -115,13 +121,19 @@ switch(intval($_POST['action'])) {
 			exit;
 		}
 
+		// Make sure password is not too long
+		if (strlen($_POST['password']) > 12) {
+			echo json_encode(array("status"=>1, "message"=>"Password is too long. Must be at under 12 characters"));
+			exit;
+		}
+
 		// Check if we have a valid deviceid
 		if (!isValidDeviceId($_POST['deviceid'])) {
 			echo json_encode(array("status"=>1, "message"=>"Malformed device id"));
 			exit;
 		}
 
-		// Information in valid format -- we can check the pass hash hit the database now
+		// Information in valid format -- we can check the pass hash hit the database now, yeah, hit it!
 
 		try {
 			$db = new PDO("mysql:host=".$DB_HOST.";dbname=".$DB_NAME,$DB_USER,$DB_PASS);
@@ -139,7 +151,7 @@ switch(intval($_POST['action'])) {
 				// echo json_encode($valid);
 				// exit;						instead of exiting we update the device id
 
-				$check = setDeviceId($_POST['username'], $_POST['deviceid'], &$db);
+				$check = setUserDeviceId($_POST['username'], $_POST['deviceid'], &$db);
 				if ($check['status'] == 1) {
 					echo json_encode($check);
 					exit;
@@ -147,7 +159,7 @@ switch(intval($_POST['action'])) {
 			}
 
 			// Make sure we clear out old sessions.
-			$check = clearUserSession($_POST['username'], &$db);
+			$check = cleanUserData($_POST['username'], &$db);
 			if ($check['status'] == 1) {
 				echo json_encode($check);
 				exit;

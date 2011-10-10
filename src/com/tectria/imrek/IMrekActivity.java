@@ -103,7 +103,7 @@ public class IMrekActivity extends TabActivity {
         started = prefs.getBoolean(IMrekPushService.PREF_STARTED, false);
         
         //Start the service
-        connect(user, pass);
+        connect(user, token);
         
         //Set up tabs
         //Do this last because if for whatever reason we need to fall back to the splash/login,
@@ -126,7 +126,7 @@ public class IMrekActivity extends TabActivity {
     @Override
     public void onResume() {
     	super.onResume();
-        connect(user, pass);
+        connect(user, token);
     }
     
     /*
@@ -136,7 +136,7 @@ public class IMrekActivity extends TabActivity {
     public void onStop() {
     	super.onStop();
     	if(!quitting) {
-    		connect(user, pass);
+    		connect(user, token);
     	}
     }
     
@@ -147,7 +147,7 @@ public class IMrekActivity extends TabActivity {
     public void onDestroy() {
     	super.onDestroy();
     	if(!quitting) {
-    		connect(user, pass);
+    		connect(user, token);
     	}
     }
     
@@ -157,7 +157,7 @@ public class IMrekActivity extends TabActivity {
     @Override
     public void onRestart() {
     	super.onRestart();
-        connect(user, pass);
+        connect(user, token);
     }
     
     /*
@@ -185,7 +185,7 @@ public class IMrekActivity extends TabActivity {
 		case R.id.restart:
 			disconnect();
 			setLoggedOut();
-			connect(user, pass);
+			connect(user, token);
 			setLoggedIn();
 			break;
 		case R.id.quit:

@@ -110,10 +110,10 @@ public class IMrekPushService extends Service
 	
 
 	// Static method to start the service
-	public static void actionStart(Context ctx, String user, String pass) {
+	public static void actionStart(Context ctx, String user, String token) {
 		Intent i = new Intent(ctx, IMrekPushService.class);
 		i.putExtra("user", user);
-		i.putExtra("pass", pass);
+		i.putExtra("token", token);
 		i.setAction(ACTION_START);
 		ctx.startService(i);
 	}
@@ -166,7 +166,7 @@ public class IMrekPushService extends Service
 			stopKeepAlives(); 
 				
 			// Do a clean start
-			start(mPrefs.getString("last_user", ""), mPrefs.getString("last_pass", ""));
+			start(mPrefs.getString("last_user", ""), mPrefs.getString("token", ""));
 		}
 	}
 	
@@ -199,10 +199,10 @@ public class IMrekPushService extends Service
 			
 			Editor editor = mPrefs.edit();
 			editor.putString("last_user", extras.getString("user"));
-			editor.putString("last_pass", extras.getString("pass"));
+			editor.putString("token", extras.getString("token"));
 			editor.commit();
 			
-			start(extras.getString("user"), extras.getString("pass"));
+			start(extras.getString("user"), extras.getString("token"));
 		} else if (intent.getAction().equals(ACTION_KEEPALIVE) == true) {
 			keepAlive();
 		} else if (intent.getAction().equals(ACTION_RECONNECT) == true) {
@@ -248,7 +248,7 @@ public class IMrekPushService extends Service
 		mStarted = started;
 	}
 
-	private synchronized void start(String user, String pass) {
+	private synchronized void start(String user, String token) {
 		log("Starting service...");
 		
 		// Do nothing, if the service is already running.
@@ -258,7 +258,7 @@ public class IMrekPushService extends Service
 		}
 		
 		// Establish an MQTT connection
-		connect(user, pass);
+		connect(user, token);
 		
 		// Register a connectivity listener
 		registerReceiver(mConnectivityChanged, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));		
@@ -287,7 +287,7 @@ public class IMrekPushService extends Service
 	}
 	
 	// 
-	private synchronized void connect(String user, String pass) {		
+	private synchronized void connect(String user, String token) {		
 		log("Connecting...");
 		// fetch the device ID from the preferences.
 		//String deviceID = mPrefs.getString(PREF_DEVICE_ID, null);
@@ -407,7 +407,7 @@ public class IMrekPushService extends Service
 	private synchronized void reconnectIfNecessary() {		
 		if (mStarted == true && mConnection == null) {
 			log("Reconnecting...");
-			connect(mPrefs.getString("last_user", ""), mPrefs.getString("last_pass", ""));
+			connect(mPrefs.getString("last_user", ""), mPrefs.getString("token", ""));
 		}
 	}
 
@@ -499,7 +499,7 @@ public class IMrekPushService extends Service
 	        	mqttClient = MqttClient.createMqttClient(mqttConnSpec, MQTT_PERSISTENCE);
 	        	String clientID = mPrefs.getString("last_user", "");
 	        	MqttBaseClient mqttBase;
-	        	mqttClient.connect(clientID, MQTT_CLEAN_START, MQTT_KEEP_ALIVE, mPrefs.getString("last_user", ""), mPrefs.getString("last_pass", ""));
+	        	mqttClient.connect(clientID, MQTT_CLEAN_START, MQTT_KEEP_ALIVE, mPrefs.getString("last_user", ""), mPrefs.getString("token", ""));
 	        	
 		        // register this client app has being able to receive messages
 				mqttClient.registerSimpleHandler(this);

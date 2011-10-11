@@ -111,6 +111,11 @@ public class IMrekPushService extends Service
 
 	// Static method to start the service
 	public static void actionStart(Context ctx, String user, String token) {
+		
+		if(user.length() < 5 || token.length() < 12) {
+			return;
+		}
+		
 		Intent i = new Intent(ctx, IMrekPushService.class);
 		i.putExtra("user", user);
 		i.putExtra("token", token);
@@ -166,7 +171,7 @@ public class IMrekPushService extends Service
 			stopKeepAlives(); 
 				
 			// Do a clean start
-			start(mPrefs.getString("last_user", ""), mPrefs.getString("token", ""));
+			//start();
 		}
 	}
 	
@@ -201,8 +206,9 @@ public class IMrekPushService extends Service
 			editor.putString("last_user", extras.getString("user"));
 			editor.putString("token", extras.getString("token"));
 			editor.commit();
-			
-			start(extras.getString("user"), extras.getString("token"));
+			String hmm = extras.getString("user");
+			String lol = extras.getString("token");
+			start();
 		} else if (intent.getAction().equals(ACTION_KEEPALIVE) == true) {
 			keepAlive();
 		} else if (intent.getAction().equals(ACTION_RECONNECT) == true) {
@@ -248,7 +254,7 @@ public class IMrekPushService extends Service
 		mStarted = started;
 	}
 
-	private synchronized void start(String user, String token) {
+	private synchronized void start() {
 		log("Starting service...");
 		
 		// Do nothing, if the service is already running.
@@ -258,7 +264,7 @@ public class IMrekPushService extends Service
 		}
 		
 		// Establish an MQTT connection
-		connect(user, token);
+		connect();
 		
 		// Register a connectivity listener
 		registerReceiver(mConnectivityChanged, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));		
@@ -287,7 +293,7 @@ public class IMrekPushService extends Service
 	}
 	
 	// 
-	private synchronized void connect(String user, String token) {		
+	private synchronized void connect() {		
 		log("Connecting...");
 		// fetch the device ID from the preferences.
 		//String deviceID = mPrefs.getString(PREF_DEVICE_ID, null);
@@ -297,7 +303,7 @@ public class IMrekPushService extends Service
 			log("Device ID not found.");
 		} else {*/
 			try {
-				mConnection = new MQTTConnection(MQTT_HOST, user);
+				mConnection = new MQTTConnection(MQTT_HOST, "wilfish");
 			} catch (MqttException e) {
 				// Schedule a reconnect, if we failed to connect
 				log("MqttException: " + (e.getMessage() != null ? e.getMessage() : "NULL"));
@@ -407,7 +413,7 @@ public class IMrekPushService extends Service
 	private synchronized void reconnectIfNecessary() {		
 		if (mStarted == true && mConnection == null) {
 			log("Reconnecting...");
-			connect(mPrefs.getString("last_user", ""), mPrefs.getString("token", ""));
+			connect();
 		}
 	}
 
@@ -505,8 +511,7 @@ public class IMrekPushService extends Service
 				mqttClient.registerSimpleHandler(this);
 				
 				// Subscribe to an initial topic, which is me/deviceID
-				initTopic = MQTT_CLIENT_ID + "/" + initTopic;
-				//subscribeToTopic(initTopic);
+				subscribeToTopic(initTopic);
 		
 				//log("Connection established to " + brokerHostName + " on topic " + initTopic);
 		

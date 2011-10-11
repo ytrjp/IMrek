@@ -4,11 +4,7 @@ require_once 'config.php';
 require_once 'BCrypt.class.php';
 
 function sendReloadSignal() {
-	//Get the process ID of the mosquitto broker
-	$pid = shell_exec('ps -ef | grep mosquitto | grep -v grep | awk \'{print $2}\'');
-
-	//Use the kill command to send a config reload signal
-	shell_exec('/bin/kill -s HUP 3147');
+	$pid = shell_exec('/bin/sh -c "/usr/bin/pkill -SIGHUP mosquitto" 2>&1');
 }
 
 // Add a new logging in user to the mosquitto passwords file
@@ -34,6 +30,7 @@ function addMqttUser($user, $pass) {
 	$file = fopen('/etc/mosquitto/pwfile.pwds', 'a');
 	fwrite($file, implode($logins));
 	fclose($file);
+	sendReloadSignal();
 }
 
 // Generate a session token
@@ -62,6 +59,7 @@ function removeMqttUser($username) {
 	$file = fopen('/etc/mosquitto/pwfile.pwds', 'w');
 	fwrite($file, implode('\n', $accum));
 	fclose($file);
+	sendReloadSignal();
 }
 
 // Generate a token and store it, creating a session for a user

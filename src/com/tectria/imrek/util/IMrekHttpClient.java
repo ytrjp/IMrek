@@ -37,7 +37,7 @@ public class IMrekHttpClient {
 	public static void reconnect(String username, String token, String deviceid, AsyncHttpResponseHandler handler) {
 		RequestParams params = new RequestParams();
 		params.put("username", username);
-		params.put("password", token);
+		params.put("token", token);
 		params.put("deviceid", deviceid);
 		params.put("action", "2");
 		post(base_url, params, handler);

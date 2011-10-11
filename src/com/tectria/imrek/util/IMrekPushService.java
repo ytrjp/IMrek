@@ -206,8 +206,6 @@ public class IMrekPushService extends Service
 			editor.putString("last_user", extras.getString("user"));
 			editor.putString("token", extras.getString("token"));
 			editor.commit();
-			String hmm = extras.getString("user");
-			String lol = extras.getString("token");
 			start();
 		} else if (intent.getAction().equals(ACTION_KEEPALIVE) == true) {
 			keepAlive();
@@ -511,7 +509,9 @@ public class IMrekPushService extends Service
 				mqttClient.registerSimpleHandler(this);
 				
 				// Subscribe to an initial topic, which is me/deviceID
-				subscribeToTopic(initTopic);
+				//subscribeToTopic(initTopic);
+				subscribeToTopic("one");
+				publishToTopic("two", "test1");
 		
 				//log("Connection established to " + brokerHostName + " on topic " + initTopic);
 		

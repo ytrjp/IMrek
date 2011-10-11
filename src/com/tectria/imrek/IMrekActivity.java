@@ -7,6 +7,7 @@ import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.tectria.imrek.util.IMrekHttpClient;
 import com.tectria.imrek.util.IMrekPushService;
 
+import android.app.AlertDialog;
 import android.app.TabActivity;
 import android.content.*;
 import android.content.SharedPreferences.Editor;
@@ -33,6 +34,9 @@ public class IMrekActivity extends TabActivity {
 	//Views
 	private TextView status;
 	private ImageView statusicon;
+	
+	//Dialogs
+	private AlertDialog.Builder quitDialog;
 	
 	//Misc
 	private Bundle extras;
@@ -190,6 +194,8 @@ public class IMrekActivity extends TabActivity {
 		case R.id.restart:
 			disconnect();
 			setLoggedOut();
+			
+			//Try a reconnect
 			IMrekHttpClient.reconnect(user, token, deviceid, new AsyncHttpResponseHandler() {
 				@Override
 	            public void onFailure(Throwable error) {
@@ -201,8 +207,10 @@ public class IMrekActivity extends TabActivity {
 	            public void onSuccess(String strdata) {
 	                try {
 	                	JSONObject data = new JSONObject(strdata);
+	                	//If an error is returned..
 	                	if(data.getInt("status") == 1) {
-	    					IMrekHttpClient.login(user, pass, strdata, new AsyncHttpResponseHandler() {
+	                		//Try a login
+	    					IMrekHttpClient.login(user, pass, deviceid, new AsyncHttpResponseHandler() {
 	    						@Override
 	    			            public void onFailure(Throwable error) {
 	    							Toast toast = Toast.makeText(getApplicationContext(), "An error occured contacting the server. Please try again.", Toast.LENGTH_LONG);
@@ -213,26 +221,28 @@ public class IMrekActivity extends TabActivity {
 	    			            public void onSuccess(String strdata) {
 	    			                try {
 	    			                	JSONObject data = new JSONObject(strdata);
+	    			                	//If an error is returned..
 	    			                	if(data.getInt("status") == 1) {
 	    	    	    					Toast toast = Toast.makeText(getApplicationContext(), "Error: " + data.getString("message"), Toast.LENGTH_LONG);
 	    	    	    					toast.show();
 	    	    	    					return;
+	    			                	} else {
+	    			                		editor = prefs.edit();
+		    			                	editor.putString("token", data.getJSONObject("data").getString("token"));
+		    			                	editor.commit();
+		    			    				connect(user, token);
+		    			    				setLoggedIn();
 	    			                	}
-	    			                	editor = prefs.edit();
-	    			                	editor.putString("token", data.getJSONObject("data").getString("token"));
-	    			                	editor.commit();
-	    			    				connect(user, token);
-	    			    				setLoggedIn();
-	    			                    
 	    			                } catch(JSONException e) {
 	    			                    Toast toast = Toast.makeText(getApplicationContext(), "Unknown error occured", Toast.LENGTH_LONG);
 	    			    				toast.show();
 	    			                }
 	    			            }
 	    					});
+	                	} else {
+	                		connect(user, token);
+		    				setLoggedIn();
 	                	}
-	    				connect(user, token);
-	    				setLoggedIn();
 	                    
 	                } catch(JSONException e) {
 	                    Toast toast = Toast.makeText(getApplicationContext(), "Unknown error occured", Toast.LENGTH_LONG);
@@ -242,10 +252,23 @@ public class IMrekActivity extends TabActivity {
 			});
 			break;
 		case R.id.quit:
-			quitting = true;
-			disconnect();
-			setLoggedOut();
-			finish();
+			quitDialog = new AlertDialog.Builder(this);
+			quitDialog.setMessage("Are you sure you want to quit? This will close IMrek and disconnect you from the server.");
+			quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					quitting = true;
+					disconnect();
+					setLoggedOut();
+					finish();
+				}
+			}).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+			quitDialog.show();
 			break;
 		}
 		return true;

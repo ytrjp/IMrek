@@ -71,7 +71,7 @@ function startSessionForUser($username, &$db) {
 		clearUserSession($username, &$db);
 
 		// Make token and store it with the username in the session table
-		$token = generateToken(30);
+		$token = generateToken(12);
 		$sth = $db->prepare("INSERT INTO session VALUES(?, ?, NULL)");
 		$ret = $sth->execute(array($username, $token));
 		if (!$ret) {
@@ -146,8 +146,9 @@ function isValidDeviceId($id) {
 // If there is an error (which will have something to do with the sql), it will return an array
 // containing a status and message.
 function isSessionTokenValid($username, $token, &$db) {
+	global $TOKEN_EXPIRY;
 	try {
-		$sth = $db->prepare("SELECT username, sesstoken, lastupdate a, (UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(a)) AS timediff FROM session WHERE username = ? and sesstoken = ?");
+		$sth = $db->prepare("SELECT username, sesstoken, lastupdate, (UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(lastupdate)) AS timediff FROM session WHERE username = ? AND sesstoken = ?");
 		$ret = $sth->execute(array($username, $token));
 		if (!$ret) {
 			$err = $sth->errorInfo();

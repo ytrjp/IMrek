@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Ant-Version: Apache Ant 1.7.1
+Created-By: 2.4 (IBM Corporation)
+Main-Class: com.ibm.mqtt.MqttVersion
+Bundle-Vendor: IBM Websphere MQ Development
+Bundle-Version: 1.4.6
+Bundle-Name: MQTelemetryTransport
+Bundle-SymbolicName: com.ibm.wmqtt
+Bundle-Copyright:  (C) Copyright IBM Corp. 2002, 2009 All Rights Reser
+ ved.
+Bundle-Description: IBM Websphere MQ Telemetry Transport (SupportPac I
+ A92)
+Bundle-DocURL: http://www.ibm.com/webspheremq/integrator/telemetry
+Provide-Package: com.ibm.mqtt
+Export-Package: com.ibm.mqtt
+DynamicImport-Package: com.ibm.micro
+

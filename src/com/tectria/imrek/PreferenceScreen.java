@@ -3,7 +3,7 @@ package com.tectria.imrek;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 
-public class PreferencesActivity extends PreferenceActivity {
+public class PreferenceScreen extends PreferenceActivity {
     
     @Override
     public void onCreate(Bundle savedInstanceState) {

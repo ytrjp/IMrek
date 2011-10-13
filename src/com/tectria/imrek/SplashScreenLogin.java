@@ -1,21 +1,31 @@
 package com.tectria.imrek;
 
-import org.json.*;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import com.loopj.android.http.*;
-import com.tectria.imrek.util.IMrekHttpClient;
-
-import android.app.*;
-import android.content.*;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
-import android.view.*;
-import android.widget.*;
-import android.content.DialogInterface.OnCancelListener;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.Toast;
 
-public class IMrekSplashLoginActivity extends Activity {
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.tectria.imrek.util.IMrekHttpClient;
+
+public class SplashScreenLogin extends Activity {
 	
 	//Managers
 	private SharedPreferences prefs;
@@ -67,7 +77,7 @@ public class IMrekSplashLoginActivity extends Activity {
     
     @Override
     public void onBackPressed() {
-    	Intent intent = new Intent(getBaseContext(), IMrekSplashLoginActivity.class);
+    	Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
     	startActivity(intent);
     	finish();
     }
@@ -84,12 +94,12 @@ public class IMrekSplashLoginActivity extends Activity {
     }
     
     public void startMain() {
-    	Intent intent = new Intent(getBaseContext(), IMrekActivity.class);
+    	Intent intent = new Intent(getBaseContext(), IMrekMain.class);
     	startActivity(intent);
     }
     
     public void startMain(String user, String pass) {
-    	Intent intent = new Intent(getBaseContext(), IMrekActivity.class);
+    	Intent intent = new Intent(getBaseContext(), IMrekMain.class);
     	intent.putExtra("user", user);
     	intent.putExtra("pass", pass);
     	startActivity(intent);

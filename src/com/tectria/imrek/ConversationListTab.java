@@ -1,12 +1,15 @@
 package com.tectria.imrek;
 
-import android.app.*;
+import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.*;
+import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.Toast;
 
-public class ConversationListActivity extends Activity {
+public class ConversationListTab extends Activity {
 	
 	ListView list = null;
 	String[] test = {"1", "2"};

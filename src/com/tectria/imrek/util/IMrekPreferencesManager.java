@@ -6,23 +6,23 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.provider.Settings.Secure;
 
-public class PrefsManager {
+public class IMrekPreferencesManager {
 	
-	private static PrefsManager instance = null;
+	private static IMrekPreferencesManager instance = null;
 	private static final String APP_SHARED_PREFS = "com.tectria.imrek.util.PefsManager";
 	private SharedPreferences appSharedPrefs;
 	private Editor prefsEditor;
 	private Context context;
 	
-	protected PrefsManager(Context ctx) {
+	protected IMrekPreferencesManager(Context ctx) {
 		this.appSharedPrefs = ctx.getSharedPreferences(APP_SHARED_PREFS, Activity.MODE_PRIVATE);
 		this.prefsEditor = this.appSharedPrefs.edit();
 		this.context = ctx;
 	}
 	
-	public static PrefsManager getInstance(Context ctx) {
+	public static IMrekPreferencesManager getInstance(Context ctx) {
 		if (instance == null) {
-			instance = new PrefsManager(ctx);
+			instance = new IMrekPreferencesManager(ctx);
 		}
 		return instance;
 	}

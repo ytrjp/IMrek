@@ -1,6 +1,8 @@
 package com.tectria.imrek.util;
 
-import com.loopj.android.http.*;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
 
 public class IMrekHttpClient {
 	

@@ -6,7 +6,7 @@
     <uses-sdk android:minSdkVersion="8" />
 
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@android:style/Theme.Black.NoTitleBar" android:debuggable="true">
-        <activity android:name=".IMrekSplashLoginActivity"
+        <activity android:name=".SplashScreenLogin"
 			android:label="@string/app_name"
 			android:noHistory="true">
             <intent-filter>
@@ -14,17 +14,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".IMrekActivity"
+        <activity android:name=".IMrekMain"
         	android:theme="@style/IMrek"
         	android:label="@string/app_name">
         </activity>
-        <activity android:name=".FriendsListActivity" android:label="Friends List" android:theme="@android:style/Theme.Black.NoTitleBar">
+        <activity android:name=".FriendsListTab" android:label="Friends List" android:theme="@android:style/Theme.Black.NoTitleBar">
         </activity>
-        <activity android:name=".ConversationListActivity" android:label="Conversation List" android:theme="@android:style/Theme.Black.NoTitleBar">
+        <activity android:name=".ConversationListTab" android:label="Conversation List" android:theme="@android:style/Theme.Black.NoTitleBar">
         </activity>
-        <activity android:name=".PreferencesActivity" android:label="IMrek Preferences" android:theme="@style/IMrek">
+        <activity android:name=".PreferenceScreen" android:label="IMrek Preferences" android:theme="@style/IMrek">
         </activity>
-		<service android:name=".util.MqttService" android:process=":mqttservice" android:label="IMrek MQTT Service"></service>
+		<service android:name=".util.IMrekMqttService" android:process=":mqttservice" android:label="IMrek MQTT Service"></service>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.VIBRATE" />	

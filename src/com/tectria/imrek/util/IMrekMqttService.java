@@ -18,8 +18,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 
@@ -31,7 +29,7 @@ import com.ibm.mqtt.MqttPersistenceException;
 import com.ibm.mqtt.MqttSimpleCallback;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 
-public class MqttService extends Service {
+public class IMrekMqttService extends Service {
 	
 	//Messenger Service
     ArrayList<Messenger> clients = new ArrayList<Messenger>();
@@ -65,6 +63,12 @@ public class MqttService extends Service {
     //This message is sent when a method of MQTTConnection that requires the network
     // is called while the connection is disconnected. This might be a good time to issue a reconnect
     public static final int MQTT_NO_CONNECTION = 20;
+    
+    //These tell MQTT to do stuff
+    public static final int MQTT_SUBSCRIBE = 21;
+    public static final int MQTT_UNSUBSCRIBE = 22;
+    public static final int MQTT_PUBLISH = 23;
+    public static final int MQTT_SEND_KEEPALIVE = 24;
     
     //Our Managers
     SharedPreferences prefMan;
@@ -134,6 +138,18 @@ public class MqttService extends Service {
 	                	case MSG_STOP:
 	                		stop();
 	                		break;
+	                	case MQTT_SUBSCRIBE:
+	                		mqtt.subscribe(bundle.getString("data1"));
+	                		break;
+	                	case MQTT_UNSUBSCRIBE:
+	                		mqtt.unsubscribe(bundle.getString("data1"));
+	                		break;
+	                	case MQTT_PUBLISH:
+	                		mqtt.publish(bundle.getString("data1"), bundle.getString("data2"));
+	                		break;
+	                	case MQTT_SEND_KEEPALIVE:
+	                		mqtt.keepalive();
+	                		break;
 	            	}
                     //If we need to respond
                     if(response != null) {
@@ -157,6 +173,7 @@ public class MqttService extends Service {
             }
         }
         
+        @SuppressWarnings("unused")
         private void sendMessage(int command, String data1) {
         	//Send the message to every client (We should only have one, but we need to handle dead connections)
             for(int i=clients.size()-1; i>=0; i--) {
@@ -173,6 +190,7 @@ public class MqttService extends Service {
             }
 		}
 		
+        @SuppressWarnings("unused")
         private void sendMessage(int command, String data1, String data2) {
         	//Send the message to every client (We should only have one, but we need to handle dead connections)
             for(int i=clients.size()-1; i>=0; i--) {
@@ -190,6 +208,7 @@ public class MqttService extends Service {
             }
 		}
 		
+        @SuppressWarnings("unused")
         private void sendMessage(int command, String data1, String data2, String data3) {
         	//Send the message to every client (We should only have one, but we need to handle dead connections)
             for(int i=clients.size()-1; i>=0; i--) {
@@ -293,7 +312,7 @@ public class MqttService extends Service {
     	return true;
     }
     
-    private void getCredentialsForReconnect() {
+    private synchronized void getCredentialsForReconnect() {
     	boolean sent = false;
     	//Send the message to every client, and try to get a valid connection
         for(int i=clients.size()-1; i>=0; i--) {
@@ -307,34 +326,38 @@ public class MqttService extends Service {
         }
         //If our message isn't sent, then all clients are dead and the service is on it's own.
         if(!sent) {
-        	//Try and validate the last login token. If this fails in any way, fall back on a fresh login with old credentials if possible
-            IMrekHttpClient.reconnect(prefMan.getString("last_user", ""), prefMan.getString("last_token", ""), prefMan.getString("deviceid", ""), new AsyncHttpResponseHandler() {
-            	@Override
-                public void onFailure(Throwable error) {
-            		tryFreshLogin();
-                }
-    			
-    			@Override
-                public void onSuccess(String strdata) {
-                    try {
-                    	JSONObject data = new JSONObject(strdata);
-                    	if(data.getInt("status") == 1) {
-                    		tryFreshLogin();
-        					return;
-                    	} else {
-                    		//We have a valid user/token combo. Cool.
-                    		connect(prefMan.getString("last_user", ""), prefMan.getString("last_token", ""));
-                    		return;
-                    	}
-                    } catch(JSONException e) {
-                        tryFreshLogin();
+        	if(validTokenCred(prefMan.getString("last_user", ""), prefMan.getString("last_token", ""))) {
+        		//Try and validate the last login token. If this fails in any way, fall back on a fresh login with old credentials if possible
+                IMrekHttpClient.reconnect(prefMan.getString("last_user", ""), prefMan.getString("last_token", ""), prefMan.getString("deviceid", ""), new AsyncHttpResponseHandler() {
+                	@Override
+                    public void onFailure(Throwable error) {
+                		tryFreshLogin();
                     }
-                }
-            });
+        			
+        			@Override
+                    public void onSuccess(String strdata) {
+                        try {
+                        	JSONObject data = new JSONObject(strdata);
+                        	if(data.getInt("status") == 1) {
+                        		tryFreshLogin();
+            					return;
+                        	} else {
+                        		//We have a valid user/token combo. Cool.
+                        		connect(prefMan.getString("last_user", ""), prefMan.getString("last_token", ""));
+                        		return;
+                        	}
+                        } catch(JSONException e) {
+                            tryFreshLogin();
+                        }
+                    }
+                });
+        	} else {
+        		tryFreshLogin();
+        	}
         }
     }
     
-    private void tryFreshLogin() {
+    private synchronized void tryFreshLogin() {
     	//If autologin is set, we can try and get a valid user/pass from the preferences
     	if(prefMan.getBoolean("autologin", false)) {
     		if(validCred(prefMan.getString("user", ""), prefMan.getString("pass", ""))) {
@@ -365,7 +388,7 @@ public class MqttService extends Service {
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
 		if (intent.getAction().equals("_KEEPALIVE") == true) {
-			mqtt.sendKeepAlive();
+			mqtt.keepalive();
 		}
 	}
     
@@ -403,7 +426,7 @@ public class MqttService extends Service {
 	/**
      * Sets whether or not the service has been started in the preferences
      */
-	private void setStarted(boolean started) {
+	private synchronized void setStarted(boolean started) {
  		prefMan.edit().putBoolean("started", started).commit();		
  		isStarted = started;
 	}
@@ -440,7 +463,7 @@ public class MqttService extends Service {
 	// Schedule application level keep-alives using the AlarmManager
 	private void startKeepAlives() {
 		Intent i = new Intent();
-		i.setClass(this, MqttService.class);
+		i.setClass(this, IMrekMqttService.class);
 		i.setAction("_KEEPALIVE");
 		PendingIntent pi = PendingIntent.getService(this, 0, i, 0);
 		AlarmManager alarmMgr = (AlarmManager)getSystemService(ALARM_SERVICE);
@@ -452,21 +475,21 @@ public class MqttService extends Service {
 	// Remove all scheduled keep alives
 	private void stopKeepAlives() {
 		Intent i = new Intent();
-		i.setClass(this, MqttService.class);
+		i.setClass(this, IMrekMqttService.class);
 		i.setAction("_KEEPALIVE");
 		PendingIntent pi = PendingIntent.getService(this, 0, i, 0);
 		AlarmManager alarmMgr = (AlarmManager)getSystemService(ALARM_SERVICE);
 		alarmMgr.cancel(pi);
 	}
 	
-	private void stop() {
+	private synchronized void stop() {
 		if(mqtt.client != null) {
 			mqtt.disconnect();
 		}
 		stopSelf();
 	}
 	
-	private void connect(String user, String token) {
+	private synchronized void connect(String user, String token) {
 		if(isStarted && mqtt.client == null) {
 			//Update last_ preferences
 			prefMan.edit().putString("last_user", user).putString("last_token", token).commit();
@@ -474,17 +497,15 @@ public class MqttService extends Service {
 		}
 	}
 	
-	private void disconnect() {
+	private synchronized void disconnect() {
 		if(isStarted == true && mqtt.client != null) {
 			mqtt.disconnect();
 		}
 	}
 	
-	private void reconnect(String user, String token) {
+	private synchronized void reconnect(String user, String token) {
 		if(isStarted == true && mqtt.client == null) {
-			/*
-			 * TODO: Add safe reconnect stuff
-			 */
+			disconnect();
 			connect(user, token);
 		}
 	}
@@ -524,82 +545,6 @@ public class MqttService extends Service {
 	    	this.connSpec = "tcp://" + brokerHostName + "@" + MQTT_BROKER_PORT_NUM;
 		}
 		
-		public void connect(String user, String pass) {
-        	this.clientid = user;
-        	this.user = user;
-        	this.pass = pass;
-        	
-        	try {
-        		this.client = MqttClient.createMqttClient(this.connSpec, MQTT_PERSISTENCE);
-				client.connect(clientid, MQTT_CLEAN_START, MQTT_KEEP_ALIVE, user, pass);
-			} catch (Exception e) {
-				sendMessage(MQTT_CONNECT_FAILED, clientid, user, pass);
-				disconnect();
-				return;
-			}
-        	
-        	client.registerSimpleHandler(this);
-			
-			//Subscribe to a topic identical to our deviceid
-			//This will be where we recieve "commands"
-			subscribeToTopic(clientid);
-	
-			//Save start time
-			startTime = System.currentTimeMillis();
-			
-			//Start the keep-alives
-			startKeepAlives();
-			sendMessage(MQTT_CONNECTED, this.clientid, this.user, this.pass);
-		}
-		
-		// Disconnect
-		public void disconnect() {		
-			stopKeepAlives();
-			try {
-				client.disconnect();
-			} catch (MqttPersistenceException e) {
-				//Oops
-			}
-			sendMessage(MQTT_DISCONNECTED, this.clientid, this.user, this.pass);
-		}
-		
-		/*
-		 * Send a request to the message broker to be sent messages published with 
-		 *  the specified topic name. Wildcards are allowed.	
-		 */
-		public void subscribeToTopic(String topicName) {
-			if ((client == null) || (client.isConnected() == false)) {
-				//We don't have a connection.
-				sendMessage(MQTT_NO_CONNECTION, topicName);
-			} else {									
-				String[] topics = { topicName };
-				try {
-					client.subscribe(topics, MQTT_QUALITIES_OF_SERVICE);
-				} catch (MqttException e) {
-					sendMessage(MQTT_SUBSCRIBE_FAILED, topicName);
-				}
-				sendMessage(MQTT_SUBSCRIBE_SENT, topicName);
-			}
-		}	
-		
-		/*
-		 * Sends a message to the message broker, requesting that it be published
-		 *  to the specified topic.
-		 */
-		public void publishToTopic(String topicName, String message) {		
-			if ((client == null) || (client.isConnected() == false)) {
-				//We don't have a connection.
-				sendMessage(MQTT_NO_CONNECTION, topicName, message);
-			} else {
-				try {
-					client.publish(topicName, message.getBytes(), MQTT_QUALITY_OF_SERVICE, MQTT_RETAINED_PUBLISH);
-					sendMessage(MQTT_PUBLISH_SENT, topicName, message);
-				} catch (Exception e) {
-					sendMessage(MQTT_PUBLISH_FAILED, topicName, message);
-				}
-			}
-		}		
-		
 		/*
 		 * Called if the application loses it's connection to the message broker.
 		 */
@@ -620,12 +565,111 @@ public class MqttService extends Service {
 		@Override
 		public void publishArrived(String topicName, byte[] payload, int qos, boolean retained) {
 			sendMessage(MQTT_PUBLISH_ARRIVED, topicName, new String(payload));
-		}   
+		}  
 		
-		public void sendKeepAlive() {
+		public synchronized void connect(String user, String pass) {
+        	this.clientid = user;
+        	this.user = user;
+        	this.pass = pass;
+        	
+        	try {
+        		this.client = MqttClient.createMqttClient(this.connSpec, MQTT_PERSISTENCE);
+				this.client.connect(clientid, MQTT_CLEAN_START, MQTT_KEEP_ALIVE, user, pass);
+			} catch (Exception e) {
+				sendMessage(MQTT_CONNECT_FAILED, clientid, user, pass);
+				this.disconnect();
+				return;
+			}
+        	
+        	client.registerSimpleHandler(this);
+			
+			//Subscribe to a topic identical to our deviceid
+			//This will be where we recieve "commands"
+			this.subscribe(clientid);
+	
+			//Save start time
+			startTime = System.currentTimeMillis();
+			
+			//Start the keep-alives
+			startKeepAlives();
+			sendMessage(MQTT_CONNECTED, this.clientid, this.user, this.pass);
+		}
+		
+		// Disconnect
+		public synchronized void disconnect() {		
+			stopKeepAlives();
+			try {
+				this.client.disconnect();
+			} catch (MqttPersistenceException e) {
+				//Oops
+			}
+			sendMessage(MQTT_DISCONNECTED, this.clientid, this.user, this.pass);
+		}
+		
+		/*
+		 * Send a request to the message broker to be sent messages published with 
+		 *  the specified topic name. Wildcards are allowed.	
+		 */
+		public synchronized void subscribe(String topicName) {
+			if ((this.client == null) || (this.client.isConnected() == false)) {
+				//We don't have a connection.
+				sendMessage(MQTT_NO_CONNECTION, topicName);
+			} else {									
+				String[] topics = { topicName };
+				this.topics.add(topicName);
+				try {
+					this.client.subscribe(topics, MQTT_QUALITIES_OF_SERVICE);
+				} catch (MqttException e) {
+					sendMessage(MQTT_SUBSCRIBE_FAILED, topicName);
+				}
+				sendMessage(MQTT_SUBSCRIBE_SENT, topicName);
+			}
+		}
+		
+		/*
+		 * Send a request to the message broker to be sent messages published with 
+		 *  the specified topic name. Wildcards are allowed.	
+		 */
+		public synchronized void unsubscribe(String topicName) {
+			if ((this.client == null) || (this.client.isConnected() == false)) {
+				//We don't have a connection.
+				sendMessage(MQTT_NO_CONNECTION, topicName);
+			} else {									
+				String[] topics = { topicName };
+				if(this.topics.contains(topicName)) {
+					this.topics.remove(topicName);
+				}
+				try {
+					client.subscribe(topics, MQTT_QUALITIES_OF_SERVICE);
+				} catch (MqttException e) {
+					sendMessage(MQTT_SUBSCRIBE_FAILED, topicName);
+				}
+				sendMessage(MQTT_SUBSCRIBE_SENT, topicName);
+			}
+		}	
+		
+		/*
+		 * Sends a message to the message broker, requesting that it be published
+		 *  to the specified topic.
+		 */
+		public synchronized void publish(String topicName, String message) {		
+			if ((this.client == null) || (this.client.isConnected() == false)) {
+				//We don't have a connection.
+				sendMessage(MQTT_NO_CONNECTION, topicName, message);
+			} else {
+				try {
+					this.client.publish(topicName, message.getBytes(), MQTT_QUALITY_OF_SERVICE, MQTT_RETAINED_PUBLISH);
+					sendMessage(MQTT_PUBLISH_SENT, topicName, message);
+				} catch (Exception e) {
+					sendMessage(MQTT_PUBLISH_FAILED, topicName, message);
+				}
+			}
+		}		
+		
+		public synchronized void keepalive() {
 			try {
 				client.ping();
-				publishToTopic(mqtt.clientid + "/keepalive", mqtt.clientid);
+				this.publish(mqtt.clientid + "/keepalive", mqtt.clientid);
 			} catch (MqttException e) {
 				sendMessage(MQTT_KEEPALIVE_FAILED, clientid, user, pass);
 			}

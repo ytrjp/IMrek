@@ -2,14 +2,14 @@ package com.tectria.imrek.util;
 
 import java.util.ArrayList;
 
-import com.tectria.imrek.IMrekActivity;
-
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+
+import com.tectria.imrek.IMrekMain;
 
 
 public class IMrekNotificationManager {
@@ -51,7 +51,7 @@ public class IMrekNotificationManager {
 	public void notifyNewMessage(String chan) {
 		int id = channelsToNotify.indexOf(chan);
 		if (id > -1) {
-			this.showNotification(id, "New Message", "You have new messages in " + chan, IMrekActivity.class);
+			this.showNotification(id, "New Message", "You have new messages in " + chan, IMrekMain.class);
 		}
 	}
 	
@@ -59,6 +59,7 @@ public class IMrekNotificationManager {
 		notifyMan.cancel(channelsToNotify.indexOf(chan));
 	}
 	
+	@SuppressWarnings("rawtypes")
 	public Notification getNotificationObject(String title, String text, Class intentClass) {
 		Notification n = new Notification();
 		
@@ -72,7 +73,7 @@ public class IMrekNotificationManager {
 		return n;
 	}
 	
-	
+	@SuppressWarnings("rawtypes")
 	private void showNotification(int notifId, String title, String text, Class intentClass) {
 		Notification n = new Notification();
 		n.flags |= Notification.DEFAULT_ALL;

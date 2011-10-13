@@ -510,8 +510,8 @@ public class IMrekPushService extends Service
 				
 				// Subscribe to an initial topic, which is me/deviceID
 				//subscribeToTopic(initTopic);
-				subscribeToTopic("one");
-				publishToTopic("two", "test1");
+				//subscribeToTopic("topic");
+				publishToTopic("topic", "shitdicks");
 		
 				//log("Connection established to " + brokerHostName + " on topic " + initTopic);
 		

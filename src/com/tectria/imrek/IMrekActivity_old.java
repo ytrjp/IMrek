@@ -157,6 +157,8 @@ public class IMrekActivity extends TabActivity {
     	super.onDestroy();
     	if(!quitting) {
     		connect(user, token);
+    	} else {
+    		disconnect();
     	}
     }
     
@@ -328,6 +330,11 @@ public class IMrekActivity extends TabActivity {
 		}
 		//Update UI to reflect service status
 		setUIConnected();
+    }
+    
+    
+    public void onFinish() {
+    	
     }
     
     public void setUIConnected() {

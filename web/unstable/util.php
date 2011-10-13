@@ -5,6 +5,7 @@ require_once 'BCrypt.class.php';
 
 function sendReloadSignal() {
 	$pid = shell_exec('/bin/sh -c "/usr/bin/pkill -SIGHUP mosquitto" 2>&1');
+	sleep(1);
 }
 
 // Add a new logging in user to the mosquitto passwords file

@@ -18,7 +18,7 @@ import android.provider.Settings.Secure;
 import android.view.*;
 import android.widget.*;
 
-public class IMrekActivity_old extends TabActivity {
+public class IMrekActivity extends TabActivity {
 	
 	//Tab Manager + Tabs
 	Resources res;

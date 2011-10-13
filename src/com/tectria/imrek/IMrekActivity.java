@@ -71,6 +71,7 @@ public class IMrekActivity extends TabActivity {
             msg.replyTo = msgr;
             try {
 				mService.send(msg);
+				sendMessage(MqttService.MSG_CONNECT, prefs.getString("user", ""), prefs.getString("token", ""));
 			} catch (RemoteException e) {
 				//The service crashed if we got here
 	        	//But it should be restored by the system.
@@ -126,9 +127,20 @@ public class IMrekActivity extends TabActivity {
 	    public void handleMessage(Message msg) {
 	        switch (msg.what) {
 	            case MqttService.MSG_RESPONSE:
-	            	MsgData data;
-	            	data = (MsgData)msg.obj;
-	                status.setText("Received from service: " + data.data1);
+	            	MsgData data = (MsgData)msg.obj;
+	            	int cmd = msg.arg1;
+	            	switch(cmd) {
+	            	case MqttService.MQTT_CONNECTED:
+	            		break;
+	            	case MqttService.MQTT_DISCONNECTED:
+	            		break;
+	            	case MqttService.MSG_RECONNECT:
+	            		break;
+	            	case MqttService.MSG_RECONNECT_CREDENTIALS:
+	            		//Call a reconnect with the most recent, most-probably-valid credentials we can.
+	            		sendMessage(MqttService.MSG_RECONNECT, prefs.getString(user, user), prefs.getString("token", "last_token"));
+	            		break;
+	            	}
 	                break;
 	            case MqttService.MSG_RECONNECT_CREDENTIALS:
 	            	sendMessage(MqttService.MSG_CONNECT, user, pass);
@@ -243,7 +255,7 @@ public class IMrekActivity extends TabActivity {
             	if((user.equals("") || pass.equals("")) || (user.length() < 5 || pass.length() < 6)) {
             		//If we get here, then somehow we were passed an invalid user/pass combo from the login activity
             		//Disconnect and log out, clear the user/pass in the preferences, and return to the splash/login activity
-            		//disconnect();
+            		sendMessage(MqttService.MSG_STOP, "Logging Out");
             		setLoggedOut();
             		clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), IMrekSplashLoginActivity.class);
@@ -259,7 +271,7 @@ public class IMrekActivity extends TabActivity {
             	if((user.equals("") || pass.equals("")) || (user.length() < 5 || pass.length() < 6)) {
             		//If we get here, we somehow have an invalid user or password in the preferences.
             		//Disconnect and log out, clear the user/pass in the preferences, and return to the splash/login activity
-            		//disconnect();
+            		sendMessage(MqttService.MSG_STOP, "Logging Out");
             		setLoggedOut();
             		clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), IMrekSplashLoginActivity.class);
@@ -268,6 +280,10 @@ public class IMrekActivity extends TabActivity {
             	}
             }
         }
+        
+        //Let the service know it doesn't have to reconnect
+        //The service won't reconnect if it doesn't think it was previously started
+        prefs.edit().putBoolean("started", false).commit();
         
         doBindService();
         
@@ -318,6 +334,7 @@ public class IMrekActivity extends TabActivity {
 			quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
+					sendMessage(MqttService.MSG_STOP, "Quitting");
 					setLoggedOut();
 					finish();
 				}

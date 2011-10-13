@@ -39,9 +39,10 @@ public class MqttService extends Service {
     public static final int MSG_REGISTER_CLIENT = 1;
     public static final int MSG_UNREGISTER_CLIENT = 2;
     public static final int MSG_COMMAND = 3;
-    public static final int MSG_RESPONSE = 5;
+    public static final int MSG_RESPONSE = 4;
     
     //arg1
+    public static final int MSG_STOP = 5; //Stop the service
     public static final int MSG_CONNECT = 6; //Connect to MQTT
     public static final int MSG_DISCONNECT = 7; //Disconnect from MQTT
     public static final int MSG_RECONNECT = 8; //Reconnect to MQTT
@@ -140,16 +141,20 @@ public class MqttService extends Service {
                 	//Determine, and set our response accordingly
                     cmd = msg.arg1;
                     response = null;
+                    MsgData data = (MsgData)msg.obj;
                     switch(cmd){
 	                	case MSG_CONNECT:
-	                		response = "Connected";
+	                		connect(data.data1, data.data2);
 	            			break;
 	                	case MSG_DISCONNECT:
-	                		response = "Disconnected";
+	                		disconnect();
 	            			break;
 	                	case MSG_RECONNECT:
-	                		response = "Reconnected";
+	                		reconnect(data.data1, data.data2);
 	            			break;
+	                	case MSG_STOP:
+	                		stop();
+	                		break;
 	            	}
                     //If we need to respond
                     if(response != null) {
@@ -251,13 +256,13 @@ public class MqttService extends Service {
     		return false;
     	}
     	if(pass != null) {
-    		if((pass.length() > 4 && pass.length() < 13)) {
+    		if(!(pass.length() > 6 && pass.length() < 13)) {
     			return false;
     		}
     	} else {
 			return false;
 		}
-    	return false;
+    	return true;
     }
     
     private boolean validTokenCred(String user, String token) {
@@ -269,13 +274,13 @@ public class MqttService extends Service {
     		return false;
     	}
     	if(token != null) {
-    		if((token.length() > 4 && token.length() < 13)) {
+    		if(token.length() != 12) {
     			return false;
     		}
     	} else {
 			return false;
 		}
-    	return false;
+    	return true;
     }
     
     private void getCredentialsForReconnect() {
@@ -333,6 +338,7 @@ public class MqttService extends Service {
                         	if(data.getInt("status") == 0) {
                         		//Get the token
                         		prefMan.edit().putString("token", data.getJSONObject("data").getString("token")).commit();
+                        		setLoggedIn();
                         		connect(prefMan.getString("user", ""), prefMan.getString("token", ""));
                         		return;
                         	}
@@ -364,6 +370,20 @@ public class MqttService extends Service {
     }
     
     /**
+     * Set shared preference 'loggedin' to true
+     */
+    public void setLoggedIn() {
+    	prefMan.edit().putBoolean("loggedin", true).commit();
+    }
+    
+    /**
+     * Set shared preference 'loggedin' to false
+     */
+    public void setLoggedOut() {
+    	prefMan.edit().putBoolean("loggedin", false).commit();
+    }
+    
+    /**
      * Checks preferences to see if the service was previously started
      */
 	private boolean wasStarted() {
@@ -383,10 +403,15 @@ public class MqttService extends Service {
 	 */
 	private void handleCrashedService() {
 		//If it was started before, it must have crashed (oops)
-		if(wasStarted() == true) {
+		if(wasStarted()) {
+			//We're started now, to set started to true
+			setStarted(true);
 			stopKeepAlives(); 
 			//Try and send a message to get new login credentials
 			getCredentialsForReconnect();
+		} else {
+			//We're started now, to set started to true
+			setStarted(true);
 		}
 	}
 	private void handleDisconnect() {
@@ -425,26 +450,28 @@ public class MqttService extends Service {
 	}
 	
 	private void stop() {
-		if(mqtt != null) {
+		if(mqtt.client != null) {
 			mqtt.disconnect();
 		}
 		stopSelf();
 	}
 	
 	private void connect(String user, String token) {
-		if(isStarted == true && mqtt == null) {
+		if(isStarted && mqtt.client == null) {
+			//Update last_ preferences
+			prefMan.edit().putString("last_user", user).putString("last_token", token).commit();
 			mqtt.connect(user, token);
 		}
 	}
 	
 	private void disconnect() {
-		if(isStarted == true && mqtt == null) {
+		if(isStarted == true && mqtt.client != null) {
 			mqtt.disconnect();
 		}
 	}
 	
 	private void reconnect(String user, String token) {
-		if(isStarted == true && mqtt == null) {
+		if(isStarted == true && mqtt.client == null) {
 			/*
 			 * TODO: Add safe reconnect stuff
 			 */
@@ -457,6 +484,9 @@ public class MqttService extends Service {
     	//Get out managers
     	prefMan = PreferenceManager.getDefaultSharedPreferences(this);
     	connMan = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+    	
+    	//Instantiate MQTTConnection
+    	mqtt = new MQTTConnection(MQTT_HOST);
     	
     	handleCrashedService();
     }
@@ -479,10 +509,9 @@ public class MqttService extends Service {
 		String pass;
 		
 		// Creates a new connection given the broker address and initial topic
-		public MQTTConnection(String brokerHostName, String initTopic) throws MqttException {
+		public MQTTConnection(String brokerHostName) {
 			// Create connection spec
 	    	this.connSpec = "tcp://" + brokerHostName + "@" + MQTT_BROKER_PORT_NUM;
-	    	this.client = MqttClient.createMqttClient(this.connSpec, MQTT_PERSISTENCE);
 		}
 		
 		public void connect(String user, String pass) {
@@ -491,6 +520,7 @@ public class MqttService extends Service {
         	this.pass = pass;
         	
         	try {
+        		this.client = MqttClient.createMqttClient(this.connSpec, MQTT_PERSISTENCE);
 				client.connect(clientid, MQTT_CLEAN_START, MQTT_KEEP_ALIVE, user, pass);
 			} catch (Exception e) {
 				sendMessage(MQTT_CONNECT_FAILED, clientid, user, pass);
@@ -568,7 +598,7 @@ public class MqttService extends Service {
 			sendMessage(MQTT_CONNECTION_LOST, "Connection Lost");
 			stopKeepAlives();
 			// null itself
-			mqtt = null;
+			client = null;
 			if(isNetworkAvailable() == true) {
 				handleDisconnect();
 			}

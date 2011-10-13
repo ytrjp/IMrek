@@ -203,13 +203,12 @@ public class IMrekSplashLoginActivity extends Activity {
     	                	editor = prefs.edit();
     	    				editor.putBoolean("rememberme", rememberme.isChecked());
     	    				editor.putBoolean("autologin", autologin.isChecked());
-    	    				editor.putBoolean("loggedin", true);
     	    				editor.putString("token", data.getJSONObject("data").getString("token"));
     	    				if(autologin.isChecked()) {
-    	    					editor.putString("username", user);
-    	    					editor.putString("password", pass);
+    	    					editor.putString("user", user);
+    	    					editor.putString("pass", pass);
     	    				} else if(rememberme.isChecked()) {
-    	    					editor.putString("username", username.getText().toString());
+    	    					editor.putString("user", username.getText().toString());
     	    				}
     	    				editor.commit();
     	    				if(autologin.isChecked()) {
@@ -294,10 +293,10 @@ public class IMrekSplashLoginActivity extends Activity {
     	    				editor.putBoolean("autologin", autologin.isChecked());
     	    				editor.putString("token", data.getJSONObject("data").getString("token"));
     	    				if(autologin.isChecked()) {
-    	    					editor.putString("username", user);
-    	    					editor.putString("password", pass);
+    	    					editor.putString("user", user);
+    	    					editor.putString("pass", pass);
     	    				} else if(rememberme.isChecked()) {
-    	    					editor.putString("username", username.getText().toString());
+    	    					editor.putString("user", username.getText().toString());
     	    				}
     	    				editor.commit();
     	    				if(autologin.isChecked()) {

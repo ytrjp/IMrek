@@ -1,25 +1,26 @@
 package com.tectria.imrek;
 
-import com.tectria.imrek.util.MqttService;
-import com.tectria.imrek.util.MqttService.MsgData;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.tectria.imrek.util.IMrekHttpClient;
+import com.tectria.imrek.util.IMrekPushService_old;
 
 import android.app.AlertDialog;
 import android.app.TabActivity;
 import android.content.*;
 import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
+import android.os.Binder;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 import android.view.*;
 import android.widget.*;
 
-public class IMrekActivity extends TabActivity {
+public class IMrekActivity_old extends TabActivity {
 	
 	//Tab Manager + Tabs
 	Resources res;
@@ -30,6 +31,7 @@ public class IMrekActivity extends TabActivity {
 	//PreferenceManager + Preferences
 	private SharedPreferences prefs;
 	private Editor editor;
+	private boolean started;
 	
 	//Views
 	private TextView status;
@@ -40,180 +42,55 @@ public class IMrekActivity extends TabActivity {
 	
 	//Misc
 	private Bundle extras;
+	private boolean quitting = false;
+	private String deviceid;
 	private String user;
 	private String pass;
-	
-	private MqttService mqtt;
-	Messenger mService = null;
-	boolean isBound;
+	private String token;
+	private IMrekPushService mBoundService;
+	private boolean isBound;
 
-	/**
-	 * Target we publish for clients to send messages to IncomingHandler.
-	 */
-	final Messenger msgr = new Messenger(new IncomingHandler());
-
-	/**
-	 * Class for interacting with the main interface of the service.
-	 */
 	private ServiceConnection mConnection = new ServiceConnection() {
 	    public void onServiceConnected(ComponentName className, IBinder service) {
 	        // This is called when the connection with the service has been
 	        // established, giving us the service object we can use to
-	        // interact with the service.  We are communicating with our
-	        // service through an IDL interface, so get a client-side
-	        // representation of that from the raw service object.
-	        mService = new Messenger(service);
-	        status.setText("Attached.");
+	        // interact with the service.  Because we have bound to a explicit
+	        // service that we know is running in our own process, we can
+	        // cast its IBinder to a concrete class and directly access it.
+	        mBoundService = ((IMrekPushService.LocalBinder)service).getService();
 
-	        // We want to monitor the service for as long as we are
-	        // connected to it.
-	        Message msg = Message.obtain(null, MqttService.MSG_REGISTER_CLIENT);
-            msg.replyTo = msgr;
-            try {
-				mService.send(msg);
-			} catch (RemoteException e) {
-				//The service crashed if we got here
-	        	//But it should be restored by the system.
-	        	//Until it is, we should just disconnect here and reset some preferences.
-			}
+	        // Tell the user about this for our demo.
+	        Toast.makeText(getBaseContext(), "Connected",
+	                Toast.LENGTH_SHORT).show();
 	    }
 
 	    public void onServiceDisconnected(ComponentName className) {
 	        // This is called when the connection with the service has been
 	        // unexpectedly disconnected -- that is, its process crashed.
-	        mService = null;
-	        status.setText("Disconnected.");
+	        // Because it is running in our same process, we should never
+	        // see this happen.
+	        mBoundService = null;
+	        Toast.makeText(getBaseContext(), "Disconnected",
+	                Toast.LENGTH_SHORT).show();
 	    }
 	};
-	
+
 	void doBindService() {
 	    // Establish a connection with the service.  We use an explicit
-	    // class name because there is no reason to be able to let other
-	    // applications replace our component.
-	    bindService(new Intent(getBaseContext(), MqttService.class), mConnection, Context.BIND_AUTO_CREATE);
+	    // class name because we want a specific service implementation that
+	    // we know will be running in our own process (and thus won't be
+	    // supporting component replacement by other applications).
+	    bindService(new Intent(getBaseContext(), 
+	    		IMrekPushService.class), mConnection, Context.BIND_AUTO_CREATE);
 	    isBound = true;
-	    status = (TextView)findViewById(R.id.status);
-	    status.setText("Binding.");
 	}
 
 	void doUnbindService() {
 	    if (isBound) {
-	        // If we have received the service, and hence registered with
-	        // it, then now is the time to unregister.
-	        if (mService != null) {
-	            try {
-	                Message msg = Message.obtain(null, MqttService.MSG_UNREGISTER_CLIENT);
-	                msg.replyTo = msgr;
-	                mService.send(msg);
-	            } catch (RemoteException e) {
-	                // There is nothing special we need to do if the service
-	                // has crashed.
-	            }
-	        }
-
 	        // Detach our existing connection.
 	        unbindService(mConnection);
 	        isBound = false;
-	        status.setText("Unbinding.");
 	    }
-	}
-	
-	/**
-	 * Handler of incoming messages from service.
-	 */
-	class IncomingHandler extends Handler {
-	    @Override
-	    public void handleMessage(Message msg) {
-	        switch (msg.what) {
-	            case MqttService.MSG_RESPONSE:
-	            	MsgData data;
-	            	data = (MsgData)msg.obj;
-	                status.setText("Received from service: " + data.data1);
-	                break;
-	            case MqttService.MSG_RECONNECT_CREDENTIALS:
-	            	sendMessage(MqttService.MSG_CONNECT, user, pass);
-	            	break;
-	            default:
-	                super.handleMessage(msg);
-	        }
-	    }
-	    
-	    private void sendMessage(int command, String data1) {
-			try {
-	            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, new MsgData(data1));
-	            mService.send(msg);
-	        } catch (RemoteException e) {
-	            //The service crashed if we got here
-	        	//But it should be restored by the system.
-	        	//Until it is, we should just disconnect here and reset some preferences.
-	        	handleCrashedService();
-	        }
-		}
-		
-		private void sendMessage(int command, String data1, String data2) {
-			try {
-	            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, new MsgData(data1, data2));
-	            mService.send(msg);
-	        } catch (RemoteException e) {
-	            //The service crashed if we got here
-	        	//But it should be restored by the system.
-	        	//Until it is, we should just disconnect here and reset some preferences.
-	        	handleCrashedService();
-	        }
-		}
-		
-		private void sendMessage(int command, String data1, String data2, String data3) {
-			try {
-	            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, new MsgData(data1, data2, data3));
-	            mService.send(msg);
-	        } catch (RemoteException e) {
-	            //The service crashed if we got here
-	        	//But it should be restored by the system.
-	        	//Until it is, we should just disconnect here and reset some preferences.
-	        	handleCrashedService();
-	        }
-		}
-	}
-	
-	private void sendMessage(int command, String data1) {
-		try {
-            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, new MsgData(data1));
-            mService.send(msg);
-        } catch (RemoteException e) {
-            //The service crashed if we got here
-        	//But it should be restored by the system.
-        	//Until it is, we should just disconnect here and reset some preferences.
-        	handleCrashedService();
-        }
-	}
-	
-	private void sendMessage(int command, String data1, String data2) {
-		try {
-            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, new MsgData(data1, data2));
-            mService.send(msg);
-        } catch (RemoteException e) {
-            //The service crashed if we got here
-        	//But it should be restored by the system.
-        	//Until it is, we should just disconnect here and reset some preferences.
-        	handleCrashedService();
-        }
-	}
-	
-	private void sendMessage(int command, String data1, String data2, String data3) {
-		try {
-            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, new MsgData(data1, data2, data3));
-            mService.send(msg);
-        } catch (RemoteException e) {
-            //The service crashed if we got here
-        	//But it should be restored by the system.
-        	//Until it is, we should just disconnect here and reset some preferences.
-        	handleCrashedService();
-        }
-	}
-	
-	public void handleCrashedService() {
-		//Set everything as disconnected
-		setDisconnected();
 	}
 	
     @Override
@@ -229,13 +106,24 @@ public class IMrekActivity extends TabActivity {
         
         //Get our preference manager
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
+         
+        //Get our deviceid
+        deviceid = prefs.getString("deviceid", getDeviceID());
+        token = prefs.getString("token", null);
         
-      //If we aren't logged in,
+        //Grab some views, used to change UI status to connected/disconnected
+        status = (TextView)findViewById(R.id.status);
+        statusicon = (ImageView)findViewById(R.id.statusicon);
+        
+        //We start off with the UI status set to disconnected
+        setUIDisconnected();
+        
+        //If we aren't logged in,
         if(!prefs.getBoolean("loggedin", false)) {
         	//Grab the intent extras
         	extras = this.getIntent().getExtras();
         	//If we're being passed a user/pass combo
-            if(this.getIntent().hasExtra("user") && this.getIntent().hasExtra("pass")) {
+            if(extras.containsKey("user") && extras.containsKey("pass")) {
             	//Set our current user/pass to the combo from the bundle
             	user = extras.getString("user");
             	pass = extras.getString("pass");
@@ -243,12 +131,11 @@ public class IMrekActivity extends TabActivity {
             	if((user.equals("") || pass.equals("")) || (user.length() < 5 || pass.length() < 6)) {
             		//If we get here, then somehow we were passed an invalid user/pass combo from the login activity
             		//Disconnect and log out, clear the user/pass in the preferences, and return to the splash/login activity
-            		//disconnect();
+            		disconnect();
             		setLoggedOut();
             		clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), IMrekSplashLoginActivity.class);
         			startActivity(intent);
-        			finish();
             	}
             //If there's no user/pass in the bundle
             } else {
@@ -259,17 +146,20 @@ public class IMrekActivity extends TabActivity {
             	if((user.equals("") || pass.equals("")) || (user.length() < 5 || pass.length() < 6)) {
             		//If we get here, we somehow have an invalid user or password in the preferences.
             		//Disconnect and log out, clear the user/pass in the preferences, and return to the splash/login activity
-            		//disconnect();
+            		disconnect();
             		setLoggedOut();
             		clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), IMrekSplashLoginActivity.class);
         			startActivity(intent);
-        			finish();
             	}
             }
         }
         
-        doBindService();
+        //Check if service is started
+        started = prefs.getBoolean("started", false);
+        
+        //Start the service
+        connect(user, token);
         
         //Set up tabs
         //Do this last because if for whatever reason we need to fall back to the splash/login,
@@ -286,6 +176,54 @@ public class IMrekActivity extends TabActivity {
 		tabHost.addTab(spec);
     }
     
+    /*
+     * Make sure the service is started when we resume
+     */
+/*    @Override
+    public void onResume() {
+    	super.onResume();
+        connect(user, token);
+    }*/
+    
+    /*
+     * Make sure service is started, as long as we aren't quitting via the menu
+     */
+    @Override
+    public void onStop() {
+    	super.onStop();
+    	if(!quitting) {
+    		connect(user, token);
+    	}
+    }
+    
+    /*
+     * Make sure service is started, as long as we aren't quitting via the menu
+     */
+    @Override
+    public void onDestroy() {
+    	super.onDestroy();
+    	if(!quitting) {
+    		connect(user, token);
+    	}
+    }
+    
+    /*
+     * Make sure the service is started after we restart
+     */
+/*    @Override
+    public void onRestart() {
+    	super.onRestart();
+        connect(user, token);
+    }*/
+    
+    /*
+     * Prevent the use of the back button within the tab manager activity.
+     */
+/*    @Override
+    public void onBackPressed() {
+    	return;
+    }*/
+    
     @Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
@@ -300,17 +238,65 @@ public class IMrekActivity extends TabActivity {
 			Intent prefIntent = new Intent(getBaseContext(), PreferencesActivity.class);
 			startActivity(prefIntent);
 			break;
-		case R.id.logout:
-			setLoggedOut();
-			editor = prefs.edit();
-			editor.putBoolean("autologin", false);
-	    	editor.commit();
-			Intent intent = new Intent(getBaseContext(), IMrekSplashLoginActivity.class);
-			startActivity(intent);
-			finish();
-			break;
 		case R.id.restart:
-			//Nothing right now
+			disconnect();
+			setLoggedOut();
+			
+			//Try a reconnect
+			IMrekHttpClient.reconnect(user, token, deviceid, new AsyncHttpResponseHandler() {
+				@Override
+	            public void onFailure(Throwable error) {
+					Toast toast = Toast.makeText(getApplicationContext(), "An error occured contacting the server. Please try again.", Toast.LENGTH_LONG);
+					toast.show();
+	            }
+				
+				@Override
+	            public void onSuccess(String strdata) {
+	                try {
+	                	JSONObject data = new JSONObject(strdata);
+	                	//If an error is returned..
+	                	if(data.getInt("status") == 1) {
+	                		//Try a login
+	    					IMrekHttpClient.login(user, pass, deviceid, new AsyncHttpResponseHandler() {
+	    						@Override
+	    			            public void onFailure(Throwable error) {
+	    							Toast toast = Toast.makeText(getApplicationContext(), "An error occured contacting the server. Please try again.", Toast.LENGTH_LONG);
+	    							toast.show();
+	    			            }
+	    						
+	    						@Override
+	    			            public void onSuccess(String strdata) {
+	    			                try {
+	    			                	JSONObject data = new JSONObject(strdata);
+	    			                	//If an error is returned..
+	    			                	if(data.getInt("status") == 1) {
+	    	    	    					Toast toast = Toast.makeText(getApplicationContext(), "Error: " + data.getString("message"), Toast.LENGTH_LONG);
+	    	    	    					toast.show();
+	    	    	    					return;
+	    			                	} else {
+	    			                		editor = prefs.edit();
+		    			                	editor.putString("token", data.getJSONObject("data").getString("token"));
+		    			                	editor.commit();
+		    			    				connect(user, token);
+		    			    				setLoggedIn();
+	    			                	}
+	    			                } catch(JSONException e) {
+	    			                    Toast toast = Toast.makeText(getApplicationContext(), "Unknown error occured", Toast.LENGTH_LONG);
+	    			    				toast.show();
+	    			                }
+	    			            }
+	    					});
+	                	} else {
+	                		connect(user, token);
+		    				setLoggedIn();
+	                	}
+	                    
+	                } catch(JSONException e) {
+	                    Toast toast = Toast.makeText(getApplicationContext(), "Unknown error occured", Toast.LENGTH_LONG);
+	    				toast.show();
+	                }
+	            }
+			});
 			break;
 		case R.id.quit:
 			quitDialog = new AlertDialog.Builder(this);
@@ -318,6 +304,8 @@ public class IMrekActivity extends TabActivity {
 			quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
+					quitting = true;
+					disconnect();
 					setLoggedOut();
 					finish();
 				}
@@ -335,7 +323,6 @@ public class IMrekActivity extends TabActivity {
     
     /*
      * Get deviceid and save it to preferences
-     * TODO: Phase this out for the one that will be in the preference manager
      */
     public String getDeviceID() {
     	String id = Secure.getString(this.getContentResolver(), Secure.ANDROID_ID);
@@ -355,23 +342,8 @@ public class IMrekActivity extends TabActivity {
     	editor.remove("pass");
     	editor.remove("last_user");
     	editor.remove("last_pass");
-    	editor.putBoolean("autologin", false);
     	editor.commit();
     }
-    
-	public void setConnected() {
-		editor = prefs.edit();
-    	editor.putBoolean("connected", true);
-    	editor.commit();
-    	setUIConnected();
-	}
-	
-	public void setDisconnected() {
-		editor = prefs.edit();
-    	editor.putBoolean("connected", false);
-    	editor.commit();
-    	setUIDisconnected();
-	}
     
     /*
      * Set shared preference 'loggedin' to true
@@ -391,6 +363,20 @@ public class IMrekActivity extends TabActivity {
     	editor.commit();
     }
     
+    /*
+     * Start the MQTT push service if it isn't already started, and update the UI accordingly
+     */
+    public void connect(String mqtt_user, String mqtt_token) {
+    	//Check is service is started
+    	started = prefs.getBoolean("started", false);
+    	//Actually start the service
+		if(!started) {
+			IMrekPushService_old.startService(getApplicationContext(), mqtt_user, mqtt_token);
+		}
+		//Update UI to reflect service status
+		setUIConnected();
+    }
+    
     public void setUIConnected() {
     	status.setTextColor(getResources().getColor(R.color.connectedColor));
 		status.setText("Connected");
@@ -402,4 +388,20 @@ public class IMrekActivity extends TabActivity {
 		status.setText("Disconnected");
     	statusicon.setImageResource(R.drawable.icon_disconnected);
 	}
+	
+    /*
+     * Stop the MQTT push service if it isn't already stopped, and update the UI accordingly
+     */
+	public void disconnect() {
+		//Check is service is started
+    	started = prefs.getBoolean("started", false);
+		//Actually stop the service
+		if(started) {
+			IMrekPushService_old.stopService(getApplicationContext());
+		}
+		//Update UI to reflect service status
+		setUIDisconnected();
+	}
+	
+	
 }

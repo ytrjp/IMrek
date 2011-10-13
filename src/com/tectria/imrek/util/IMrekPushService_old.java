@@ -35,8 +35,15 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-public class IMrekPushService extends Service
+public class IMrekPushService_old extends Service
 {
+	public class LocalBinder {
+
+	}
+
+
+
+
 	// this is the log tag
 	public static final String		TAG = "IMrekPushService";
 
@@ -510,8 +517,8 @@ public class IMrekPushService extends Service
 				
 				// Subscribe to an initial topic, which is me/deviceID
 				//subscribeToTopic(initTopic);
-				subscribeToTopic("one");
-				publishToTopic("two", "test1");
+				subscribeToTopic("topic");
+				publishToTopic("topic", "Dicks");
 		
 				//log("Connection established to " + brokerHostName + " on topic " + initTopic);
 		

@@ -108,15 +108,6 @@ public class PrefsManager {
 		prefsEditor.commit();
 	}
 	
-	public synchronized String getLastPass() {
-		return appSharedPrefs.getString("last_pass", "");
-	}
-	
-	public synchronized void setLastPass(String pass) {
-		prefsEditor.putString("last_pass", pass);
-		prefsEditor.commit();
-	}
-	
 	public synchronized String getLastToken() {
 		return appSharedPrefs.getString("last_token", "");
 	}

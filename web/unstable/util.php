@@ -161,7 +161,7 @@ function isSessionTokenValid($username, $token, &$db) {
 		// look at the time difference given from the select and see if it's greater
 		// than the token expire time
 		$row = $sth->fetch(PDO::FETCH_ASSOC);
-		if ($row["timediff"] > $TOKEN_EXPIRY) {
+		if (intval($row["timediff"]) > $TOKEN_EXPIRY) {
 			return false;
 		}
 

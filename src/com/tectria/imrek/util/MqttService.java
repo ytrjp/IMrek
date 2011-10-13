@@ -63,6 +63,8 @@ public class MqttService extends Service {
     // is called while the connection is disconnected. This might be a good time to issue a reconnect
     public static final int MQTT_NO_CONNECTION = 20;
     
+    public static final int MSG_PING = 21;
+    public static final int MSG_KEEPALIVE = 22;
     //Our Managers
     SharedPreferences prefMan;
 	ConnectivityManager connMan;

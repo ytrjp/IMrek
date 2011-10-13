@@ -76,6 +76,7 @@ public class IMrekActivity extends TabActivity {
 				//The service crashed if we got here
 	        	//But it should be restored by the system.
 	        	//Until it is, we should just disconnect here and reset some preferences.
+				// TODO: stuff
 			}
 	    }
 
@@ -83,7 +84,7 @@ public class IMrekActivity extends TabActivity {
 	        // This is called when the connection with the service has been
 	        // unexpectedly disconnected -- that is, its process crashed.
 	        mService = null;
-	        status.setText("Disconnected.");
+	        // TODO: stuff
 	    }
 	};
 	
@@ -130,16 +131,52 @@ public class IMrekActivity extends TabActivity {
 	            	MsgData data = (MsgData)msg.obj;
 	            	int cmd = msg.arg1;
 	            	switch(cmd) {
-	            	case MqttService.MQTT_CONNECTED:
-	            		break;
-	            	case MqttService.MQTT_DISCONNECTED:
-	            		break;
-	            	case MqttService.MSG_RECONNECT:
-	            		break;
-	            	case MqttService.MSG_RECONNECT_CREDENTIALS:
-	            		//Call a reconnect with the most recent, most-probably-valid credentials we can.
-	            		sendMessage(MqttService.MSG_RECONNECT, prefs.getString(user, user), prefs.getString("token", "last_token"));
-	            		break;
+		            	case MqttService.MQTT_CONNECTED:
+		            		setUIConnected();
+		            		// TODO: Reconnect topics
+		            		// TODO: load friends list
+		            		break;
+		            	case MqttService.MQTT_CONNECTION_LOST:
+		            		setUIDisconnected();
+		            		// TODO: Clear friends / conversation list
+		            		break;
+		            	case MqttService.MQTT_DISCONNECTED:
+		            		setUIDisconnected();
+		            		// TODO: Clear friends / conversation list
+		            		break;
+		            	case MqttService.MSG_RECONNECT_CREDENTIALS:
+		            		//Call a reconnect with the most recent, most-probably-valid credentials we can.
+		            		sendMessage(MqttService.MSG_RECONNECT, prefs.getString(user, user), prefs.getString("token", "last_token"));
+		            		break;
+		            	case MqttService.MQTT_PUBLISH_ARRIVED:
+		            		// TODO: Call conversation manager functions
+		            		break;
+		            	case MqttService.MQTT_PUBLISH_SENT:
+		            		// TODO: Call conversation manager functions
+		            		break;
+		            	case MqttService.MQTT_SUBSCRIBE_SENT:
+		            		// TODO: Call conversation manager functions
+		            		break;
+		            	case MqttService.MQTT_PUBLISH_FAILED:
+		            		// TODO: Call conversation manager functions
+		            		// TODO: Retry
+		            		break;
+		            	case MqttService.MQTT_SUBSCRIBE_FAILED:
+		            		// TODO: Call conversation manager functions
+		            		// TODO: Retry
+		            		break;
+		            	case MqttService.MQTT_CONNECT_FAILED:
+		            		// TODO: Call conversation manager functions
+		            		// TODO: Retry
+		            		break;
+		            	case MqttService.MSG_PING:
+		            		sendMessage(MqttService.MSG_KEEPALIVE, "keepalive");
+		            		break;
+		            	case MqttService.MQTT_KEEPALIVE_FAILED:
+		            		sendMessage(MqttService.MSG_PING, "ping");
+		            		// set timeout to kill service? Don't kill if received ping
+		            		break;
+		            	
 	            	}
 	                break;
 	            case MqttService.MSG_RECONNECT_CREDENTIALS:

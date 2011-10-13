@@ -204,6 +204,8 @@ public class IMrekSplashLoginActivity extends Activity {
     	    				editor.putBoolean("rememberme", rememberme.isChecked());
     	    				editor.putBoolean("autologin", autologin.isChecked());
     	    				editor.putString("token", data.getJSONObject("data").getString("token"));
+    	    				editor.putString("last_user", user);
+	    					editor.putString("last_pass", pass);
     	    				editor.putString("user", username.getText().toString());
     	    				editor.putString("pass", password.getText().toString());
     	    				editor.commit();

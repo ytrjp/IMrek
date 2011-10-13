@@ -13,10 +13,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 
@@ -87,30 +90,6 @@ public class MqttService extends Service {
 	private static final long KEEP_ALIVE_INTERVAL = 1000 * 60 * 28;
     
     /**
-     * Object we instantiate to send a string between Service and main activity
-     */
-    public static class MsgData {
-    	public String data1;
-    	public String data2;
-    	public String data3;
-
-    	public MsgData(String data1) {
-    		this.data1 = data1;
-    	}
-    	
-    	public MsgData(String data1, String data2) {
-    		this.data1 = data1;
-    		this.data2 = data2;
-    	}
-    	
-    	public MsgData(String data1, String data2, String data3) {
-    		this.data1 = data1;
-    		this.data2 = data2;
-    		this.data3 = data3;
-    	}
-    }
-    
-    /**
      * Target we publish for clients to send messages to IncomingHandler.
      */
     final Messenger msgr = new Messenger(new IncomingHandler());
@@ -141,16 +120,16 @@ public class MqttService extends Service {
                 	//Determine, and set our response accordingly
                     cmd = msg.arg1;
                     response = null;
-                    MsgData data = (MsgData)msg.obj;
+                    Bundle bundle = msg.getData();
                     switch(cmd){
 	                	case MSG_CONNECT:
-	                		connect(data.data1, data.data2);
+	                		connect(bundle.getString("data1"), bundle.getString("data2"));
 	            			break;
 	                	case MSG_DISCONNECT:
 	                		disconnect();
 	            			break;
 	                	case MSG_RECONNECT:
-	                		reconnect(data.data1, data.data2);
+	                		reconnect(bundle.getString("data1"), bundle.getString("data2"));
 	            			break;
 	                	case MSG_STOP:
 	                		stop();
@@ -162,7 +141,11 @@ public class MqttService extends Service {
                         for(int i=clients.size()-1; i>=0; i--) {
                         	//Try to send the message
                             try {
-                                clients.get(i).send(Message.obtain(null, MSG_RESPONSE, cmd, 0, new MsgData(response)));
+                            	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
+                            	Bundle rbundle = new Bundle();
+                	            rbundle.putString("data1", response);
+                	            msg.setData(rbundle);
+                                clients.get(i).send(message);
                             } catch (RemoteException e) {
                                 clients.remove(i); //Client is dead, remove it
                             }
@@ -179,7 +162,11 @@ public class MqttService extends Service {
             for(int i=clients.size()-1; i>=0; i--) {
             	//Try to send the message
                 try {
-                    clients.get(i).send(Message.obtain(null, MSG_RESPONSE, cmd, 0, new MsgData(data1)));
+                	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
+                	Bundle bundle = new Bundle();
+    	            bundle.putString("data1", data1);
+    	            message.setData(bundle);
+                    clients.get(i).send(message);
                 } catch (RemoteException e) {
                     clients.remove(i); //Client is dead, remove it
                 }
@@ -191,7 +178,12 @@ public class MqttService extends Service {
             for(int i=clients.size()-1; i>=0; i--) {
             	//Try to send the message
                 try {
-                    clients.get(i).send(Message.obtain(null, MSG_RESPONSE, cmd, 0, new MsgData(data1, data2)));
+                	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
+                	Bundle bundle = new Bundle();
+    	            bundle.putString("data1", data1);
+    	            bundle.putString("data2", data2);
+    	            message.setData(bundle);
+                    clients.get(i).send(message);
                 } catch (RemoteException e) {
                     clients.remove(i); //Client is dead, remove it
                 }
@@ -203,7 +195,13 @@ public class MqttService extends Service {
             for(int i=clients.size()-1; i>=0; i--) {
             	//Try to send the message
                 try {
-                    clients.get(i).send(Message.obtain(null, MSG_RESPONSE, cmd, 0, new MsgData(data1, data2, data3)));
+                	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
+                	Bundle bundle = new Bundle();
+    	            bundle.putString("data1", data1);
+    	            bundle.putString("data2", data2);
+    	            bundle.putString("data3", data3);
+    	            message.setData(bundle);
+                    clients.get(i).send(message);
                 } catch (RemoteException e) {
                     clients.remove(i); //Client is dead, remove it
                 }
@@ -216,7 +214,10 @@ public class MqttService extends Service {
         for(int i=clients.size()-1; i>=0; i--) {
         	//Try to send the message
             try {
-                clients.get(i).send(Message.obtain(null, MSG_RESPONSE, cmd, 0, new MsgData(data1)));
+            	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
+            	Bundle bundle = new Bundle();
+	            bundle.putString("data1", data1);
+                clients.get(i).send(message);
             } catch (RemoteException e) {
                 clients.remove(i); //Client is dead, remove it
             }
@@ -228,7 +229,11 @@ public class MqttService extends Service {
         for(int i=clients.size()-1; i>=0; i--) {
         	//Try to send the message
             try {
-                clients.get(i).send(Message.obtain(null, MSG_RESPONSE, cmd, 0, new MsgData(data1, data2)));
+            	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
+            	Bundle bundle = new Bundle();
+	            bundle.putString("data1", data1);
+	            bundle.putString("data2", data2);
+                clients.get(i).send(message);
             } catch (RemoteException e) {
                 clients.remove(i); //Client is dead, remove it
             }
@@ -240,7 +245,12 @@ public class MqttService extends Service {
         for(int i=clients.size()-1; i>=0; i--) {
         	//Try to send the message
             try {
-                clients.get(i).send(Message.obtain(null, MSG_RESPONSE, cmd, 0, new MsgData(data1, data2, data3)));
+            	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
+            	Bundle bundle = new Bundle();
+	            bundle.putString("data1", data1);
+	            bundle.putString("data2", data2);
+	            bundle.putString("data3", data3);
+                clients.get(i).send(message);
             } catch (RemoteException e) {
                 clients.remove(i); //Client is dead, remove it
             }
@@ -613,7 +623,12 @@ public class MqttService extends Service {
 		}   
 		
 		public void sendKeepAlive() {
-			publishToTopic(mqtt.clientid + "/keepalive", mqtt.clientid);
+			try {
+				client.ping();
+				publishToTopic(mqtt.clientid + "/keepalive", mqtt.clientid);
+			} catch (MqttException e) {
+				sendMessage(MQTT_KEEPALIVE_FAILED, clientid, user, pass);
+			}
 		}		
 	}
 }

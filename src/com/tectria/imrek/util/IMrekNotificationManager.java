@@ -32,12 +32,20 @@ public class IMrekNotificationManager {
 		return instance; 
 	}
 	
-	public void addChannelToNotify(String chan) {
+	public synchronized void addChannelToNotify(String chan) {
 		channelsToNotify.add(chan);
 	}
 	
-	public void addChannelsToNotify(ArrayList<String> chans) {
+	public synchronized void addChannelsToNotify(ArrayList<String> chans) {
 		channelsToNotify.addAll(chans);
+	}
+	
+	public synchronized void removeChannelToNotify(String chan) {
+		channelsToNotify.remove(chan);
+	}
+	
+	public synchronized void removeChannelsToNotify(ArrayList<String> chans) {
+		channelsToNotify.removeAll(chans);
 	}
 	
 	public void notifyNewMessage(String chan) {
@@ -77,3 +85,4 @@ public class IMrekNotificationManager {
 		notifyMan.notify(notifId, n);
 	}
 }
+

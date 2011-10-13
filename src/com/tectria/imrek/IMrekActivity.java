@@ -244,6 +244,8 @@ public class IMrekActivity extends TabActivity {
         
       //If we aren't logged in,
         if(!prefs.getBoolean("loggedin", false)) {
+        	//Credentials aren't yet verified
+        	prefs.edit().putBoolean("verified", false).commit();
         	//Grab the intent extras
         	extras = this.getIntent().getExtras();
         	//If we're being passed a user/pass combo
@@ -261,6 +263,8 @@ public class IMrekActivity extends TabActivity {
             		Intent intent = new Intent(getBaseContext(), IMrekSplashLoginActivity.class);
         			startActivity(intent);
         			finish();
+            	} else {
+            		prefs.edit().putBoolean("verified", true).commit();
             	}
             //If there's no user/pass in the bundle
             } else {
@@ -277,6 +281,8 @@ public class IMrekActivity extends TabActivity {
             		Intent intent = new Intent(getBaseContext(), IMrekSplashLoginActivity.class);
         			startActivity(intent);
         			finish();
+            	} else {
+            		prefs.edit().putBoolean("verified", true).commit();
             	}
             }
         }

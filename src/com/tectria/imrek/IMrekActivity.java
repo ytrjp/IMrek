@@ -1,7 +1,6 @@
 package com.tectria.imrek;
 
 import com.tectria.imrek.util.MqttService;
-import com.tectria.imrek.util.MqttService.MsgData;
 
 import android.app.AlertDialog;
 import android.app.TabActivity;
@@ -63,7 +62,6 @@ public class IMrekActivity extends TabActivity {
 	        // service through an IDL interface, so get a client-side
 	        // representation of that from the raw service object.
 	        mService = new Messenger(service);
-	        status.setText("Attached.");
 
 	        // We want to monitor the service for as long as we are
 	        // connected to it.
@@ -128,7 +126,7 @@ public class IMrekActivity extends TabActivity {
 	    public void handleMessage(Message msg) {
 	        switch (msg.what) {
 	            case MqttService.MSG_RESPONSE:
-	            	MsgData data = (MsgData)msg.obj;
+	            	Bundle bundle = msg.getData();
 	            	int cmd = msg.arg1;
 	            	switch(cmd) {
 		            	case MqttService.MQTT_CONNECTED:
@@ -189,7 +187,10 @@ public class IMrekActivity extends TabActivity {
 	    
 	    private void sendMessage(int command, String data1) {
 			try {
-	            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, new MsgData(data1));
+	            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, null);
+	            Bundle bundle = new Bundle();
+	            bundle.putString("data1", data1);
+	            msg.setData(bundle);
 	            mService.send(msg);
 	        } catch (RemoteException e) {
 	            //The service crashed if we got here
@@ -201,7 +202,11 @@ public class IMrekActivity extends TabActivity {
 		
 		private void sendMessage(int command, String data1, String data2) {
 			try {
-	            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, new MsgData(data1, data2));
+	            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, null);
+	            Bundle bundle = new Bundle();
+	            bundle.putString("data1", data1);
+	            bundle.putString("data2", data2);
+	            msg.setData(bundle);
 	            mService.send(msg);
 	        } catch (RemoteException e) {
 	            //The service crashed if we got here
@@ -213,7 +218,12 @@ public class IMrekActivity extends TabActivity {
 		
 		private void sendMessage(int command, String data1, String data2, String data3) {
 			try {
-	            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, new MsgData(data1, data2, data3));
+	            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, null);
+	            Bundle bundle = new Bundle();
+	            bundle.putString("data1", data1);
+	            bundle.putString("data2", data2);
+	            bundle.putString("data3", data3);
+	            msg.setData(bundle);
 	            mService.send(msg);
 	        } catch (RemoteException e) {
 	            //The service crashed if we got here
@@ -226,7 +236,10 @@ public class IMrekActivity extends TabActivity {
 	
 	private void sendMessage(int command, String data1) {
 		try {
-            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, new MsgData(data1));
+            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, null);
+            Bundle bundle = new Bundle();
+            bundle.putString("data1", data1);
+            msg.setData(bundle);
             mService.send(msg);
         } catch (RemoteException e) {
             //The service crashed if we got here
@@ -238,7 +251,11 @@ public class IMrekActivity extends TabActivity {
 	
 	private void sendMessage(int command, String data1, String data2) {
 		try {
-            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, new MsgData(data1, data2));
+            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, null);
+            Bundle bundle = new Bundle();
+            bundle.putString("data1", data1);
+            bundle.putString("data2", data2);
+            msg.setData(bundle);
             mService.send(msg);
         } catch (RemoteException e) {
             //The service crashed if we got here
@@ -250,7 +267,12 @@ public class IMrekActivity extends TabActivity {
 	
 	private void sendMessage(int command, String data1, String data2, String data3) {
 		try {
-            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, new MsgData(data1, data2, data3));
+            Message msg = Message.obtain(null, MqttService.MSG_COMMAND, command, 0, null);
+            Bundle bundle = new Bundle();
+            bundle.putString("data1", data1);
+            bundle.putString("data2", data2);
+            bundle.putString("data3", data3);
+            msg.setData(bundle);
             mService.send(msg);
         } catch (RemoteException e) {
             //The service crashed if we got here

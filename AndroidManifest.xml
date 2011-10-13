@@ -24,7 +24,7 @@
         </activity>
         <activity android:name=".PreferencesActivity" android:label="IMrek Preferences" android:theme="@style/IMrek">
         </activity>
-		<service android:name=".util.MqttService" android:label="IMrek Push Notification Service"></service>
+		<service android:name=".util.MqttService" android:process=":mqttservice" android:label="IMrek MQTT Service"></service>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.VIBRATE" />	

@@ -7,8 +7,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,29 +14,32 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
-import android.provider.Settings.Secure;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TabHost;
+import android.widget.TabHost.TabContentFactory;
 import android.widget.TextView;
 
 import com.tectria.imrek.util.IMrekMqttService;
+import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class IMrekMain extends TabActivity {
 	
 	//Tab Manager + Tabs
 	Resources res;
 	TabHost tabHost;
-	TabHost.TabSpec spec;
+	TabHost.TabSpec friend_spec;
+	TabHost.TabSpec convo_spec;
 	Intent tabintent;
 	
 	//PreferenceManager + Preferences
-	private SharedPreferences prefs;
-	private Editor editor;
+	private IMrekPreferenceManager prefs;
 	
 	//Views
 	private TextView status;
@@ -78,7 +79,7 @@ public class IMrekMain extends TabActivity {
             msg.replyTo = msgr;
             try {
 				mService.send(msg);
-				sendMessage(IMrekMqttService.MSG_CONNECT, prefs.getString("user", ""), prefs.getString("token", ""));
+				sendMessage(IMrekMqttService.MSG_CONNECT, prefs.getUsername(), prefs.getToken());
 			} catch (RemoteException e) {
 				//The service crashed if we got here
 	        	//But it should be restored by the system.
@@ -142,7 +143,15 @@ public class IMrekMain extends TabActivity {
 	            		break;
 	            	case IMrekMqttService.MSG_RECONNECT_CREDENTIALS:
 	            		//Call a reconnect with the most recent, most-probably-valid credentials we can.
-	            		sendMessage(IMrekMqttService.MSG_RECONNECT, prefs.getString(user, user), prefs.getString("token", "last_token"));
+	            		String u = prefs.getUsername();
+	            		String t = prefs.getToken();
+	            		if(u == "") {
+	            			u = prefs.getLastUser();
+	            		}
+	            		if(t == "") {
+	            			t = prefs.getLastToken();
+	            		}
+	            		sendMessage(IMrekMqttService.MSG_RECONNECT, u, t);
 	            		break;
 	            	}
 	                break;
@@ -268,12 +277,12 @@ public class IMrekMain extends TabActivity {
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.window_title);
         
         //Get our preference manager
-        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs = IMrekPreferenceManager.getInstance(this);
         
       //If we aren't logged in,
-        if(!prefs.getBoolean("loggedin", false)) {
+        if(!prefs.getLoggedIn()) {
         	//Credentials aren't yet verified
-        	prefs.edit().putBoolean("verified", false).commit();
+        	prefs.setVerified(false);
         	//Grab the intent extras
         	extras = this.getIntent().getExtras();
         	//If we're being passed a user/pass combo
@@ -286,31 +295,31 @@ public class IMrekMain extends TabActivity {
             		//If we get here, then somehow we were passed an invalid user/pass combo from the login activity
             		//Disconnect and log out, clear the user/pass in the preferences, and return to the splash/login activity
             		sendMessage(IMrekMqttService.MSG_STOP, "Logging Out");
-            		setLoggedOut();
-            		clearSavedUser();
+            		prefs.setLoggedIn(false);
+            		prefs.clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
         			startActivity(intent);
         			finish();
             	} else {
-            		prefs.edit().putBoolean("verified", true).commit();
+            		prefs.setVerified(true);
             	}
             //If there's no user/pass in the bundle
             } else {
             	//Default to the user/pass in the preferences
-            	user = prefs.getString("user", "");
-            	pass = prefs.getString("pass", "");
+            	user = prefs.getUsername();
+            	pass = prefs.getPassword();
             	//If user/pass is blank and/or less than the required length
             	if((user.equals("") || pass.equals("")) || (user.length() < 5 || pass.length() < 6)) {
             		//If we get here, we somehow have an invalid user or password in the preferences.
             		//Disconnect and log out, clear the user/pass in the preferences, and return to the splash/login activity
             		sendMessage(IMrekMqttService.MSG_STOP, "Logging Out");
-            		setLoggedOut();
-            		clearSavedUser();
+            		prefs.setLoggedIn(false);
+            		prefs.clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
         			startActivity(intent);
         			finish();
             	} else {
-            		prefs.edit().putBoolean("verified", true).commit();
+            		prefs.setVerified(true);
             	}
             }
         }
@@ -324,7 +333,7 @@ public class IMrekMain extends TabActivity {
         
         //Let the service know it doesn't have to reconnect
         //The service won't reconnect if it doesn't think it was previously started
-        prefs.edit().putBoolean("started", false).commit();
+        prefs.setWasStarted(false);
         
         doBindService();
         
@@ -335,12 +344,13 @@ public class IMrekMain extends TabActivity {
     	tabHost = getTabHost();
 		
 		tabintent = new Intent().setClass(this, FriendsListTab.class);
-		spec = tabHost.newTabSpec("friendslist").setIndicator("Friends List", res.getDrawable(R.drawable.friends_icons)).setContent(tabintent);
-		tabHost.addTab(spec);
+		friend_spec = tabHost.newTabSpec("friendslist").setIndicator("Friends List", res.getDrawable(R.drawable.friends_icons)).setContent(tabintent);
+		tabHost.addTab(friend_spec);
 		
 		tabintent = new Intent().setClass(this, ConversationListTab.class);
-		spec = tabHost.newTabSpec("conversationlist").setIndicator("Conversation List", res.getDrawable(R.drawable.list_icons)).setContent(tabintent);
-		tabHost.addTab(spec);
+		convo_spec = tabHost.newTabSpec("conversationlist").setIndicator("Conversation List", res.getDrawable(R.drawable.list_icons)).setContent(tabintent);
+		tabHost.addTab(convo_spec);
+		
     }
     
     @Override
@@ -353,101 +363,52 @@ public class IMrekMain extends TabActivity {
     @Override
 	public boolean onOptionsItemSelected(MenuItem mi) {
 		switch(mi.getItemId()) {
-		case R.id.preferences:
-			Intent prefIntent = new Intent(getBaseContext(), PreferenceScreen.class);
-			startActivity(prefIntent);
-			break;
-		case R.id.logout:
-			setLoggedOut();
-			editor = prefs.edit();
-			editor.putBoolean("autologin", false);
-	    	editor.commit();
-			Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
-			startActivity(intent);
-			finish();
-			break;
-		case R.id.restart:
-			//Nothing right now
-			break;
-		case R.id.quit:
-			quitDialog = new AlertDialog.Builder(this);
-			quitDialog.setMessage("Are you sure you want to quit? This will close IMrek and disconnect you from the server.");
-			quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					sendMessage(IMrekMqttService.MSG_STOP, "Quitting");
-					setLoggedOut();
-					finish();
-				}
-			}).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					dialog.dismiss();
-				}
-			});
-			quitDialog.show();
-			break;
+			case R.id.preferences:
+				Intent prefIntent = new Intent(getBaseContext(), PreferenceScreen.class);
+				startActivity(prefIntent);
+				break;
+			case R.id.logout:
+				prefs.setLoggedIn(false);
+				prefs.setAutoLogin(false);
+				Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
+				startActivity(intent);
+				finish();
+				break;
+			case R.id.reconnect:
+				sendMessage(IMrekMqttService.MSG_RECONNECT, "Reconnect");
+				break;
+			case R.id.quit:
+				quitDialog = new AlertDialog.Builder(this);
+				quitDialog.setMessage("Are you sure you want to quit? This will close IMrek and disconnect you from the server.");
+				quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						sendMessage(IMrekMqttService.MSG_STOP, "Quitting");
+						setDisconnected();
+						prefs.setLoggedIn(false);
+						finish();
+					}
+				}).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				});
+				quitDialog.show();
+				break;
 		}
 		return true;
 	}
     
-    /*
-     * Get deviceid and save it to preferences
-     * TODO: Phase this out for the one that will be in the preference manager
-     */
-    public String getDeviceID() {
-    	String id = Secure.getString(this.getContentResolver(), Secure.ANDROID_ID);
-    	editor = prefs.edit();
-    	editor.putString("deviceid", id);
-    	editor.commit();
-    	return id;
-    }
-    
-    /*
-     * Clear saved user/pass in the preferences
-     * Also clear last_user and last_pass, used by the push service for post-mortem recovery
-     */
-    public void clearSavedUser() {
-    	editor = prefs.edit();
-    	editor.remove("user");
-    	editor.remove("pass");
-    	editor.remove("last_user");
-    	editor.remove("last_pass");
-    	editor.putBoolean("autologin", false);
-    	editor.commit();
-    }
-    
 	public void setConnected() {
-		editor = prefs.edit();
-    	editor.putBoolean("connected", true);
-    	editor.commit();
+		prefs.setIsConnected(true);
     	setUIConnected();
 	}
 	
 	public void setDisconnected() {
-		editor = prefs.edit();
-    	editor.putBoolean("connected", false);
-    	editor.commit();
+		prefs.setIsConnected(false);
     	setUIDisconnected();
 	}
-    
-    /*
-     * Set shared preference 'loggedin' to true
-     */
-    public void setLoggedIn() {
-    	editor = prefs.edit();
-    	editor.putBoolean("loggedin", true);
-    	editor.commit();
-    }
-    
-    /*
-     * Set shared preference 'loggedin' to false
-     */
-    public void setLoggedOut() {
-    	editor = prefs.edit();
-    	editor.putBoolean("loggedin", false);
-    	editor.commit();
-    }
     
     public void setUIConnected() {
     	status.setTextColor(getResources().getColor(R.color.connectedColor));

@@ -6,29 +6,29 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.provider.Settings.Secure;
 
-public class IMrekPreferencesManager {
+public class IMrekPreferenceManager {
 	
-	private static IMrekPreferencesManager instance = null;
-	private static final String APP_SHARED_PREFS = "com.tectria.imrek.util.PefsManager";
+	private static IMrekPreferenceManager instance = null;
+	private static final String APP_SHARED_PREFS = "com.tectria.imrek.util.IMrekPreferencesManager";
 	private SharedPreferences appSharedPrefs;
 	private Editor prefsEditor;
 	private Context context;
 	
-	protected IMrekPreferencesManager(Context ctx) {
+	protected IMrekPreferenceManager(Context ctx) {
 		this.appSharedPrefs = ctx.getSharedPreferences(APP_SHARED_PREFS, Activity.MODE_PRIVATE);
 		this.prefsEditor = this.appSharedPrefs.edit();
 		this.context = ctx;
 	}
 	
-	public static IMrekPreferencesManager getInstance(Context ctx) {
+	public static IMrekPreferenceManager getInstance(Context ctx) {
 		if (instance == null) {
-			instance = new IMrekPreferencesManager(ctx);
+			instance = new IMrekPreferenceManager(ctx);
 		}
 		return instance;
 	}
 	
 	public synchronized String getUsername() {
-		return appSharedPrefs.getString("user", "user");
+		return appSharedPrefs.getString("user", "");
 	}
 	
 	public synchronized void setUsername(String username) {
@@ -37,10 +37,10 @@ public class IMrekPreferencesManager {
 	}
 	
 	public synchronized String getPassword() {
-		return appSharedPrefs.getString("pass", "pass");
+		return appSharedPrefs.getString("pass", "");
 	}
 	
-	public synchronized void setPassowrd(String password) {
+	public synchronized void setPassword(String password) {
 		prefsEditor.putString("pass", password);
 		prefsEditor.commit();
 	}
@@ -54,16 +54,16 @@ public class IMrekPreferencesManager {
 		prefsEditor.commit();
 	}
 	
-	public synchronized boolean getIsStarted() {
+	public synchronized boolean getWasStarted() {
 		return appSharedPrefs.getBoolean("started", false);
 	}
 	
-	public synchronized void setStarted(boolean started) {
+	public synchronized void setWasStarted(boolean started) {
 		prefsEditor.putBoolean("started", started);
 		prefsEditor.commit();
 	}
 	
-	public synchronized boolean getIsLoggedIn() {
+	public synchronized boolean getLoggedIn() {
 		return appSharedPrefs.getBoolean("loggedin", false);
 	}
 	
@@ -90,6 +90,15 @@ public class IMrekPreferencesManager {
 		prefsEditor.commit();
 	}
 	
+	public synchronized boolean getVerified() {
+		return appSharedPrefs.getBoolean("verified", false);
+	}
+	
+	public synchronized void setVerified(boolean verified) {
+		prefsEditor.putBoolean("verified", verified);
+		prefsEditor.commit();
+	}
+	
 	public synchronized boolean getRememberMe() {
 		return appSharedPrefs.getBoolean("rememberme", false);
 	}
@@ -100,7 +109,7 @@ public class IMrekPreferencesManager {
 	}
 	
 	public synchronized String getLastUser() {
-		return appSharedPrefs.getString("last_user", "user");
+		return appSharedPrefs.getString("last_user", "");
 	}
 	
 	public synchronized void setLastUser(String user) {

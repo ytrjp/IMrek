@@ -24,12 +24,12 @@ import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.tectria.imrek.util.IMrekHttpClient;
+import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class SplashScreenLogin extends Activity {
 	
 	//Managers
-	private SharedPreferences prefs;
-	private Editor editor;
+	private IMrekPreferenceManager prefs;
 	private LayoutInflater inflater;
 	
 	//Dialogs
@@ -44,9 +44,6 @@ public class SplashScreenLogin extends Activity {
 	private CheckBox autologin;
 	private EditText confirm;
 	
-	//Misc
-	private String deviceid;
-	
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
@@ -58,11 +55,10 @@ public class SplashScreenLogin extends Activity {
     	super.onStart();
     	
     	makeProgressDialog();
-    	prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    	prefs = IMrekPreferenceManager.getInstance(this);
     	//Get our deviceid
-    	deviceid = prefs.getString("deviceid", getDeviceID());
     	inflater = (LayoutInflater)this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    	if(prefs.getBoolean("autologin", false) || prefs.getBoolean("loggedin", false)) {
+    	if(prefs.getAutoLogin() || prefs.getLoggedIn()) {
     		startMain();
     	} else {
     		makeHelloDialog();
@@ -80,17 +76,6 @@ public class SplashScreenLogin extends Activity {
     	Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
     	startActivity(intent);
     	finish();
-    }
-    
-    /*
-     * Get deviceid and save it to preferences
-     */
-    public String getDeviceID() {
-    	String id = Secure.getString(this.getContentResolver(), Secure.ANDROID_ID);
-    	editor = prefs.edit();
-    	editor.putString("deviceid", id);
-    	editor.commit();
-    	return id;
     }
     
     public void startMain() {
@@ -155,11 +140,11 @@ public class SplashScreenLogin extends Activity {
     	rememberme = (CheckBox)dialogview.findViewById(R.id.rememberme);
     	autologin = (CheckBox)dialogview.findViewById(R.id.autologin);
     	
-    	rememberme.setChecked(prefs.getBoolean("rememberme", false));
-    	autologin.setChecked(prefs.getBoolean("autologin", false));
+    	rememberme.setChecked(prefs.getRememberMe());
+    	autologin.setChecked(prefs.getAutoLogin());
     	
-    	if(prefs.getBoolean("rememberme", false)) {
-    		username.setText(prefs.getString("username", ""));
+    	if(prefs.getRememberMe()) {
+    		username.setText(prefs.getUsername());
     	}
     	dialog.setPositiveButton("Register", new DialogInterface.OnClickListener() {
     		@Override
@@ -192,7 +177,7 @@ public class SplashScreenLogin extends Activity {
 					return;
     			}
     			
-    			IMrekHttpClient.register(user, pass, deviceid, new AsyncHttpResponseHandler() {
+    			IMrekHttpClient.register(user, pass, prefs.getDeviceId(), new AsyncHttpResponseHandler() {
     	            @Override
     	            public void onFailure(Throwable error) {
     					makeRegistrationDialog();
@@ -210,15 +195,13 @@ public class SplashScreenLogin extends Activity {
     	    					toast.show();
     	    					return;
     	                	}
-    	                	editor = prefs.edit();
-    	    				editor.putBoolean("rememberme", rememberme.isChecked());
-    	    				editor.putBoolean("autologin", autologin.isChecked());
-    	    				editor.putString("token", data.getJSONObject("data").getString("token"));
-    	    				editor.putString("last_user", user);
-	    					editor.putString("last_pass", pass);
-    	    				editor.putString("user", username.getText().toString());
-    	    				editor.putString("pass", password.getText().toString());
-    	    				editor.commit();
+    	                	prefs.setRememberMe(rememberme.isChecked());
+    	                	prefs.setAutoLogin(autologin.isChecked());
+    	                	prefs.setUsername(username.getText().toString());
+    	                	prefs.setPassword(password.getText().toString());
+    	                	prefs.setToken(data.getJSONObject("data").getString("token"));
+    	                	prefs.setLastUser(username.getText().toString());
+    	                	prefs.setLastToken(data.getJSONObject("data").getString("token"));
     	    				if(autologin.isChecked()) {
     	    					startMain();
     	    				} else {
@@ -261,11 +244,11 @@ public class SplashScreenLogin extends Activity {
     	rememberme = (CheckBox)dialogview.findViewById(R.id.rememberme);
     	autologin = (CheckBox)dialogview.findViewById(R.id.autologin);
     	
-    	rememberme.setChecked(prefs.getBoolean("rememberme", false));
-    	autologin.setChecked(prefs.getBoolean("autologin", false));
+    	rememberme.setChecked(prefs.getRememberMe());
+    	autologin.setChecked(prefs.getAutoLogin());
     	
-    	if(prefs.getBoolean("rememberme", false)) {
-    		username.setText(prefs.getString("username", ""));
+    	if(prefs.getRememberMe()) {
+    		username.setText(prefs.getUsername());
     	}
     	
     	dialog.setPositiveButton("Login", new DialogInterface.OnClickListener() {
@@ -278,7 +261,7 @@ public class SplashScreenLogin extends Activity {
     			final String user = username.getText().toString();
     			final String pass = password.getText().toString();
     			
-    			IMrekHttpClient.login(user, pass, deviceid, new AsyncHttpResponseHandler() {
+    			IMrekHttpClient.login(user, pass, prefs.getDeviceId(), new AsyncHttpResponseHandler() {
     	            @Override
     	            public void onFailure(Throwable error) {
     					makeLoginDialog();
@@ -296,15 +279,13 @@ public class SplashScreenLogin extends Activity {
     	    					toast.show();
     	    					return;
     	                	}
-    	                	editor = prefs.edit();
-    	    				editor.putBoolean("rememberme", rememberme.isChecked());
-    	    				editor.putBoolean("autologin", autologin.isChecked());
-    	    				editor.putString("token", data.getJSONObject("data").getString("token"));
-    	    				editor.putString("last_user", user);
-	    					editor.putString("last_pass", pass);
-	    					editor.putString("user", username.getText().toString());
-    	    				editor.putString("pass", password.getText().toString());
-    	    				editor.commit();
+    	                	prefs.setRememberMe(rememberme.isChecked());
+    	                	prefs.setAutoLogin(autologin.isChecked());
+    	                	prefs.setUsername(username.getText().toString());
+    	                	prefs.setPassword(password.getText().toString());
+    	                	prefs.setToken(data.getJSONObject("data").getString("token"));
+    	                	prefs.setLastUser(username.getText().toString());
+    	                	prefs.setLastToken(data.getJSONObject("data").getString("token"));
     	    				if(autologin.isChecked()) {
     	    					startMain();
     	    				} else {

@@ -10,7 +10,6 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -19,7 +18,6 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.preference.PreferenceManager;
 
 import com.ibm.mqtt.IMqttClient;
 import com.ibm.mqtt.MqttClient;
@@ -71,8 +69,8 @@ public class IMrekMqttService extends Service {
     public static final int MQTT_SEND_KEEPALIVE = 24;
     
     //Our Managers
-    SharedPreferences prefMan;
-	ConnectivityManager connMan;
+    IMrekPreferenceManager prefs;
+	ConnectivityManager conn;
 	//NotificationManager notifMan;
 	
 	//Service
@@ -125,7 +123,7 @@ public class IMrekMqttService extends Service {
                     cmd = msg.arg1;
                     response = null;
                     Bundle bundle = msg.getData();
-                    switch(cmd){
+                    switch(cmd) {
 	                	case MSG_CONNECT:
 	                		connect(bundle.getString("data1"), bundle.getString("data2"));
 	            			break;
@@ -160,7 +158,7 @@ public class IMrekMqttService extends Service {
                             	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
                             	Bundle rbundle = new Bundle();
                 	            rbundle.putString("data1", response);
-                	            msg.setData(rbundle);
+                	            message.setData(rbundle);
                                 clients.get(i).send(message);
                             } catch (RemoteException e) {
                                 clients.remove(i); //Client is dead, remove it
@@ -312,7 +310,7 @@ public class IMrekMqttService extends Service {
     	return true;
     }
     
-    private synchronized void getCredentialsForReconnect() {
+    private void getCredentialsForReconnect() {
     	boolean sent = false;
     	//Send the message to every client, and try to get a valid connection
         for(int i=clients.size()-1; i>=0; i--) {
@@ -326,9 +324,9 @@ public class IMrekMqttService extends Service {
         }
         //If our message isn't sent, then all clients are dead and the service is on it's own.
         if(!sent) {
-        	if(validTokenCred(prefMan.getString("last_user", ""), prefMan.getString("last_token", ""))) {
+        	if(validTokenCred(prefs.getLastUser(), prefs.getLastToken())) {
         		//Try and validate the last login token. If this fails in any way, fall back on a fresh login with old credentials if possible
-                IMrekHttpClient.reconnect(prefMan.getString("last_user", ""), prefMan.getString("last_token", ""), prefMan.getString("deviceid", ""), new AsyncHttpResponseHandler() {
+                IMrekHttpClient.reconnect(prefs.getLastUser(), prefs.getLastToken(), prefs.getDeviceId(), new AsyncHttpResponseHandler() {
                 	@Override
                     public void onFailure(Throwable error) {
                 		tryFreshLogin();
@@ -343,7 +341,8 @@ public class IMrekMqttService extends Service {
             					return;
                         	} else {
                         		//We have a valid user/token combo. Cool.
-                        		connect(prefMan.getString("last_user", ""), prefMan.getString("last_token", ""));
+                        		prefs.setLoggedIn(true);
+                        		connect(prefs.getLastUser(), prefs.getLastToken());
                         		return;
                         	}
                         } catch(JSONException e) {
@@ -357,11 +356,11 @@ public class IMrekMqttService extends Service {
         }
     }
     
-    private synchronized void tryFreshLogin() {
+    private void tryFreshLogin() {
     	//If autologin is set, we can try and get a valid user/pass from the preferences
-    	if(prefMan.getBoolean("autologin", false)) {
-    		if(validCred(prefMan.getString("user", ""), prefMan.getString("pass", ""))) {
-    			IMrekHttpClient.login(prefMan.getString("user", ""), prefMan.getString("pass", ""), prefMan.getString("deviceid", ""), new AsyncHttpResponseHandler() {
+    	if(prefs.getAutoLogin()) {
+    		if(validCred(prefs.getUsername(), prefs.getPassword())) {
+    			IMrekHttpClient.login(prefs.getUsername(), prefs.getPassword(), prefs.getDeviceId(), new AsyncHttpResponseHandler() {
         			
         			@Override
                     public void onSuccess(String strdata) {
@@ -370,9 +369,9 @@ public class IMrekMqttService extends Service {
                         	//We have a valid user/pass combo. Cool.
                         	if(data.getInt("status") == 0) {
                         		//Get the token
-                        		prefMan.edit().putString("token", data.getJSONObject("data").getString("token")).commit();
-                        		setLoggedIn();
-                        		connect(prefMan.getString("user", ""), prefMan.getString("token", ""));
+                        		prefs.setToken(data.getJSONObject("data").getString("token"));
+                        		prefs.setLoggedIn(true);
+                        		connect(prefs.getUsername(), prefs.getToken());
                         		return;
                         	}
                         } catch(JSONException e) {
@@ -401,59 +400,33 @@ public class IMrekMqttService extends Service {
         // stopped, so return sticky.
         return START_STICKY;
     }
-    
-    /**
-     * Set shared preference 'loggedin' to true
-     */
-    public void setLoggedIn() {
-    	prefMan.edit().putBoolean("loggedin", true).commit();
-    }
-    
-    /**
-     * Set shared preference 'loggedin' to false
-     */
-    public void setLoggedOut() {
-    	prefMan.edit().putBoolean("loggedin", false).commit();
-    }
-    
-    /**
-     * Checks preferences to see if the service was previously started
-     */
-	private boolean wasStarted() {
- 		return prefMan.getBoolean("started", false);
-	}
-
-	/**
-     * Sets whether or not the service has been started in the preferences
-     */
-	private synchronized void setStarted(boolean started) {
- 		prefMan.edit().putBoolean("started", started).commit();		
- 		isStarted = started;
-	}
 	
 	/**
 	 * This method does any necessary cleanup if the service has crashed
 	 */
 	private void handleCrashedService() {
 		//If it was started before, it must have crashed (oops)
-		if(wasStarted()) {
+		if(prefs.getWasStarted()) {
 			//We're started now, to set started to true
-			setStarted(true);
+			prefs.setWasStarted(true);
+			isStarted = true;
 			stopKeepAlives(); 
 			//Try and send a message to get new login credentials
 			getCredentialsForReconnect();
 		} else {
 			//We're started now, to set started to true
-			setStarted(true);
+			prefs.setWasStarted(true);
+			isStarted = true;
 		}
 	}
+	
 	private void handleDisconnect() {
-		//Handle MQTT disconnecting
+		reconnect(prefs.getLastUser(), prefs.getLastToken());
 	}
 	
 	// Check if we are online
 	private boolean isNetworkAvailable() {
-		NetworkInfo info = connMan.getActiveNetworkInfo();
+		NetworkInfo info = conn.getActiveNetworkInfo();
 		if(info == null) {
 			return false;
 		}
@@ -482,28 +455,29 @@ public class IMrekMqttService extends Service {
 		alarmMgr.cancel(pi);
 	}
 	
-	private synchronized void stop() {
+	private void stop() {
 		if(mqtt.client != null) {
 			mqtt.disconnect();
 		}
 		stopSelf();
 	}
 	
-	private synchronized void connect(String user, String token) {
+	private void connect(String user, String token) {
 		if(isStarted && mqtt.client == null) {
 			//Update last_ preferences
-			prefMan.edit().putString("last_user", user).putString("last_token", token).commit();
+			prefs.setLastUser(user);
+			prefs.setLastToken(token);
 			mqtt.connect(user, token);
 		}
 	}
 	
-	private synchronized void disconnect() {
+	private void disconnect() {
 		if(isStarted == true && mqtt.client != null) {
 			mqtt.disconnect();
 		}
 	}
 	
-	private synchronized void reconnect(String user, String token) {
+	private void reconnect(String user, String token) {
 		if(isStarted == true && mqtt.client == null) {
 			disconnect();
 			connect(user, token);
@@ -512,9 +486,9 @@ public class IMrekMqttService extends Service {
 
     @Override
     public void onCreate() {
-    	//Get out managers
-    	prefMan = PreferenceManager.getDefaultSharedPreferences(this);
-    	connMan = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+    	//Get our managers
+    	prefs = IMrekPreferenceManager.getInstance(this);
+    	conn = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
     	
     	//Instantiate MQTTConnection
     	mqtt = new MQTTConnection(MQTT_HOST);
@@ -525,7 +499,7 @@ public class IMrekMqttService extends Service {
     @Override
 	public void onDestroy() {
 		//Stop service if started
-		if (prefMan.getBoolean("started", false) == true) {
+		if (prefs.getWasStarted() == true) {
 			stop();
 		}	
 	}
@@ -543,6 +517,7 @@ public class IMrekMqttService extends Service {
 		public MQTTConnection(String brokerHostName) {
 			// Create connection spec
 	    	this.connSpec = "tcp://" + brokerHostName + "@" + MQTT_BROKER_PORT_NUM;
+	    	this.topics = new ArrayList<String>();
 		}
 		
 		/*
@@ -567,7 +542,7 @@ public class IMrekMqttService extends Service {
 			sendMessage(MQTT_PUBLISH_ARRIVED, topicName, new String(payload));
 		}  
 		
-		public synchronized void connect(String user, String pass) {
+		public void connect(String user, String pass) {
         	this.clientid = user;
         	this.user = user;
         	this.pass = pass;
@@ -596,7 +571,7 @@ public class IMrekMqttService extends Service {
 		}
 		
 		// Disconnect
-		public synchronized void disconnect() {		
+		public void disconnect() {		
 			stopKeepAlives();
 			try {
 				this.client.disconnect();
@@ -610,7 +585,7 @@ public class IMrekMqttService extends Service {
 		 * Send a request to the message broker to be sent messages published with 
 		 *  the specified topic name. Wildcards are allowed.	
 		 */
-		public synchronized void subscribe(String topicName) {
+		public void subscribe(String topicName) {
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
 				sendMessage(MQTT_NO_CONNECTION, topicName);
@@ -630,7 +605,7 @@ public class IMrekMqttService extends Service {
 		 * Send a request to the message broker to be sent messages published with 
 		 *  the specified topic name. Wildcards are allowed.	
 		 */
-		public synchronized void unsubscribe(String topicName) {
+		public void unsubscribe(String topicName) {
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
 				sendMessage(MQTT_NO_CONNECTION, topicName);
@@ -652,7 +627,7 @@ public class IMrekMqttService extends Service {
 		 * Sends a message to the message broker, requesting that it be published
 		 *  to the specified topic.
 		 */
-		public synchronized void publish(String topicName, String message) {		
+		public void publish(String topicName, String message) {		
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
 				sendMessage(MQTT_NO_CONNECTION, topicName, message);
@@ -666,7 +641,7 @@ public class IMrekMqttService extends Service {
 			}
 		}		
 		
-		public synchronized void keepalive() {
+		public void keepalive() {
 			try {
 				client.ping();
 				this.publish(mqtt.clientid + "/keepalive", mqtt.clientid);

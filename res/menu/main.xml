@@ -5,7 +5,7 @@
     	android:title="Preferences" />
     <item android:id="@+id/logout"
     	android:title="Logout" />
-    <item android:id="@+id/restart"
+    <item android:id="@+id/reconnect"
     	android:title="Reconnect" />
   	<item android:id="@+id/quit"
     	android:title="Quit" />

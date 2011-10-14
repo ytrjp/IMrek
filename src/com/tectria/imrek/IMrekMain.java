@@ -84,6 +84,8 @@ public class IMrekMain extends TabActivity {
 				//The service crashed if we got here
 	        	//But it should be restored by the system.
 	        	//Until it is, we should just disconnect here and reset some preferences.
+				// TODO: stuff
+				setUIDisconnected();
 			}
 	    }
 
@@ -91,6 +93,8 @@ public class IMrekMain extends TabActivity {
 	        // This is called when the connection with the service has been
 	        // unexpectedly disconnected -- that is, its process crashed.
 	        mService = null;
+	        // TODO: stuff
+	        setUIDisconnected();
 	    }
 	};
 	
@@ -135,24 +139,60 @@ public class IMrekMain extends TabActivity {
 	            	Bundle bundle = msg.getData();
 	            	int cmd = msg.arg1;
 	            	switch(cmd) {
-	            	case IMrekMqttService.MQTT_CONNECTED:
-	            		break;
-	            	case IMrekMqttService.MQTT_DISCONNECTED:
-	            		break;
-	            	case IMrekMqttService.MSG_RECONNECT:
-	            		break;
-	            	case IMrekMqttService.MSG_RECONNECT_CREDENTIALS:
-	            		//Call a reconnect with the most recent, most-probably-valid credentials we can.
-	            		String u = prefs.getUsername();
-	            		String t = prefs.getToken();
-	            		if(u == "") {
-	            			u = prefs.getLastUser();
-	            		}
-	            		if(t == "") {
-	            			t = prefs.getLastToken();
-	            		}
-	            		sendMessage(IMrekMqttService.MSG_RECONNECT, u, t);
-	            		break;
+		            	case IMrekMqttService.MQTT_CONNECTED:
+		            		setUIConnected();
+		            		// TODO: Reconnect topics
+		            		// TODO: load friends list
+		            		break;
+		            	case IMrekMqttService.MQTT_CONNECTION_LOST:
+		            		setUIDisconnected();
+		            		// TODO: Clear friends / conversation list
+		            		break;
+		            	case IMrekMqttService.MQTT_DISCONNECTED:
+		            		setUIDisconnected();
+		            		// TODO: Clear friends / conversation list
+		            		break;
+		            	case IMrekMqttService.MSG_RECONNECT_CREDENTIALS:
+		            		//Call a reconnect with the most recent, most-probably-valid credentials we can.
+		            		//Call a reconnect with the most recent, most-probably-valid credentials we can.
+		            		String u = prefs.getUsername();
+		            		String t = prefs.getToken();
+		            		if(u == "") {
+		            			u = prefs.getLastUser();
+		            		}
+		            		if(t == "") {
+		            			t = prefs.getLastToken();
+		            		}
+		            		sendMessage(IMrekMqttService.MSG_RECONNECT, u, t);
+		            		break;
+		            	case IMrekMqttService.MQTT_PUBLISH_ARRIVED:
+		            		// TODO: Call conversation manager functions
+		            		break;
+		            	case IMrekMqttService.MQTT_PUBLISH_SENT:
+		            		// TODO: Call conversation manager functions
+		            		break;
+		            	case IMrekMqttService.MQTT_SUBSCRIBE_SENT:
+		            		// TODO: Call conversation manager functions
+		            		break;
+		            	case IMrekMqttService.MQTT_PUBLISH_FAILED:
+		            		// TODO: Call conversation manager functions
+		            		// TODO: Retry
+		            		break;
+		            	case IMrekMqttService.MQTT_SUBSCRIBE_FAILED:
+		            		// TODO: Call conversation manager functions
+		            		// TODO: Retry
+		            		break;
+		            	case IMrekMqttService.MQTT_CONNECT_FAILED:
+		            		// TODO: Call conversation manager functions
+		            		// TODO: Retry
+		            		break;
+		            	case IMrekMqttService.MSG_PING:
+		            		sendMessage(IMrekMqttService.MQTT_SEND_KEEPALIVE, "keepalive");
+		            		break;
+		            	case IMrekMqttService.MQTT_KEEPALIVE_FAILED:
+		            		sendMessage(IMrekMqttService.MSG_PING, "ping");
+		            		// set timeout to kill service? Don't kill if received ping
+		            		break;
 	            	}
 	                break;
 	            default:

@@ -62,12 +62,16 @@ public class IMrekMqttService extends Service {
     // is called while the connection is disconnected. This might be a good time to issue a reconnect
     public static final int MQTT_NO_CONNECTION = 20;
     
+    
     //These tell MQTT to do stuff
     public static final int MQTT_SUBSCRIBE = 21;
     public static final int MQTT_UNSUBSCRIBE = 22;
     public static final int MQTT_PUBLISH = 23;
     public static final int MQTT_SEND_KEEPALIVE = 24;
     
+    //Ping the service
+    public static final int MSG_PING = 25;
+	
     //Our Managers
     IMrekPreferenceManager prefs;
 	ConnectivityManager conn;

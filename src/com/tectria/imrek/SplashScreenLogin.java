@@ -10,11 +10,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.provider.Settings.Secure;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -129,7 +125,7 @@ public class SplashScreenLogin extends Activity {
     	if(progressdialog.isShowing()) {
     		progressdialog.dismiss();
     	}
-    	dialogview = inflater.inflate(R.layout.registration_dialog, null);
+    	dialogview = inflater.inflate(R.layout.dialog_registration, null);
     	dialog = new AlertDialog.Builder(this);
     	dialog.setTitle("Registration");
     	dialog.setView(dialogview);
@@ -234,7 +230,7 @@ public class SplashScreenLogin extends Activity {
     	if(progressdialog.isShowing()) {
     		progressdialog.dismiss();
     	}
-    	dialogview = inflater.inflate(R.layout.login_dialog, null);
+    	dialogview = inflater.inflate(R.layout.dialog_login, null);
     	dialog = new AlertDialog.Builder(this);
     	dialog.setTitle("Login");
     	dialog.setView(dialogview);

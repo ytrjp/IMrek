@@ -1,38 +1,44 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<TabHost xmlns:android="http://schemas.android.com/apk/res/android" 
-	android:id="@android:id/tabhost" 
-	android:layout_width="fill_parent" 
-	android:layout_height="fill_parent">
-	
-	<RelativeLayout android:layout_width="fill_parent" 
+<?xml version="1.0" encoding="utf-8"?>
+ <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+	<TabHost
+	    android:id="@android:id/tabhost"
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"
+	    >
+	    <RelativeLayout android:layout_width="fill_parent" 
 		android:layout_height="match_parent">
 		
-		<ImageView android:id="@+id/brandimage" 
-			android:layout_width="wrap_content" 
-			android:layout_height="40dp"
-			android:layout_alignParentTop="true" 
-			android:gravity="left|center_vertical" 
-			android:paddingLeft="5dp" 
-			android:layout_alignParentLeft="true" />
-		
-		<TextView android:layout_width="wrap_content" 
-			android:id="@+id/section_title" 
-			android:layout_height="40dp" 
-			android:layout_alignParentRight="true" 
-			android:layout_toRightOf="@+id/brandimage" 
+		<TextView
+			android:id="@+id/title"
+			android:layout_height="10dp" 
+			android:layout_width="fill_parent"
 			android:textStyle="bold" android:textSize="16sp"
 			android:gravity="right|center_vertical" 
 			android:paddingRight="5dp" />
 		
-		<FrameLayout android:id="@android:id/tabcontent" 
-			android:layout_width="fill_parent" 
-			android:layout_height="wrap_content" 
-			android:layout_above="@android:id/tabs"
-			android:layout_below="@+id/brandimage" />
+		<FrameLayout
+            android:id="@android:id/tabcontent"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="0"
+            android:layout_above="@android:id/tabs"
+			android:layout_below="@+id/title"/>
+		
+		<android.support.v4.view.ViewPager
+		  	android:id="@+id/viewpager"
+		  	android:layout_width="fill_parent"
+		 	android:layout_height="0dp"
+		 	android:layout_weight="1"
+		  	android:layout_above="@android:id/tabs"
+			android:layout_below="@+id/title"/>
 		
 		<TabWidget android:id="@android:id/tabs" 
 		android:layout_width="fill_parent" 
 		android:layout_height="wrap_content" 
 		android:layout_alignParentBottom="true" />
 	</RelativeLayout>
-</TabHost>
+	</TabHost>
+</LinearLayout>

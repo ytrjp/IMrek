@@ -34,7 +34,7 @@ public class FriendsListFragment extends Fragment {
 		LinearLayout llayout = (LinearLayout)inflater.inflate(R.layout.f_friends_list, container, false);
 		list = (ListView)llayout.findViewById(R.id.friendslist);
         
-        list.setAdapter(new ArrayAdapter<String>(getActivity(), R.layout.item_friends_list, R.id.friend_name, test));
+        list.setAdapter(new ArrayAdapter<String>(getActivity(), R.layout.item_friends_list, R.id.name, test));
         
         list.setOnItemClickListener(new OnItemClickListener() {
 

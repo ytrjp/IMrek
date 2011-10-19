@@ -384,19 +384,6 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
         
         doBindService();
         
-        //Set up tabs
-        //Do this last because if for whatever reason we need to fall back to the splash/login,
-        //this isn't needed
-        /*res = getResources();
-    	tabHost = getTabHost();
-		
-		tabintent = new Intent().setClass(this, FriendsListTab.class);
-		friend_spec = tabHost.newTabSpec("friendslist").setIndicator("Friends List", res.getDrawable(R.drawable.friends_icons)).setContent(tabintent);
-		tabHost.addTab(friend_spec);
-		
-		tabintent = new Intent().setClass(this, ConversationListTab.class);
-		convo_spec = tabHost.newTabSpec("conversationlist").setIndicator("Conversation List", res.getDrawable(R.drawable.list_icons)).setContent(tabintent);
-		tabHost.addTab(convo_spec);*/
         this.initializeTabHost(savedInstanceState);
 		if (savedInstanceState != null) {
             mTabHost.setCurrentTabByTag(savedInstanceState.getString("tab")); //set the tab as per the saved state
@@ -560,12 +547,13 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 	 * Initialize the Tab Host
 	 */
 	private void initializeTabHost(Bundle args) {
+		res = getResources();
 		mTabHost = (TabHost)findViewById(android.R.id.tabhost);
         mTabHost.setup();
         TabInfo tabInfo = null;
-        IMrekMain.AddTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab1").setIndicator("Tab 1"), ( tabInfo = new TabInfo("Tab1", ChannelListFragment.class, args)));
+        IMrekMain.AddTab(this, this.mTabHost, this.mTabHost.newTabSpec("channel_list").setIndicator("Channels", res.getDrawable(R.drawable.icon_channel_list_tab)), ( tabInfo = new TabInfo("channel_list", ChannelListFragment.class, args)));
         this.mapTabInfo.put(tabInfo.tag, tabInfo);
-        IMrekMain.AddTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab2").setIndicator("Tab 2"), ( tabInfo = new TabInfo("Tab2", FriendsListFragment.class, args)));
+        IMrekMain.AddTab(this, this.mTabHost, this.mTabHost.newTabSpec("friends_list").setIndicator("Friends", res.getDrawable(R.drawable.icon_friends_list_tab)), ( tabInfo = new TabInfo("friends_list", FriendsListFragment.class, args)));
         this.mapTabInfo.put(tabInfo.tag, tabInfo);
         //IMrekMain.AddTab(this, this.mTabHost, this.mTabHost.newTabSpec("Tab3").setIndicator("Tab 3"), ( tabInfo = new TabInfo("Tab3", Tab3Fragment.class, args)));
         //this.mapTabInfo.put(tabInfo.tag, tabInfo);

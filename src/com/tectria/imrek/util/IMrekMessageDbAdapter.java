@@ -36,7 +36,7 @@ public class IMrekMessageDbAdapter {
 		dbhelper.close();
 	}
 	
-	public long addMessage(String channel_id, String username, String message) {
+	public long addMessage(long channel_id, String username, String message) {
 		ContentValues cv = new ContentValues();
 		cv.put(KEY_CHANNELID, channel_id);
 		cv.put(KEY_USERNAME, username);
@@ -47,15 +47,20 @@ public class IMrekMessageDbAdapter {
 	
 	public boolean removeMessage(long messageId) {
 		// TODO: cascade delete to any messages stored for this channel
-		return database.delete(DATABASE_TABLE, "_id = ?", new String[]{((Long)messageId).toString()}) > 0;
+		return database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)messageId).toString()}) > 0;
 	}
 	
-	public Cursor getMessagesForChannel(String channel_id) {
-		return database.query(DATABASE_TABLE, null, KEY_CHANNELID + " = ?", new String[]{channel_id}, null, null, null);
+	public Cursor getMessagesForChannel(long channel_id) {
+		return database.query(DATABASE_TABLE, null, KEY_CHANNELID + " = ?", new String[]{((Long)channel_id).toString()}, null, null, null);
 	}
 	
-	public Cursor getMessagesSince(String channel_id, String messageId) {
-		return database.query(DATABASE_TABLE, null, KEY_CHANNELID + " = ? AND " + KEY_CHANNELID + " > ? ", new String[]{channel_id, messageId}, null, null, null);
+	public Cursor getMessagesSince(long channel_id, Long messageId) {
+		return database.query(DATABASE_TABLE, null, KEY_CHANNELID + " = ? AND " + KEY_ID + " > ? ", new String[]{((Long)channel_id).toString(), messageId.toString()}, null, null, null);
 	}
+	
+	public boolean clearChannel(long channel_id) {
+		return database.delete(DATABASE_TABLE, KEY_CHANNELID + " = ? ", new String[]{((Long)channel_id).toString()}) > 0;
+	}
+	
 	
 }

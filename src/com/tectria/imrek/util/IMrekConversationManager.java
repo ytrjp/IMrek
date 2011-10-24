@@ -13,13 +13,14 @@ public class IMrekConversationManager {
 	private IMrekChannelDbAdapter channelAdapter;
 	private IMrekMessageDbAdapter messageAdapter;
 	private HashMap<String, Long> lastMessageMap;		// Keep a map of the last message ID for each channel
-	
+	private IMrekNotificationManager notificationManager;
 	protected IMrekConversationManager(Context ctx) {
 		this.context = ctx;
 		channelAdapter = new IMrekChannelDbAdapter(this.context);
 		channelAdapter.open();
 		messageAdapter = new IMrekMessageDbAdapter(this.context);
 		messageAdapter.open();
+		notificationManager = IMrekNotificationManager.getInstance(this.context);
 		lastMessageMap = new HashMap<String, Long>();
 	}
 	

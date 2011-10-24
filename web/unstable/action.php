@@ -4,6 +4,11 @@ require_once 'config.php';
 require 'util.php';
 require_once 'BCrypt.class.php';
 
+if (!array_key_exists('action', $_POST)) {
+	echo json_encode(array("status"=>1, "message"=>"Invalid parameters"));
+	exit;
+}
+
 switch(intval($_POST['action'])) {
 	case 0:							// Register
 		// Make sure we have all tha paramters

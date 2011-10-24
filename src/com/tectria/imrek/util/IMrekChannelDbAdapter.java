@@ -45,7 +45,7 @@ public class IMrekChannelDbAdapter {
 			// is messed up.
 			return false;
 		}
-		return database.delete(DATABASE_TABLE, "channel_name = ?", new String[]{channel_name}) > 0;
+		return database.delete(DATABASE_TABLE, KEY_CHANNELNAME + " = ?", new String[]{channel_name}) > 0;
 	}
 	
 	public Cursor getChannels() {
@@ -53,7 +53,7 @@ public class IMrekChannelDbAdapter {
 	}
 	
 	public long getChannelId(String name) {
-		Cursor c = database.query(DATABASE_TABLE, new String[]{"_id"}, "channel_name = ? ", new String[]{name}, null, null, null);
+		Cursor c = database.query(DATABASE_TABLE, new String[]{KEY_ID}, KEY_CHANNELNAME + " = ? ", new String[]{name}, null, null, null);
 		if (!c.moveToFirst()) {
 			// if there's no results or an error, return -1
 			return -1;
@@ -62,4 +62,12 @@ public class IMrekChannelDbAdapter {
 		return c.getLong(0);
 	}
 	
+	public String getChannelName(long id) {
+		Cursor c = database.query(DATABASE_TABLE, new String[]{KEY_CHANNELNAME}, KEY_ID + " = ? ", new String[]{((Long)id).toString()}, null, null, null);
+		if (!c.moveToFirst()) {
+			// If it doesn't come up with anything, return null	
+			return null;
+		}
+		return c.getString(0);
+	}
 }

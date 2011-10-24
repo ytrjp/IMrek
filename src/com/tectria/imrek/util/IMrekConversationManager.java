@@ -14,6 +14,8 @@ public class IMrekConversationManager {
 	private IMrekMessageDbAdapter messageAdapter;
 	private HashMap<String, Long> lastMessageMap;		// Keep a map of the last message ID for each channel
 	private IMrekNotificationManager notificationManager;
+	private ArrayList<String> channelList;
+	
 	protected IMrekConversationManager(Context ctx) {
 		this.context = ctx;
 		channelAdapter = new IMrekChannelDbAdapter(this.context);
@@ -22,6 +24,11 @@ public class IMrekConversationManager {
 		messageAdapter.open();
 		notificationManager = IMrekNotificationManager.getInstance(this.context);
 		lastMessageMap = new HashMap<String, Long>();
+		channelList = new ArrayList<String>();
+		Cursor c = channelAdapter.getChannels();
+		while (c.moveToNext()) {
+			channelList.add(c.getString(c.getColumnIndex("channel_name")));
+		}
 	}
 	
 	// Get singleton instance
@@ -79,5 +86,18 @@ public class IMrekConversationManager {
 		}
 		c.close();
 		return msgs;
+	}
+	
+	public ArrayList<String> getChannelList() {
+		return channelList;
+	}
+	
+	public void updateChannelList() {
+		channelList = null;
+		channelList = new ArrayList<String>();
+		Cursor c = channelAdapter.getChannels();
+		while (c.moveToNext()) {
+			channelList.add(c.getString(c.getColumnIndex("channel_name")));
+		}
 	}
 }

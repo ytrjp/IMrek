@@ -50,9 +50,11 @@ public class IMrekConversationManager {
 		Cursor c = messageAdapter.getMessagesSince(channelAdapter.getChannelId(channel), lastMessageMap.get(channel));
 		ArrayList<String> msgs = new ArrayList<String>();
 		while (c.moveToNext()) {
-			msgs.add(c.getString(c.getColumnIndex("username")).toString().concat(c.getString(c.getColumnIndex("message"))));
+			msgs.add(c.getString(c.getColumnIndex("username")).toString() + ": " + c.getString(c.getColumnIndex("message")));
 		}
+		c.close();
 		if (msgs.size() == 0) {
+			
 			return null;
 		} else {
 			return msgs;
@@ -63,5 +65,19 @@ public class IMrekConversationManager {
 		// Remove messages from database
 		messageAdapter.clearChannel(channelAdapter.getChannelId(channel));
 		// TODO: clear messages on screen.
+	}
+	
+	public ArrayList<String> openChannelMessages(String channel) {
+		Cursor c = messageAdapter.openChannelMessages(channelAdapter.getChannelId(channel));
+		ArrayList<String> msgs = new ArrayList<String>();
+		for (int i = 0; i < 25; i++) {
+			if (!c.moveToNext()) {
+				c.close();
+				return msgs;
+			}
+			msgs.add(0, c.getString(c.getColumnIndex("username")).toString() + ": " + c.getString(c.getColumnIndex("message")));
+		}
+		c.close();
+		return msgs;
 	}
 }

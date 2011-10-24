@@ -62,5 +62,7 @@ public class IMrekMessageDbAdapter {
 		return database.delete(DATABASE_TABLE, KEY_CHANNELID + " = ? ", new String[]{((Long)channel_id).toString()}) > 0;
 	}
 	
-	
+	public Cursor openChannelMessages(long channel_id) {
+		return database.query(DATABASE_TABLE, null, KEY_CHANNELID + " = ? ", new String[]{((Long)channel_id).toString()}, null,null, KEY_CHANNELID + " DESC");
+	}
 }

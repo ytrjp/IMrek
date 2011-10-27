@@ -27,6 +27,10 @@ public class IMrekConversationManager {
 		while (c.moveToNext()) {
 			channelList.add(c.getString(c.getColumnIndex("channel_name")));
 		}
+		// Just for testing data
+		channelList.add("channel 1");
+		channelList.add("channel 2");
+		channelList.add("channel 3");
 	}
 	
 	// Get singleton instance
@@ -99,7 +103,10 @@ public class IMrekConversationManager {
 			}
 			c.close();
 		}
-		
+		// Just for testing
+		v.add("message 1");
+		v.add("message 2");
+		v.add("message 3");
 		return v;
 	}
 	

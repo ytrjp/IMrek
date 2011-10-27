@@ -1,7 +1,7 @@
 package com.tectria.imrek.util;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Vector;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -12,9 +12,8 @@ public class IMrekConversationManager {
 	private Context context;
 	private IMrekChannelDbAdapter channelAdapter;
 	private IMrekMessageDbAdapter messageAdapter;
-	private HashMap<String, Long> lastMessageMap;		// Keep a map of the last message ID for each channel
 	private IMrekNotificationManager notificationManager;
-	private ArrayList<String> channelList;
+	private Vector<String> channelList;
 	
 	protected IMrekConversationManager(Context ctx) {
 		this.context = ctx;
@@ -23,8 +22,7 @@ public class IMrekConversationManager {
 		messageAdapter = new IMrekMessageDbAdapter(this.context);
 		messageAdapter.open();
 		notificationManager = IMrekNotificationManager.getInstance(this.context);
-		lastMessageMap = new HashMap<String, Long>();
-		channelList = new ArrayList<String>();
+		channelList = new Vector<String>();
 		Cursor c = channelAdapter.getChannels();
 		while (c.moveToNext()) {
 			channelList.add(c.getString(c.getColumnIndex("channel_name")));
@@ -41,21 +39,17 @@ public class IMrekConversationManager {
 	
 	// Call when a new message comes in
 	// Pass channel/topic, message payload, and whether the channel is currently in focus
-	public void newMessageReceived(String channel, String payload, boolean inFocus) {
+	public void newMessageReceived(String channel, String payload) {
 		String[] message = payload.split(":", 1);
 		long msgId = messageAdapter.addMessage(channelAdapter.getChannelId(channel), message[0], message[1]);
-		// inFocus marks whether or not the channel the messages is being added to is currently in focus
-		if (inFocus) {
-			lastMessageMap.put(channel, msgId);
-		}
 		// TODO: add to conversation window
 	}
 	
 	// this should be called when a channel comes back into focus. Grabs messages
 	// from the database that have been added since the channel was last in focus. 
-	public ArrayList<String> getChannelUpdate(String channel) {
-		Cursor c = messageAdapter.getMessagesSince(channelAdapter.getChannelId(channel), lastMessageMap.get(channel));
-		ArrayList<String> msgs = new ArrayList<String>();
+	public Vector<String> getChannelUpdate(String channel, long lastMsgId) {
+		Cursor c = messageAdapter.getMessagesSince(channelAdapter.getChannelId(channel), lastMsgId);
+		Vector<String> msgs = new Vector<String>();
 		while (c.moveToNext()) {
 			msgs.add(c.getString(c.getColumnIndex("username")).toString() + ": " + c.getString(c.getColumnIndex("message")));
 		}
@@ -74,9 +68,9 @@ public class IMrekConversationManager {
 		// TODO: clear messages on screen.
 	}
 	
-	public ArrayList<String> openChannelMessages(String channel) {
+	public Vector<String> openChannelMessages(String channel) {
 		Cursor c = messageAdapter.openChannelMessages(channelAdapter.getChannelId(channel));
-		ArrayList<String> msgs = new ArrayList<String>();
+		Vector<String> msgs = new Vector<String>();
 		for (int i = 0; i < 25; i++) {
 			if (!c.moveToNext()) {
 				c.close();
@@ -88,13 +82,30 @@ public class IMrekConversationManager {
 		return msgs;
 	}
 	
-	public ArrayList<String> getChannelList() {
+	public Vector<String> getChannelList() {
 		return channelList;
+	}
+	
+	// TODO: get actual last messages
+	public Vector<String> getChannelsLastMessages() {
+		Vector<String> v = new Vector<String>();
+		
+		for (String channel : channelList) {
+			Cursor c = messageAdapter.getMessagesForChannel(channelAdapter.getChannelId(channel));
+			if (c.moveToFirst()) {
+				v.add(c.getString(c.getColumnIndex("username")).toString() + ": " + c.getString(c.getColumnIndex("message")));
+			} else {
+				v.add("");
+			}
+			c.close();
+		}
+		
+		return v;
 	}
 	
 	public void updateChannelList() {
 		channelList = null;
-		channelList = new ArrayList<String>();
+		channelList = new Vector<String>();
 		Cursor c = channelAdapter.getChannels();
 		while (c.moveToNext()) {
 			channelList.add(c.getString(c.getColumnIndex("channel_name")));

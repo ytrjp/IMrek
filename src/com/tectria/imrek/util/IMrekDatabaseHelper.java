@@ -8,9 +8,9 @@ public class IMrekDatabaseHelper extends SQLiteOpenHelper {
 
 	private static final String DATABASE_NAME = "IMrekdb";
 	private static final int DATABASE_VERSION = 2;
-	private static final String DATABASE_SQL1 = "CREATE TABLE channels (_id integer primary key autoincrement, "
+	private static final String DATABASE_SQL1 = "CREATE TABLE IF NOT EXISTS channels (_id integer primary key autoincrement, "
 						+ "channel_name text not null);";
-	private static final String DATABASE_SQL2 = "CREATE TABLE messages(_id integer primary key autoincrement, channel_id integer not null, "
+	private static final String DATABASE_SQL2 = "CREATE TABLE IF NOT EXISTS messages(_id integer primary key autoincrement, channel_id integer not null, "
 						+ "username text not null, message text not null, timestamp text not null);";
 	
 	

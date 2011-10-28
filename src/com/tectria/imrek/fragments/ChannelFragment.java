@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 public class ChannelFragment extends Fragment {
     
@@ -21,15 +22,13 @@ public class ChannelFragment extends Fragment {
 	View layout;
 	String topic;
 	ListView convo;
+	Vector<String> messages;
+	IMrekConversationManager cmanager;
 	
 	@Override
-	public void onCreate(Bundle savedInstance) {
-		super.onCreate(savedInstance);
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
 		
-	}
-	
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		context = getActivity().getApplicationContext();
 		Bundle args = this.getArguments();
 		topic = args.getString("topic");
@@ -43,6 +42,29 @@ public class ChannelFragment extends Fragment {
 			}
 		}
 		//Add appropriate handlers, etc here (to communicate with IMrekConversations)
+		
+		//Get Managers
+		cmanager = IMrekConversationManager.getInstance(getActivity().getBaseContext());
+		
+		//Get Messages
+		messages = cmanager.openChannelMessages(topic);
+		
+		//Add appropriate handlers, etc here (to communicate with IMrekChannels)
+	}
+	
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		
+		
+		layout = inflater.inflate(R.layout.f_channel, container, false);
+		
+		TextView text = (TextView)layout.findViewById(R.id.text);
+		
+		StringBuilder builder = new StringBuilder();
+		for(int i=0;i<messages.size();i++) {
+			builder.append(messages.get(i));
+		}
+		text.setText(builder.toString());
 		
 		return layout;
 	}

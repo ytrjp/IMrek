@@ -14,6 +14,7 @@ public class IMrekConversationManager {
 	private IMrekMessageDbAdapter messageAdapter;
 	private IMrekNotificationManager notificationManager;
 	private Vector<String> channelList;
+	private HashMap<String, Vector<String>> waitingMessages;
 	
 	protected IMrekConversationManager(Context ctx) {
 		this.context = ctx;
@@ -27,6 +28,9 @@ public class IMrekConversationManager {
 		while (c.moveToNext()) {
 			channelList.add(c.getString(c.getColumnIndex("channel_name")));
 		}
+		
+		waitingMessages = new HashMap<String, Vector<String>>();
+		
 		// Just for testing data
 		channelList.add("channel 1");
 		channelList.add("channel 2");
@@ -43,30 +47,34 @@ public class IMrekConversationManager {
 	
 	// Call when a new message comes in
 	// Pass channel/topic, message payload, and whether the channel is currently in focus
-	public void newMessageReceived(String channel, String payload) {
+	public synchronized void newMessageReceived(String channel, String payload) {
 		String[] message = payload.split(":", 1);
 		long msgId = messageAdapter.addMessage(channelAdapter.getChannelId(channel), message[0], message[1]);
+		if (waitingMessages.containsKey(channel)) {
+			Vector<String> v = waitingMessages.get(channel);
+			v.add(payload);
+			waitingMessages.put(channel, v);
+		} else {
+			Vector<String> v = new Vector<String>();
+			v.add(payload);
+			waitingMessages.put(channel, v);
+		}
 		// TODO: add to conversation window
 	}
 	
 	// this should be called when a channel comes back into focus. Grabs messages
 	// from the database that have been added since the channel was last in focus. 
-	public Vector<String> getChannelUpdate(String channel, long lastMsgId) {
-		Cursor c = messageAdapter.getMessagesSince(channelAdapter.getChannelId(channel), lastMsgId);
-		Vector<String> msgs = new Vector<String>();
-		while (c.moveToNext()) {
-			msgs.add(c.getString(c.getColumnIndex("username")).toString() + ": " + c.getString(c.getColumnIndex("message")));
+	public synchronized Vector<String> getChannelUpdate(String channel) {
+		if (waitingMessages.containsKey(channel)){
+			Vector<String> v = waitingMessages.get(channel);
+			waitingMessages.remove(channel);
+			return v;
 		}
-		c.close();
-		if (msgs.size() == 0) {
-			
-			return null;
-		} else {
-			return msgs;
-		}
+		return new Vector<String>();
+		
 	}
 	
-	public void clearChat(String channel) {
+	public synchronized void clearChat(String channel) {
 		// Remove messages from database
 		messageAdapter.clearChannel(channelAdapter.getChannelId(channel));
 		// TODO: clear messages on screen.

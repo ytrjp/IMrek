@@ -35,6 +35,7 @@ import com.tectria.imrek.fragments.FriendsListFragment;
 import com.tectria.imrek.util.IMrekMqttService;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 import com.tectria.imrek.util.TabPagerAdapter;
+import com.tectria.imrek.util.IMrekConversationManager;
 
 public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeListener, ViewPager.OnPageChangeListener {
 	
@@ -59,6 +60,9 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 	private Bundle extras;
 	private String user;
 	private String pass;
+	
+	// Managers
+	private IMrekConversationManager conversationManager;
 	
 	Messenger mService = null;
 	boolean isBound;
@@ -325,6 +329,7 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
         
         //Get our preference manager
         prefs = IMrekPreferenceManager.getInstance(this);
+        conversationManager = IMrekConversationManager.getInstance(this);
         
       //If we aren't logged in,
         if(!prefs.getLoggedIn()) {

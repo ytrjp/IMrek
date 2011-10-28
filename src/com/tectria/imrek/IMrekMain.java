@@ -32,6 +32,7 @@ import android.widget.TextView;
 
 import com.tectria.imrek.fragments.ChannelListFragment;
 import com.tectria.imrek.fragments.FriendsListFragment;
+import com.tectria.imrek.util.IMrekConversationManager;
 import com.tectria.imrek.util.IMrekMqttService;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 import com.tectria.imrek.util.TabPagerAdapter;
@@ -47,6 +48,7 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 	
 	//PreferenceManager + Preferences
 	private IMrekPreferenceManager prefs;
+	private IMrekConversationManager convo;
 	
 	//Views
 	private TextView status;
@@ -173,7 +175,7 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 		            		sendMessage(IMrekMqttService.MSG_RECONNECT, u, t);
 		            		break;
 		            	case IMrekMqttService.MQTT_PUBLISH_ARRIVED:
-		            		// TODO: Call conversation manager functions
+		            		convo.newMessageReceived(bundle.getString("data1"), bundle.getString("data2"));
 		            		break;
 		            	case IMrekMqttService.MQTT_PUBLISH_SENT:
 		            		// TODO: Call conversation manager functions
@@ -325,6 +327,7 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
         
         //Get our preference manager
         prefs = IMrekPreferenceManager.getInstance(this);
+        convo = IMrekConversationManager.getInstance(this);
         
       //If we aren't logged in,
         if(!prefs.getLoggedIn()) {

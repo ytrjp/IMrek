@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
+import android.app.Application;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -16,14 +17,17 @@ import android.view.Window;
 
 import com.tectria.imrek.fragments.ChannelFragment;
 import com.tectria.imrek.util.ChannelPagerAdapter;
+import com.tectria.imrek.util.IMrekConversationManager;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 
  public class IMrekChannels extends FragmentActivity {   
 	
 	IMrekPreferenceManager prefs;
 	private ChannelPagerAdapter pageradapter;
+	ViewPager pager;
 	Vector<String> channels;
 	List<Fragment> fragments;
+	IMrekConversationManager cmanager;
 	
 	//Bundle object to be reused
 	Bundle bundle;
@@ -34,7 +38,7 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
 	private void initializePaging() {
 		//Get a list of channels
 		//For now use this test list
-		channels = new Vector<String>(Arrays.asList("one", "two", "three"));
+		channels = cmanager.getChannelList();
 		
 		fragments = new Vector<Fragment>();
 		for(int i=0;i<channels.size();i++) {
@@ -43,7 +47,7 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
 			fragments.add(Fragment.instantiate(this, ChannelFragment.class.getName(), bundle));
 		}
 		pageradapter  = new ChannelPagerAdapter(super.getSupportFragmentManager(), fragments);
-		ViewPager pager = (ViewPager)super.findViewById(R.id.viewpager);
+		pager = (ViewPager)super.findViewById(R.id.viewpager);
 		pager.setAdapter(pageradapter);
 	}
 	
@@ -58,7 +62,6 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        //Request window feature for custom title
         requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
         setContentView(R.layout.channels);
         
@@ -67,8 +70,17 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
         
         //Get our preference manager
         prefs = IMrekPreferenceManager.getInstance(this);
+        cmanager = IMrekConversationManager.getInstance(getBaseContext());
         
         initializePaging();
+    }
+    
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        Bundle extras = intent.getExtras();
+        pager.setCurrentItem(extras.getInt("index"));
     }
  
     @Override

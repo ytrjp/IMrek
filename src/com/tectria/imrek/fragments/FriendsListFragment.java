@@ -1,48 +1,93 @@
 package com.tectria.imrek.fragments;
 
-import com.tectria.imrek.R;
-import com.tectria.imrek.R.id;
-import com.tectria.imrek.R.layout;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Vector;
 
-import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.support.v4.app.ListFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Toast;
+import android.widget.SimpleAdapter;
 
-public class FriendsListFragment extends Fragment {
+import com.tectria.imrek.R;
+import com.tectria.imrek.util.IMrekConversationManager;
+
+public class FriendsListFragment extends ListFragment {
 	
-	ListView list = null;
-	String[] test = {"1", "2"};
+	Context context;
+	View layout;
+	
+	//Data for the channel list
+	Vector<String> channels;
+	Vector<String> lastmessages;
+	String[] from;
+	int[] to;
+	ArrayList<HashMap<String, String>> items;
+	SimpleAdapter adapter;
+	//Reusable HashMap
+    HashMap<String, String> map;
+    IMrekConversationManager cmanager;
     
-    /** (non-Javadoc)
-	 * @see android.support.v4.app.Fragment#onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle)
-	 */
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
-		if (container == null) {
-            //Tab isnt seen so doesnt need to be created
-            return null;
-        }
-		LinearLayout llayout = (LinearLayout)inflater.inflate(R.layout.f_friends_list, container, false);
-		list = (ListView)llayout.findViewById(R.id.friendslist);
-        
-        list.setAdapter(new ArrayAdapter<String>(getActivity(), R.layout.item_friends_list, R.id.name, test));
-        
-        list.setOnItemClickListener(new OnItemClickListener() {
+    @Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		
+		context = getActivity().getApplicationContext();
+		//Get Managers
+		cmanager = IMrekConversationManager.getInstance(getActivity().getBaseContext());
+		
+		//Get these from the database
+		channels = cmanager.getChannelList();
+		lastmessages = cmanager.getChannelsLastMessages();
+		
+		//Item mapping
+        from = new String[] {"channel", "lastm"};
+        to = new int[] { R.id.channel, R.id.lastm };
 
-			@Override
-			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				Toast.makeText(getActivity().getApplicationContext(), test[position], Toast.LENGTH_SHORT).show();
+        //ArrayList of HashMaps for the adapter
+        items = new ArrayList<HashMap<String, String>>();
+        
+        for(int i = 0;i < channels.size(); i++) {
+        	map = new HashMap<String, String>();
+        	map.put("channel", channels.get(i));
+        	map.put("lastm", lastmessages.get(i));
+        	items.add(map);
+        }
+        
+        //TODO: Add appropriate handlers, etc (to communicate with IMrekConversations)
+        
+	}
+    
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		
+		layout = inflater.inflate(R.layout.f_channel_list, container, false);
+
+        //Pass ArrayList to adapter
+        adapter = new SimpleAdapter(context, items, R.layout.item_channel_list, from, to);
+        this.setListAdapter(adapter);
+		
+		return layout;
+	}
+	
+	public void addChannel(String channel, String lastm) {
+		map = new HashMap<String, String>();
+		map.put("channel", channel);
+		map.put("lastm", lastm);
+		items.add(map);
+		adapter.notifyDataSetChanged();
+	}
+	
+	public void removeChannel(String channel) {
+		for(int i=0;i<items.size();i++) {
+			if(items.get(i).containsValue(channel)) {
+				items.remove(i);
 			}
-        });
-		return llayout;
+		}
+		adapter.notifyDataSetChanged();
 	}
 }

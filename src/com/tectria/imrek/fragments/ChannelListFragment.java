@@ -1,17 +1,23 @@
 package com.tectria.imrek.fragments;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Vector;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
+import com.tectria.imrek.IMrekChannels;
 import com.tectria.imrek.R;
+import com.tectria.imrek.util.IMrekConversationManager;
 
 public class ChannelListFragment extends ListFragment {
 	
@@ -19,44 +25,64 @@ public class ChannelListFragment extends ListFragment {
 	View layout;
 	
 	//Data for the channel list
-	String[] channels;
-	String[] lastmessages;
+	Vector<String> channels;
+	Vector<String> lastmessages;
+	String[] from;
+	int[] to;
 	ArrayList<HashMap<String, String>> items;
 	SimpleAdapter adapter;
 	//Reusable HashMap
     HashMap<String, String> map;
+    IMrekConversationManager cmanager;
     
-	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		context = getActivity().getApplicationContext();
+    @Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
 		
-		layout = inflater.inflate(R.layout.f_channel_list, container, false);
+		context = getActivity().getApplicationContext();
+		//Get Managers
+		cmanager = IMrekConversationManager.getInstance(getActivity().getBaseContext());
 		
 		//Get these from the database
-		channels = new String[]{"one", "two", "three"};
-		lastmessages = new String[]{"lastone", "lasttwo", "lastthree"};
+		channels = cmanager.getChannelList();
+		lastmessages = cmanager.getChannelsLastMessages();
 		
 		//Item mapping
-        String[] from = new String[] {"channel", "lastm"};
-        int[] to = new int[] { R.id.channel, R.id.lastm };
+        from = new String[] {"channel", "lastm"};
+        to = new int[] { R.id.channel, R.id.lastm };
 
         //ArrayList of HashMaps for the adapter
         items = new ArrayList<HashMap<String, String>>();
         
-        for(int i = 0;i < channels.length; i++) {
+        for(int i = 0;i < channels.size(); i++) {
         	map = new HashMap<String, String>();
-        	map.put("channel", channels[i]);
-        	map.put("lastm", lastmessages[i]);
+        	map.put("channel", channels.get(i));
+        	map.put("lastm", lastmessages.get(i));
         	items.add(map);
         }
+        
+        //TODO: Add appropriate handlers, etc (to communicate with IMrekConversations)
+        
+	}
+    
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		
+		layout = inflater.inflate(R.layout.f_channel_list, container, false);
 
         //Pass ArrayList to adapter
         adapter = new SimpleAdapter(context, items, R.layout.item_channel_list, from, to);
         this.setListAdapter(adapter);
-        
-		//TODO: Add appropriate handlers, etc (to communicate with IMrekConversations)
 		
 		return layout;
+	}
+	
+	@Override
+	public void onListItemClick (ListView l, View v, int position, long id) {
+		Intent intent = new Intent(context, IMrekChannels.class);
+		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+		intent.putExtra("index", position);
+		startActivity(intent);
 	}
 	
 	public void addChannel(String channel, String lastm) {

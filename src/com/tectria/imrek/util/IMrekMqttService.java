@@ -53,11 +53,13 @@ public class IMrekMqttService extends Service {
     public static final int MQTT_PUBLISH_ARRIVED = 13; //We recieved a message
     public static final int MQTT_PUBLISH_SENT = 14; //We sent a message
     public static final int MQTT_SUBSCRIBE_SENT = 15; //We sent a subscribe to a topic
+    public static final int MQTT_UNSUBSCRIBE_SENT = 26; //We sent a unsubscribe to a topic
     
     public static final int MQTT_KEEPALIVE_FAILED = 16; //A keepalive failed to send. We may want to reconnect.
     public static final int MQTT_CONNECT_FAILED = 17; //A connect failed. Reconnect?
     public static final int MQTT_PUBLISH_FAILED = 18; //A publish failed
     public static final int MQTT_SUBSCRIBE_FAILED = 19; //A subscribe failed.
+    public static final int MQTT_UNSUBSCRIBE_FAILED = 27; //A unsubscribe failed.
     //This message is sent when a method of MQTTConnection that requires the network
     // is called while the connection is disconnected. This might be a good time to issue a reconnect
     public static final int MQTT_NO_CONNECTION = 20;
@@ -621,9 +623,9 @@ public class IMrekMqttService extends Service {
 				try {
 					client.subscribe(topics, MQTT_QUALITIES_OF_SERVICE);
 				} catch (MqttException e) {
-					sendMessage(MQTT_SUBSCRIBE_FAILED, topicName);
+					sendMessage(MQTT_UNSUBSCRIBE_FAILED, topicName);
 				}
-				sendMessage(MQTT_SUBSCRIBE_SENT, topicName);
+				sendMessage(MQTT_UNSUBSCRIBE_SENT, topicName);
 			}
 		}	
 		

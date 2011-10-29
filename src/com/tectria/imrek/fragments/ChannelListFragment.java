@@ -32,29 +32,14 @@ public class ChannelListFragment extends ListFragment {
 	SimpleAdapter adapter;
 	//Reusable HashMap
     HashMap<String, String> map;
-    IMrekConversationManager cmanager;
     
     @Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		context = getActivity().getApplicationContext();
-		//Get Managers
-		cmanager = IMrekConversationManager.getInstance(getActivity().getBaseContext());
 		
-		//Get these from the database
-		channels = cmanager.getChannelList();
-		lastmessages = cmanager.getChannelsLastMessages();
-
-        //ArrayList of HashMaps for the adapter
-        items = new ArrayList<HashMap<String, String>>();
-        
-        for(int i = 0;i < channels.size(); i++) {
-        	map = new HashMap<String, String>();
-        	map.put("channel", channels.get(i));
-        	map.put("lastm", lastmessages.get(i));
-        	items.add(map);
-        }
+		items = IMrekConversationManager.getInstance(getActivity().getBaseContext()).getChannelsLastMessages();
         
         //TODO: Add appropriate handlers, etc (to communicate with IMrekConversations)
         
@@ -64,10 +49,30 @@ public class ChannelListFragment extends ListFragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		
 		layout = inflater.inflate(R.layout.f_channel_list, container, false);
-
-        //Pass ArrayList to adapter
-        adapter = new SimpleAdapter(context, items, R.layout.item_channel_list, from, to);
-        this.setListAdapter(adapter);
+		
+		//if there is no list adapter
+		if(this.getListAdapter() == null) {
+	        
+	        //Get last 25 messages
+	        items = IMrekConversationManager.getInstance(getActivity().getBaseContext()).getChannelsLastMessages();
+			
+			//Create the adapter
+	        adapter = new SimpleAdapter(context, items, R.layout.item_channel_list, from, to);
+	        this.setListAdapter(adapter);
+			
+		//if we have a list adapter
+		} else {
+			//Fetch a channel update
+			ArrayList<HashMap<String, String>> v = cmanager.getChannelUpdate(topic);
+			
+			//Loop through new messages and add them to items
+			for(HashMap<String, String> map : v) {
+				items.add(map);
+			}
+			
+			//Notify the adapter that we added messages
+			adapter.notifyDataSetChanged();
+		}
 		
 		return layout;
 	}

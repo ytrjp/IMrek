@@ -7,16 +7,23 @@ import java.util.Vector;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnKeyListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
+import com.tectria.imrek.IMrekChannels;
 import com.tectria.imrek.R;
 import com.tectria.imrek.util.IMrekConversationManager;
+import com.tectria.imrek.util.IMrekMqttService;
 
 public class ChannelFragment extends ListFragment {
     
@@ -26,10 +33,10 @@ public class ChannelFragment extends ListFragment {
 	InputMethodManager imm;
 	
 	//List Adapter Stuff
-	String topic;
+	public String topic;
 	ArrayList<HashMap<String, String>> items;
-	final String[] to = new String[]{"message"};
-	final int[] from = new int[]{R.id.message};
+	final String[] to = new String[]{"name", "message"};
+	final int[] from = new int[]{R.id.name, R.id.message};
 	SimpleAdapter adapter;
     HashMap<String, String> map;
     
@@ -37,7 +44,17 @@ public class ChannelFragment extends ListFragment {
     View layout;
     TextView channel;
     ViewGroup viewContainer; //Allows us to access the main activity's window token, so save it
+    Button sendbutton;
+	EditText sendtext;
 	
+    public void setConnected() {
+    	sendbutton.setEnabled(true);
+    }
+	
+    public void setDisconnected() {
+    	sendbutton.setEnabled(false);
+    }
+    
 	@Override
 	public void onCreate(Bundle savedInstance) {
 		super.onCreate(savedInstance);
@@ -60,6 +77,31 @@ public class ChannelFragment extends ListFragment {
 		
 		//Get Views
 		channel = (TextView)layout.findViewById(R.id.channel);
+		sendbutton = (Button)layout.findViewById(R.id.sendbutton);
+		sendtext = (EditText)layout.findViewById(R.id.sendtext);
+		
+		//Set Some Handlers
+		sendbutton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if(sendtext.getText().toString() != "") {
+					((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString());
+					sendtext.setText("");
+				}
+			}
+		});
+		
+		sendtext.setOnKeyListener(new OnKeyListener() {
+			@Override
+			public boolean onKey(View v, int keyCode, KeyEvent event) {
+				if((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
+		        	((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString());
+		        	sendtext.setText("");
+		        	return true;
+		        }
+		        return false;
+			}
+		});
 		
 		//Set the channel name in the layout
 		channel.setText(topic);
@@ -68,15 +110,7 @@ public class ChannelFragment extends ListFragment {
 		if(this.getListAdapter() == null) {
 	        
 	        //Get last 25 messages
-	        Vector<String> v = cmanager.openChannelMessages(topic);
-	        
-	        //Put the messages in a hashmap
-			items = new ArrayList<HashMap<String, String>>();
-			for(int i = 0;i < v.size(); i++) {
-	        	map = new HashMap<String, String>();
-	        	map.put("message", v.get(i));
-	        	items.add(map);
-	        }
+	        items = cmanager.openChannelMessages(topic);
 			
 			//Create the adapter
 			adapter = new SimpleAdapter(context, items, R.layout.item_message, to, from);
@@ -85,12 +119,10 @@ public class ChannelFragment extends ListFragment {
 		//if we have a list adapter
 		} else {
 			//Fetch a channel update
-			Vector<String> v = IMrekConversationManager.getInstance(context).getChannelUpdate(topic);
+			ArrayList<HashMap<String, String>> v = cmanager.getChannelUpdate(topic);
 			
 			//Loop through new messages and add them to items
-			for(String s : v) {
-				map = new HashMap<String, String>();
-				map.put("message", s);
+			for(HashMap<String, String> map : v) {
 				items.add(map);
 			}
 			

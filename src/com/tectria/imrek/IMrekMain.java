@@ -48,7 +48,6 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 	
 	//PreferenceManager + Preferences
 	private IMrekPreferenceManager prefs;
-	private IMrekConversationManager convo;
 	
 	//Views
 	private TextView status;
@@ -61,9 +60,6 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 	private Bundle extras;
 	private String user;
 	private String pass;
-	
-	// Managers
-	private IMrekConversationManager conversationManager;
 	
 	Messenger mService = null;
 	boolean isBound;
@@ -152,20 +148,19 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 	            	int cmd = msg.arg1;
 	            	switch(cmd) {
 		            	case IMrekMqttService.MQTT_CONNECTED:
-		            		setUIConnected();
+		            		setConnected();
 		            		// TODO: Reconnect topics
 		            		// TODO: load friends list
 		            		break;
 		            	case IMrekMqttService.MQTT_CONNECTION_LOST:
-		            		setUIDisconnected();
+		            		setDisconnected();
 		            		// TODO: Clear friends / conversation list
 		            		break;
 		            	case IMrekMqttService.MQTT_DISCONNECTED:
-		            		setUIDisconnected();
+		            		setDisconnected();
 		            		// TODO: Clear friends / conversation list
 		            		break;
 		            	case IMrekMqttService.MSG_RECONNECT_CREDENTIALS:
-		            		//Call a reconnect with the most recent, most-probably-valid credentials we can.
 		            		//Call a reconnect with the most recent, most-probably-valid credentials we can.
 		            		String u = prefs.getUsername();
 		            		String t = prefs.getToken();
@@ -178,21 +173,25 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 		            		sendMessage(IMrekMqttService.MSG_RECONNECT, u, t);
 		            		break;
 		            	case IMrekMqttService.MQTT_PUBLISH_ARRIVED:
-		            		convo.newMessageReceived(bundle.getString("data1"), bundle.getString("data2"));
+		            		IMrekConversationManager.getInstance(getBaseContext()).newMessageReceived(bundle.getString("data1"), bundle.getString("data2"));
 		            		break;
 		            	case IMrekMqttService.MQTT_PUBLISH_SENT:
-		            		// TODO: Call conversation manager functions
+		            		// TODO: Check if we get an MQTT_PUBLISH_ARRIVED for our own messages
 		            		break;
 		            	case IMrekMqttService.MQTT_SUBSCRIBE_SENT:
-		            		// TODO: Call conversation manager functions
+		            		IMrekConversationManager.getInstance(getBaseContext()).addChannel(bundle.getString("data1"));
+		            		break;
+		            	case IMrekMqttService.MQTT_UNSUBSCRIBE_SENT:
+		            		IMrekConversationManager.getInstance(getBaseContext()).removeChannel(bundle.getString("data1"));
 		            		break;
 		            	case IMrekMqttService.MQTT_PUBLISH_FAILED:
 		            		// TODO: Call conversation manager functions
 		            		// TODO: Retry
 		            		break;
 		            	case IMrekMqttService.MQTT_SUBSCRIBE_FAILED:
-		            		// TODO: Call conversation manager functions
-		            		// TODO: Retry
+		            		// TODO: Retry?
+		            	case IMrekMqttService.MQTT_UNSUBSCRIBE_FAILED:
+		            		// TODO: Retry?
 		            		break;
 		            	case IMrekMqttService.MQTT_CONNECT_FAILED:
 		            		// TODO: Call conversation manager functions
@@ -330,7 +329,6 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
         
         //Get our preference manager
         prefs = IMrekPreferenceManager.getInstance(this);
-        convo = IMrekConversationManager.getInstance(this);
         
       //If we aren't logged in,
         if(!prefs.getLoggedIn()) {

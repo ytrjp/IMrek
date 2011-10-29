@@ -1,5 +1,6 @@
 package com.tectria.imrek.util;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -64,13 +65,21 @@ public class IMrekConversationManager {
 	
 	// this should be called when a channel comes back into focus. Grabs messages
 	// from the database that have been added since the channel was last in focus. 
-	public synchronized Vector<String> getChannelUpdate(String channel) {
+	public synchronized ArrayList<HashMap<String, String>> getChannelUpdate(String channel) {
 		if (waitingMessages.containsKey(channel)){
 			Vector<String> v = waitingMessages.get(channel);
+			ArrayList<HashMap<String, String>> msgs = new ArrayList<HashMap<String, String>>();
+			for (String s : v) {
+				HashMap<String, String> m = new HashMap<String, String>();
+				String[] str = s.split(":");
+				m.put("name", str[0]);
+				m.put("message", str[1]);
+				msgs.add(m);
+			}
 			waitingMessages.remove(channel);
-			return v;
+			return msgs;
 		}
-		return new Vector<String>();
+		return new ArrayList<HashMap<String, String>>();
 		
 	}
 	
@@ -80,15 +89,19 @@ public class IMrekConversationManager {
 		// TODO: clear messages on screen.
 	}
 	
-	public Vector<String> openChannelMessages(String channel) {
+	public ArrayList<HashMap<String, String>> openChannelMessages(String channel) {
 		Cursor c = messageAdapter.openChannelMessages(channelAdapter.getChannelId(channel));
-		Vector<String> msgs = new Vector<String>();
+		ArrayList<HashMap<String, String>> msgs = new ArrayList<HashMap<String, String>>();
 		for (int i = 0; i < 25; i++) {
 			if (!c.moveToNext()) {
 				c.close();
 				return msgs;
 			}
-			msgs.add(0, c.getString(c.getColumnIndex("username")).toString() + ": " + c.getString(c.getColumnIndex("message")));
+			HashMap<String, String> m = new HashMap<String, String>();
+			//.add(0, c.getString(c.getColumnIndex("username")).toString() + ": " + c.getString(c.getColumnIndex("message")));
+			m.put("name", c.getString(c.getColumnIndex("username")).toString());
+			m.put("message", c.getString(c.getColumnIndex("message")).toString());
+			msgs.add(0, m);
 		}
 		c.close();
 		return msgs;
@@ -99,23 +112,20 @@ public class IMrekConversationManager {
 	}
 	
 	// TODO: get actual last messages
-	public Vector<String> getChannelsLastMessages() {
-		Vector<String> v = new Vector<String>();
+	public ArrayList<HashMap<String, String>> getChannelsLastMessages() {
+		ArrayList<HashMap<String, String>> msgs = new ArrayList<HashMap<String, String>>();
 		
 		for (String channel : channelList) {
 			Cursor c = messageAdapter.getMessagesForChannel(channelAdapter.getChannelId(channel));
+			HashMap<String, String> m = new HashMap<String, String>();
 			if (c.moveToFirst()) {
-				v.add(c.getString(c.getColumnIndex("username")).toString() + ": " + c.getString(c.getColumnIndex("message")));
-			} else {
-				v.add("");
+				m.put("name", c.getString(c.getColumnIndex("username")).toString());
+				m.put("message", c.getString(c.getColumnIndex("message")).toString());
 			}
 			c.close();
+			msgs.add(m);
 		}
-		// Just for testing
-		v.add("message 1");
-		v.add("message 2");
-		v.add("message 3");
-		return v;
+		return msgs;
 	}
 	
 	public void updateChannelList() {
@@ -125,5 +135,13 @@ public class IMrekConversationManager {
 		while (c.moveToNext()) {
 			channelList.add(c.getString(c.getColumnIndex("channel_name")));
 		}
+	}
+	
+	public void addChannel(String channel_name) {
+		channelAdapter.addChannel(channel_name);
+	}
+	
+	public void removeChannel(String channel_name) {
+		channelAdapter.removeChannel(channel_name);
 	}
 }

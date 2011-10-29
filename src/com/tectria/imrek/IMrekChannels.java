@@ -1,10 +1,8 @@
 package com.tectria.imrek;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
-import android.app.Application;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;

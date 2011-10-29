@@ -36,7 +36,6 @@ import com.tectria.imrek.util.IMrekConversationManager;
 import com.tectria.imrek.util.IMrekMqttService;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 import com.tectria.imrek.util.TabPagerAdapter;
-import com.tectria.imrek.util.IMrekConversationManager;
 
 public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeListener, ViewPager.OnPageChangeListener {
 	

@@ -1,7 +1,6 @@
 package com.tectria.imrek.fragments;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -27,8 +26,8 @@ public class ChannelListFragment extends ListFragment {
 	//Data for the channel list
 	Vector<String> channels;
 	Vector<String> lastmessages;
-	String[] from;
-	int[] to;
+	final String[] from = new String[] {"channel", "lastm"};
+	final int[] to = new int[] { R.id.channel, R.id.lastm };
 	ArrayList<HashMap<String, String>> items;
 	SimpleAdapter adapter;
 	//Reusable HashMap
@@ -46,10 +45,6 @@ public class ChannelListFragment extends ListFragment {
 		//Get these from the database
 		channels = cmanager.getChannelList();
 		lastmessages = cmanager.getChannelsLastMessages();
-		
-		//Item mapping
-        from = new String[] {"channel", "lastm"};
-        to = new int[] { R.id.channel, R.id.lastm };
 
         //ArrayList of HashMaps for the adapter
         items = new ArrayList<HashMap<String, String>>();

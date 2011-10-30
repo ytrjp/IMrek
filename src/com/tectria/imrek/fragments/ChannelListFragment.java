@@ -8,9 +8,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
@@ -24,8 +29,6 @@ public class ChannelListFragment extends ListFragment {
 	View layout;
 	
 	//Data for the channel list
-	Vector<String> channels;
-	Vector<String> lastmessages;
 	final String[] from = new String[] {"channel", "lastm"};
 	final int[] to = new int[] { R.id.channel, R.id.lastm };
 	ArrayList<HashMap<String, String>> items;
@@ -38,43 +41,48 @@ public class ChannelListFragment extends ListFragment {
 		super.onCreate(savedInstanceState);
 		
 		context = getActivity().getApplicationContext();
-		
 		items = IMrekConversationManager.getInstance(getActivity().getBaseContext()).getChannelsLastMessages();
         
         //TODO: Add appropriate handlers, etc (to communicate with IMrekConversations)
-        
 	}
     
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		
+		registerForContextMenu(getListView());
+		
 		layout = inflater.inflate(R.layout.f_channel_list, container, false);
 		
-		//if there is no list adapter
-		if(this.getListAdapter() == null) {
-	        
-	        //Get last 25 messages
-	        items = IMrekConversationManager.getInstance(getActivity().getBaseContext()).getChannelsLastMessages();
-			
-			//Create the adapter
-	        adapter = new SimpleAdapter(context, items, R.layout.item_channel_list, from, to);
-	        this.setListAdapter(adapter);
-			
-		//if we have a list adapter
-		} else {
-			//Fetch a channel update
-			ArrayList<HashMap<String, String>> v = cmanager.getChannelUpdate(topic);
-			
-			//Loop through new messages and add them to items
-			for(HashMap<String, String> map : v) {
-				items.add(map);
-			}
-			
-			//Notify the adapter that we added messages
-			adapter.notifyDataSetChanged();
-		}
+        //Get channels
+        items = IMrekConversationManager.getInstance(getActivity().getBaseContext()).getChannelsLastMessages();
+		
+		//Create the adapter
+        adapter = new SimpleAdapter(context, items, R.layout.item_channel_list, from, to);
+        this.setListAdapter(adapter);
+        adapter.notifyDataSetChanged();
 		
 		return layout;
+	}
+	
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v,
+	                                ContextMenuInfo menuInfo) {
+	  super.onCreateContextMenu(menu, v, menuInfo);
+	  MenuInflater inflater = getActivity().getMenuInflater();
+	  inflater.inflate(R.menu.channel_item, menu);
+	}
+	
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+		if(item.getItemId() == R.id.close) {
+			IMrekConversationManager.getInstance(getActivity().getBaseContext()).removeChannel(items.get(info.position).get("channel"));
+			items.remove(info.position);
+			adapter.notifyDataSetChanged();
+		} else {
+			return super.onContextItemSelected(item);
+		}
+		return true;
 	}
 	
 	@Override

@@ -29,33 +29,15 @@ public class FriendsListFragment extends ListFragment {
 	SimpleAdapter adapter;
 	//Reusable HashMap
     HashMap<String, String> map;
-    IMrekConversationManager cmanager;
     
     @Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
 		context = getActivity().getApplicationContext();
-		//Get Managers
-		cmanager = IMrekConversationManager.getInstance(getActivity().getBaseContext());
 		
-		//Get these from the database
-		channels = cmanager.getChannelList();
-		lastmessages = cmanager.getChannelsLastMessages();
 		
-		//Item mapping
-        from = new String[] {"channel", "lastm"};
-        to = new int[] { R.id.channel, R.id.lastm };
-
-        //ArrayList of HashMaps for the adapter
-        items = new ArrayList<HashMap<String, String>>();
         
-        for(int i = 0;i < channels.size(); i++) {
-        	map = new HashMap<String, String>();
-        	map.put("channel", channels.get(i));
-        	map.put("lastm", lastmessages.get(i));
-        	items.add(map);
-        }
         
         //TODO: Add appropriate handlers, etc (to communicate with IMrekConversations)
         

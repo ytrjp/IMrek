@@ -3,8 +3,10 @@ package com.tectria.imrek;
 import java.util.List;
 import java.util.Vector;
 
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
@@ -46,6 +48,9 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
 	//Some Views
 	TextView status;
 	ImageView statusicon;
+	
+	//Dialogs
+	private AlertDialog.Builder quitDialog;
 	
 	Messenger mService = null;
 	boolean isBound;
@@ -325,17 +330,41 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
     
     @Override
 	public boolean onOptionsItemSelected(MenuItem mi) {
-		switch(mi.getItemId()) {
-			case R.id.preferences:
-				Intent prefIntent = new Intent(getBaseContext(), PreferenceScreen.class);
-				startActivity(prefIntent);
-				break;
-			case R.id.logout:
-				break;
-			case R.id.reconnect:
-				break;
-			case R.id.quit:
-				break;
+		if(mi.getItemId() == R.id.preferences) {
+			Intent prefIntent = new Intent(getBaseContext(), PreferenceScreen.class);
+			startActivity(prefIntent);
+		}
+		else if(mi.getItemId() == R.id.logout) {
+			prefs.setLoggedIn(false);
+			prefs.setAutoLogin(false);
+			Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
+			startActivity(intent);
+			finish();
+		}
+		else if(mi.getItemId() == R.id.reconnect) {
+			sendMessage(IMrekMqttService.MSG_RECONNECT, "Reconnect");
+		}
+		else if(mi.getItemId() == R.id.quit) {
+			quitDialog = new AlertDialog.Builder(this);
+			quitDialog.setMessage("Are you sure you want to quit? This will close IMrek and disconnect you from the server.");
+			quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					sendMessage(IMrekMqttService.MSG_STOP, "Quitting");
+					for(int i=0;i<fragments.size();i++) {
+            			((ChannelFragment) fragments.get(i)).setDisconnected();
+            		}
+					setUIDisconnected();
+					prefs.setLoggedIn(false);
+					finish();
+				}
+			}).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+			quitDialog.show();	
 		}
 		return true;
 	}

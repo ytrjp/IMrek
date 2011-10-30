@@ -73,7 +73,8 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 	 * Class for interacting with the main interface of the service.
 	 */
 	private ServiceConnection mConnection = new ServiceConnection() {
-	    public void onServiceConnected(ComponentName className, IBinder service) {
+	    @Override
+		public void onServiceConnected(ComponentName className, IBinder service) {
 	        // This is called when the connection with the service has been
 	        // established, giving us the service object we can use to
 	        // interact with the service.  We are communicating with our
@@ -97,7 +98,8 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 			}
 	    }
 
-	    public void onServiceDisconnected(ComponentName className) {
+	    @Override
+		public void onServiceDisconnected(ComponentName className) {
 	        // This is called when the connection with the service has been
 	        // unexpectedly disconnected -- that is, its process crashed.
 	        mService = null;
@@ -405,40 +407,38 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
     
     @Override
 	public boolean onOptionsItemSelected(MenuItem mi) {
-		switch(mi.getItemId()) {
-			case R.id.preferences:
-				Intent prefIntent = new Intent(getBaseContext(), PreferenceScreen.class);
-				startActivity(prefIntent);
-				break;
-			case R.id.logout:
-				prefs.setLoggedIn(false);
-				prefs.setAutoLogin(false);
-				Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
-				startActivity(intent);
-				finish();
-				break;
-			case R.id.reconnect:
-				sendMessage(IMrekMqttService.MSG_RECONNECT, "Reconnect");
-				break;
-			case R.id.quit:
-				quitDialog = new AlertDialog.Builder(this);
-				quitDialog.setMessage("Are you sure you want to quit? This will close IMrek and disconnect you from the server.");
-				quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						sendMessage(IMrekMqttService.MSG_STOP, "Quitting");
-						setDisconnected();
-						prefs.setLoggedIn(false);
-						finish();
-					}
-				}).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.dismiss();
-					}
-				});
-				quitDialog.show();
-				break;
+		if(mi.getItemId() == R.id.preferences) {
+			Intent prefIntent = new Intent(getBaseContext(), PreferenceScreen.class);
+			startActivity(prefIntent);
+		}
+		else if(mi.getItemId() == R.id.logout) {
+			prefs.setLoggedIn(false);
+			prefs.setAutoLogin(false);
+			Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
+			startActivity(intent);
+			finish();
+		}
+		else if(mi.getItemId() == R.id.reconnect) {
+			sendMessage(IMrekMqttService.MSG_RECONNECT, "Reconnect");
+		}
+		else if(mi.getItemId() == R.id.quit) {
+			quitDialog = new AlertDialog.Builder(this);
+			quitDialog.setMessage("Are you sure you want to quit? This will close IMrek and disconnect you from the server.");
+			quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					sendMessage(IMrekMqttService.MSG_STOP, "Quitting");
+					setDisconnected();
+					prefs.setLoggedIn(false);
+					finish();
+				}
+			}).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+				}
+			});
+			quitDialog.show();	
 		}
 		return true;
 	}
@@ -514,7 +514,8 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 	    /** (non-Javadoc)
 	     * @see android.widget.TabHost.TabContentFactory#createTabContent(java.lang.String)
 	     */
-	    public View createTabContent(String tag) {
+	    @Override
+		public View createTabContent(String tag) {
 	        View v = new View(mContext);
 	        v.setMinimumWidth(0);
 	        v.setMinimumHeight(0);
@@ -526,7 +527,8 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 	/** (non-Javadoc)
      * @see android.support.v4.app.FragmentActivity#onSaveInstanceState(android.os.Bundle)
      */
-    protected void onSaveInstanceState(Bundle outState) {
+    @Override
+	protected void onSaveInstanceState(Bundle outState) {
         outState.putString("tab", mTabHost.getCurrentTabTag()); //save the tab selected
         super.onSaveInstanceState(outState);
     }
@@ -584,6 +586,7 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
 	/** (non-Javadoc)
 	 * @see android.widget.TabHost.OnTabChangeListener#onTabChanged(java.lang.String)
 	 */
+	@Override
 	public void onTabChanged(String tag) {
 		//TabInfo newTab = this.mapTabInfo.get(tag);
 		int pos = this.mTabHost.getCurrentTab();

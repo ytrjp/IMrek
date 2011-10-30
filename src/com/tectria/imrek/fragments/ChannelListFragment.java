@@ -41,15 +41,12 @@ public class ChannelListFragment extends ListFragment {
 		super.onCreate(savedInstanceState);
 		
 		context = getActivity().getApplicationContext();
-		items = IMrekConversationManager.getInstance(getActivity().getBaseContext()).getChannelsLastMessages();
         
         //TODO: Add appropriate handlers, etc (to communicate with IMrekConversations)
 	}
     
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		
-		registerForContextMenu(getListView());
 		
 		layout = inflater.inflate(R.layout.f_channel_list, container, false);
 		
@@ -62,6 +59,13 @@ public class ChannelListFragment extends ListFragment {
         adapter.notifyDataSetChanged();
 		
 		return layout;
+	}
+	
+	@Override
+	public void onStart() {
+		super.onStart();
+		
+		registerForContextMenu(getListView());
 	}
 	
 	@Override

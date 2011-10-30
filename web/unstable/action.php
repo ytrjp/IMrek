@@ -32,7 +32,7 @@ switch(intval($_POST['action'])) {
 
 		// Make sure the username contains only valid characters
 		$chars = str_split("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_");
-		for ($i = 0; $i < strlen($_POST['username']); $i++) {
+		for ($i = 0; $i < $usernamelen; $i++) {
 			if (!in_array($_POST['username']{$i}, $chars)) {
 				echo json_encode(array("status"=>1, "message"=>"Invalid characters in username. Valid characters are alphanumeric and underscores ( _ )"));
 				exit;

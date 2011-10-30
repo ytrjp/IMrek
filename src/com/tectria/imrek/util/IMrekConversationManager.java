@@ -111,16 +111,17 @@ public class IMrekConversationManager {
 		return channelList;
 	}
 	
-	// TODO: get actual last messages
 	public ArrayList<HashMap<String, String>> getChannelsLastMessages() {
 		ArrayList<HashMap<String, String>> msgs = new ArrayList<HashMap<String, String>>();
 		
 		for (String channel : channelList) {
 			Cursor c = messageAdapter.getMessagesForChannel(channelAdapter.getChannelId(channel));
 			HashMap<String, String> m = new HashMap<String, String>();
+			m.put("channel", channel);
 			if (c.moveToFirst()) {
-				m.put("channel", channel);
 				m.put("message", c.getString(c.getColumnIndex("username")).toString() + ":"+c.getString(c.getColumnIndex("message")).toString());
+			} else {
+				m.put("message", "");
 			}
 			c.close();
 			msgs.add(m);

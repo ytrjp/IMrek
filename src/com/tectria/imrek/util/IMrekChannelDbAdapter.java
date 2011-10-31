@@ -32,12 +32,20 @@ public class IMrekChannelDbAdapter {
 	}
 	
 	public long addChannel(String channel_name) {
+		if (database == null || dbhelper == null) {
+			this.open();
+		}
 		ContentValues cv = new ContentValues();
 		cv.put(KEY_CHANNELNAME, channel_name);
-		return database.insert(DATABASE_TABLE, null, cv);
+		long id = database.insert(DATABASE_TABLE, null, cv);
+		this.close();
+		return id;
 	}
 	
 	public boolean removeChannel(String channel_name) {
+		if (database == null || dbhelper == null) {
+			this.open();
+		}
 		IMrekMessageDbAdapter messageAdapter = new IMrekMessageDbAdapter(this.context);
 		messageAdapter.open();
 		long id = getChannelId(channel_name);
@@ -47,29 +55,47 @@ public class IMrekChannelDbAdapter {
 			// is messed up.
 			return false;
 		}
-		return database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()}) > 0;
+		boolean ret = database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()}) > 0;
+		this.close();
+		return ret;
 	}
 	
 	public Cursor getChannels() {
-		return database.query(DATABASE_TABLE, null, null, null, null, null, null);
+		if (database == null || dbhelper == null) {
+			this.open();
+		}
+		Cursor c = database.query(DATABASE_TABLE, null, null, null, null, null, null);
+		this.close();
+		return c;
 	}
 	
 	public long getChannelId(String name) {
+		if (database == null || dbhelper == null) {
+			this.open();
+		}
 		Cursor c = database.query(DATABASE_TABLE, new String[]{KEY_ID}, KEY_CHANNELNAME + " = ? ", new String[]{name}, null, null, null);
 		if (!c.moveToFirst()) {
 			// if there's no results or an error, return -1
 			return -1;
 		}
-		
-		return c.getLong(0);
+		long i = c.getLong(c.getColumnIndex(KEY_ID));
+		c.close();
+		this.close();
+		return i;
 	}
 	
 	public String getChannelName(long id) {
+		if (database == null || dbhelper == null) {
+			this.open();
+		}
 		Cursor c = database.query(DATABASE_TABLE, new String[]{KEY_CHANNELNAME}, KEY_ID + " = ? ", new String[]{((Long)id).toString()}, null, null, null);
 		if (!c.moveToFirst()) {
 			// If it doesn't come up with anything, return null	
 			return null;
 		}
-		return c.getString(0);
+		String s = c.getString(0);
+		c.close();
+		this.close();
+		return s;
 	}
 }

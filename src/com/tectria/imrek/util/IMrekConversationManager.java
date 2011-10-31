@@ -140,6 +140,7 @@ public class IMrekConversationManager {
 	
 	public void addChannel(String channel_name) {
 		channelAdapter.addChannel(channel_name);
+		this.updateChannelList();
 	}
 	
 	public void removeChannel(String channel_name) {

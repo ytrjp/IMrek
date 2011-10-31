@@ -29,7 +29,7 @@ public class IMrekConversationManager {
 		while (c.moveToNext()) {
 			channelList.add(c.getString(c.getColumnIndex("channel_name")));
 		}
-		
+		c.close();
 		waitingMessages = new HashMap<String, Vector<String>>();
 		
 	}
@@ -132,6 +132,7 @@ public class IMrekConversationManager {
 		while (c.moveToNext()) {
 			channelList.add(c.getString(c.getColumnIndex("channel_name")));
 		}
+		c.close();
 	}
 	
 	public void addChannel(String channel_name) {

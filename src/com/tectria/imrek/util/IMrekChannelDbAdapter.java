@@ -40,13 +40,14 @@ public class IMrekChannelDbAdapter {
 	public boolean removeChannel(String channel_name) {
 		IMrekMessageDbAdapter messageAdapter = new IMrekMessageDbAdapter(this.context);
 		messageAdapter.open();
-		if (!messageAdapter.clearChannel(getChannelId(channel_name))) {
+		long id = getChannelId(channel_name);
+		if (!messageAdapter.clearChannel(id)) {
 			// return false if we can't clear the messages for the channel
 			// this likely means that the channel doesn't actually exist and something
 			// is messed up.
 			return false;
 		}
-		return database.delete(DATABASE_TABLE, KEY_CHANNELNAME + " = ?", new String[]{channel_name}) > 0;
+		return database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()}) > 0;
 	}
 	
 	public Cursor getChannels() {

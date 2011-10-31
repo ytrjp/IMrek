@@ -20,9 +20,7 @@ public class IMrekConversationManager {
 	protected IMrekConversationManager(Context ctx) {
 		this.context = ctx;
 		channelAdapter = new IMrekChannelDbAdapter(this.context);
-		channelAdapter.open();
 		messageAdapter = new IMrekMessageDbAdapter(this.context);
-		messageAdapter.open();
 		notificationManager = IMrekNotificationManager.getInstance(this.context);
 		channelList = new Vector<String>();
 		Cursor c = channelAdapter.getChannels();

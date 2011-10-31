@@ -127,12 +127,14 @@ public class IMrekPreferenceManager {
 	}
 	
 	public synchronized String getDeviceId() {
+		String id;
 		if (appSharedPrefs.contains("deviceid")) {
-			return appSharedPrefs.getString("deviceid", "");
+			id = appSharedPrefs.getString("deviceid", "");
+		} else {
+			id = Secure.getString(this.context.getContentResolver(), Secure.ANDROID_ID);
+			prefsEditor.putString("deviceid", id);
+			prefsEditor.commit();
 		}
-		String id = Secure.getString(this.context.getContentResolver(), Secure.ANDROID_ID);
-		prefsEditor.putString("deviceid", id);
-		prefsEditor.commit();
 		return id;
 	}
 	

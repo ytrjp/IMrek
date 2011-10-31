@@ -139,7 +139,7 @@ public class IMrekConversationManager {
 		this.updateChannelList();
 	}
 	
-	public void removeChannel(String channel_name) {
-		channelAdapter.removeChannel(channel_name);
+	public boolean removeChannel(String channel_name) {
+		return channelAdapter.removeChannel(channel_name);
 	}
 }

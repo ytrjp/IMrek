@@ -140,7 +140,7 @@ public class ChannelListFragment extends ListFragment {
 	public boolean onContextItemSelected(MenuItem item) {
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 		if(item.getItemId() == R.id.close) {
-			IMrekConversationManager.getInstance(getActivity().getBaseContext()).removeChannel(items.get(info.position).get("channel"));
+			boolean test = IMrekConversationManager.getInstance(getActivity().getBaseContext()).removeChannel(items.get(info.position).get("channel"));
 			items.remove(info.position);
 			adapter.notifyDataSetChanged();
 		} else {
@@ -155,22 +155,5 @@ public class ChannelListFragment extends ListFragment {
 		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 		intent.putExtra("index", position);
 		startActivity(intent);
-	}
-	
-	public void addChannel(String channel, String message) {
-		map = new HashMap<String, String>();
-		map.put("channel", channel);
-		map.put("message", message);
-		items.add(map);
-		adapter.notifyDataSetChanged();
-	}
-	
-	public void removeChannel(String channel) {
-		for(int i=0;i<items.size();i++) {
-			if(items.get(i).containsValue(channel)) {
-				items.remove(i);
-			}
-		}
-		adapter.notifyDataSetChanged();
 	}
 }

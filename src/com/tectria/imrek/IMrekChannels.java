@@ -331,7 +331,15 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
     			bundle.putString("topic", chan);
     			fragments.add(Fragment.instantiate(getBaseContext(), ChannelFragment.class.getName(), bundle));
     		}
+    	} 
+    	for(String chan : channels) {
+    		if(!newchannels.contains(chan)) {
+    			fragments.remove(channels.indexOf(chan));
+    			channels.remove(chan);
+    		}
     	}
+    	pageradapter.notifyDataSetChanged();
+		pager.refreshDrawableState();
 		pager.setCurrentItem(index);
 		
     }

@@ -58,7 +58,7 @@ public class IMrekChannelDbAdapter {
 		if (!c.moveToFirst()) {
 			// if there's no results or an error, return -1
 			return -1;
-		}
+		} 
 		
 		return c.getLong(0);
 	}

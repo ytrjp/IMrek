@@ -34,7 +34,7 @@ public class IMrekChannelDbAdapter {
 	}
 	
 	public long addChannel(String channel_name) {
-		if (database == null || dbhelper == null) {
+		if (!database.isOpen()) {
 			this.open();
 		}
 		ContentValues cv = new ContentValues();
@@ -45,7 +45,7 @@ public class IMrekChannelDbAdapter {
 	}
 	
 	public boolean removeChannel(String channel_name) {
-		if (database == null || dbhelper == null) {
+		if (!database.isOpen()) {
 			this.open();
 		}
 		IMrekMessageDbAdapter messageAdapter = new IMrekMessageDbAdapter(this.context);
@@ -63,7 +63,7 @@ public class IMrekChannelDbAdapter {
 	}
 	
 	public Cursor getChannels() {
-		if (database == null || dbhelper == null) {
+		if (!database.isOpen()) {
 			this.open();
 		}
 		Cursor c = database.query(DATABASE_TABLE, null, null, null, null, null, null);
@@ -72,7 +72,7 @@ public class IMrekChannelDbAdapter {
 	}
 	
 	public long getChannelId(String name) {
-		if (database == null || dbhelper == null) {
+		if (!database.isOpen()) {
 			this.open();
 		}
 		Cursor c = database.query(DATABASE_TABLE, new String[]{KEY_ID}, KEY_CHANNELNAME + " = ? ", new String[]{name}, null, null, null);
@@ -87,7 +87,7 @@ public class IMrekChannelDbAdapter {
 	}
 	
 	public String getChannelName(long id) {
-		if (database == null || dbhelper == null) {
+		if (!database.isOpen()) {
 			this.open();
 		}
 		Cursor c = database.query(DATABASE_TABLE, new String[]{KEY_CHANNELNAME}, KEY_ID + " = ? ", new String[]{((Long)id).toString()}, null, null, null);

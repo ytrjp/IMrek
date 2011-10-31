@@ -41,6 +41,7 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
 	ViewPager pager;
 	Vector<String> channels;
 	List<Fragment> fragments;
+	int index;
 	
 	//Bundle object to be reused
 	Bundle bundle;
@@ -283,6 +284,8 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
 		pageradapter  = new ChannelPagerAdapter(super.getSupportFragmentManager(), fragments);
 		pager = (ViewPager)super.findViewById(R.id.viewpager);
 		pager.setAdapter(pageradapter);
+		
+		pager.setCurrentItem(index);
 	}
 	
 	public void addConvo(String name) {
@@ -299,11 +302,15 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
         requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
         setContentView(R.layout.channels);
         
+        Bundle extras = getIntent().getExtras();
+        index = extras.getInt("index");
+        
         //Actually set a custom title using our XML
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.window_title);
         
         //Get views
         status = (TextView)findViewById(R.id.status);
+        statusicon = (ImageView)findViewById(R.id.statusicon);
         
         //Get our preference manager
         prefs = IMrekPreferenceManager.getInstance(getBaseContext());
@@ -314,11 +321,9 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
     }
     
     @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-        Bundle extras = intent.getExtras();
-        pager.setCurrentItem(extras.getInt("index"));
+    public void onPause() {
+    	super.onPause();
+    	finish();
     }
  
     @Override

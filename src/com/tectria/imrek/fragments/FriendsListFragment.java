@@ -48,9 +48,9 @@ public class FriendsListFragment extends ListFragment {
 		
 		layout = inflater.inflate(R.layout.f_channel_list, container, false);
 
-        //Pass ArrayList to adapter
+        /*//Pass ArrayList to adapter
         adapter = new SimpleAdapter(context, items, R.layout.item_channel_list, from, to);
-        this.setListAdapter(adapter);
+        this.setListAdapter(adapter);*/
 		
 		return layout;
 	}

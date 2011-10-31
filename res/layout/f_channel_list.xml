@@ -23,8 +23,7 @@
 			android:orientation="horizontal"
 			android:paddingTop="5dp">
 					
-			<ImageButton
-				android:id="@+id/newchannel" 
+			<ImageButton android:id="@+id/newchannel" 
 				android:scaleType="centerInside"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
@@ -39,8 +38,7 @@
 				android:layout_width="1dp"
 				android:background="#90AAAAAA"/>
 	        
-			<ImageButton 
-				android:id="@+id/removechannels"
+			<ImageButton android:id="@+id/removechannels"
 				android:scaleType="centerInside"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"

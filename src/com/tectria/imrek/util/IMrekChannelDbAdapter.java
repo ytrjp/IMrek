@@ -81,7 +81,7 @@ public class IMrekChannelDbAdapter {
 			return -1;
 		}
 		long i = c.getLong(c.getColumnIndex(KEY_ID));
-		c.close(); 
+		c.close();
 		this.close();
 		return i;
 	}

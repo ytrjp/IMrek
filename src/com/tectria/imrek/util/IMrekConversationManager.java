@@ -133,7 +133,7 @@ public class IMrekConversationManager {
 			channelList.add(c.getString(c.getColumnIndex("channel_name")));
 		}
 		c.close();
-	}
+	} 
 	
 	public void addChannel(String channel_name) {
 		channelAdapter.addChannel(channel_name);

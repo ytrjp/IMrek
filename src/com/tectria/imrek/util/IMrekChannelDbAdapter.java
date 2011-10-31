@@ -39,6 +39,7 @@ public class IMrekChannelDbAdapter {
 	
 	public boolean removeChannel(String channel_name) {
 		IMrekMessageDbAdapter messageAdapter = new IMrekMessageDbAdapter(this.context);
+		messageAdapter.open();
 		if (!messageAdapter.clearChannel(getChannelId(channel_name))) {
 			// return false if we can't clear the messages for the channel
 			// this likely means that the channel doesn't actually exist and something

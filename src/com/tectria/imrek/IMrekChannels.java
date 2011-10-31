@@ -321,9 +321,19 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
     }
     
     @Override
-    public void onPause() {
-    	super.onPause();
-    	finish();
+    public void onResume() {
+    	super.onResume();
+    	Vector<String> newchannels = IMrekConversationManager.getInstance(getBaseContext()).getChannelList();
+    	for(String chan : newchannels) {
+    		if(!channels.contains(chan)) {
+    			channels.add(chan);
+    			bundle = new Bundle();
+    			bundle.putString("topic", chan);
+    			fragments.add(Fragment.instantiate(getBaseContext(), ChannelFragment.class.getName(), bundle));
+    		}
+    	}
+		pager.setCurrentItem(index);
+		
     }
  
     @Override

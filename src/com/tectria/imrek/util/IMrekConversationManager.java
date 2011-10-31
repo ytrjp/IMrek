@@ -20,7 +20,9 @@ public class IMrekConversationManager {
 	protected IMrekConversationManager(Context ctx) {
 		this.context = ctx;
 		channelAdapter = new IMrekChannelDbAdapter(this.context);
+		channelAdapter.open();
 		messageAdapter = new IMrekMessageDbAdapter(this.context);
+		messageAdapter.open();
 		notificationManager = IMrekNotificationManager.getInstance(this.context);
 		channelList = new Vector<String>();
 		Cursor c = channelAdapter.getChannels();
@@ -83,7 +85,7 @@ public class IMrekConversationManager {
 		// TODO: clear messages on screen.
 	}
 	
-	public ArrayList<HashMap<String, String>> openChannelMessages(String channel) {
+	public synchronized ArrayList<HashMap<String, String>> openChannelMessages(String channel) {
 		Cursor c = messageAdapter.openChannelMessages(channelAdapter.getChannelId(channel));
 		ArrayList<HashMap<String, String>> msgs = new ArrayList<HashMap<String, String>>();
 		for (int i = 0; i < 25; i++) {
@@ -101,11 +103,11 @@ public class IMrekConversationManager {
 		return msgs;
 	}
 	
-	public Vector<String> getChannelList() {
+	public synchronized Vector<String> getChannelList() {
 		return channelList;
 	}
 	
-	public ArrayList<HashMap<String, String>> getChannelsLastMessages() {
+	public synchronized ArrayList<HashMap<String, String>> getChannelsLastMessages() {
 		ArrayList<HashMap<String, String>> msgs = new ArrayList<HashMap<String, String>>();
 		
 		for (String channel : channelList) {
@@ -123,7 +125,7 @@ public class IMrekConversationManager {
 		return msgs;
 	}
 	
-	public void updateChannelList() {
+	public synchronized void updateChannelList() {
 		channelList = null;
 		channelList = new Vector<String>();
 		Cursor c = channelAdapter.getChannels();
@@ -133,12 +135,12 @@ public class IMrekConversationManager {
 		c.close();
 	}
 	
-	public void addChannel(String channel_name) {
+	public synchronized void addChannel(String channel_name) {
 		channelAdapter.addChannel(channel_name);
 		this.updateChannelList();
 	}
 	
-	public boolean removeChannel(String channel_name) {
+	public synchronized boolean removeChannel(String channel_name) {
 		return channelAdapter.removeChannel(channel_name);
 	}
 }

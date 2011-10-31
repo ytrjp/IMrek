@@ -18,36 +18,34 @@ public class IMrekChannelDbAdapter {
 	
 	public IMrekChannelDbAdapter(Context context) {
 		this.context = context;
-		dbhelper = new IMrekDatabaseHelper(context);
-		database = dbhelper.getWritableDatabase();
 	}
 	
-	public IMrekChannelDbAdapter open() {
+	public synchronized IMrekChannelDbAdapter open() {
 		dbhelper = new IMrekDatabaseHelper(context);
 		database = dbhelper.getWritableDatabase();
 		return this;
 	}
 	
-	public void close() {
+	public synchronized void close() {
 		database.close();
 		dbhelper.close();
 	}
 	
-	public long addChannel(String channel_name) {
-		if (!database.isOpen()) {
-			this.open();
-		}
+	public synchronized long addChannel(String channel_name) {
+//		if (!database.isOpen()) {
+//			this.open();
+//		}
 		ContentValues cv = new ContentValues();
 		cv.put(KEY_CHANNELNAME, channel_name);
 		long id = database.insert(DATABASE_TABLE, null, cv);
-		this.close();
+//		this.close();
 		return id;
 	}
 	
-	public boolean removeChannel(String channel_name) {
-		if (!database.isOpen()) {
-			this.open();
-		}
+	public synchronized boolean removeChannel(String channel_name) {
+//		if (!database.isOpen()) {
+//			this.open();
+//		}
 		IMrekMessageDbAdapter messageAdapter = new IMrekMessageDbAdapter(this.context);
 		messageAdapter.open();
 		long id = getChannelId(channel_name);
@@ -58,23 +56,23 @@ public class IMrekChannelDbAdapter {
 			return false;
 		}
 		boolean ret = database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()}) > 0;
-		this.close();
+//		this.close();
 		return ret;
 	}
 	
-	public Cursor getChannels() {
-		if (!database.isOpen()) {
-			this.open();
-		}
+	public synchronized Cursor getChannels() {
+//		if (!database.isOpen()) {
+//			this.open();
+//		}
 		Cursor c = database.query(DATABASE_TABLE, null, null, null, null, null, null);
-		this.close();
+//		this.close();
 		return c;
 	}
 	
-	public long getChannelId(String name) {
-		if (!database.isOpen()) {
-			this.open();
-		}
+	public synchronized long getChannelId(String name) {
+//		if (!database.isOpen()) {
+//			this.open();
+//		}
 		Cursor c = database.query(DATABASE_TABLE, new String[]{KEY_ID}, KEY_CHANNELNAME + " = ? ", new String[]{name}, null, null, null);
 		if (!c.moveToFirst()) {
 			// if there's no results or an error, return -1
@@ -82,14 +80,14 @@ public class IMrekChannelDbAdapter {
 		}
 		long i = c.getLong(c.getColumnIndex(KEY_ID));
 		c.close();
-		this.close();
+//		this.close();
 		return i;
 	}
 	
-	public String getChannelName(long id) {
-		if (!database.isOpen()) {
-			this.open();
-		}
+	public synchronized String getChannelName(long id) {
+//		if (!database.isOpen()) {
+//			this.open();
+//		}
 		Cursor c = database.query(DATABASE_TABLE, new String[]{KEY_CHANNELNAME}, KEY_ID + " = ? ", new String[]{((Long)id).toString()}, null, null, null);
 		if (!c.moveToFirst()) {
 			// If it doesn't come up with anything, return null	
@@ -97,7 +95,7 @@ public class IMrekChannelDbAdapter {
 		}
 		String s = c.getString(0);
 		c.close();
-		this.close();
+//		this.close();
 		return s;
 	}
 }

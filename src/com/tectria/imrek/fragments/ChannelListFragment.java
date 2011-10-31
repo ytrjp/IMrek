@@ -145,7 +145,7 @@ public class ChannelListFragment extends ListFragment {
 			adapter.notifyDataSetChanged();
 		} else {
 			return super.onContextItemSelected(item);
-		}
+		} 
 		return true;
 	}
 	

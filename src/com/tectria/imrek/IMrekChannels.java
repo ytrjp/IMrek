@@ -274,7 +274,7 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
 		//Get a list of channels
 		//For now use this test list
 		channels = IMrekConversationManager.getInstance(getBaseContext()).getChannelList();
-		
+		 
 		fragments = new Vector<Fragment>();
 		for(int i=0;i<channels.size();i++) {
 			bundle = new Bundle();

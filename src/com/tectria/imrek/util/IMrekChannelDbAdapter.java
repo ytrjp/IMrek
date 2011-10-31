@@ -3,7 +3,9 @@ package com.tectria.imrek.util;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 public class IMrekChannelDbAdapter {
 
@@ -46,7 +48,7 @@ public class IMrekChannelDbAdapter {
 			// this likely means that the channel doesn't actually exist and something
 			// is messed up.
 			return false;
-		}
+		} 
 		return database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()}) > 0;
 	}
 	
@@ -60,7 +62,7 @@ public class IMrekChannelDbAdapter {
 			// if there's no results or an error, return -1
 			return -1;
 		} 
-		
+		long thing = c.getLong(0);
 		return c.getLong(0);
 	}
 	

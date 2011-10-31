@@ -20,6 +20,8 @@ public class IMrekChannelDbAdapter {
 	
 	public IMrekChannelDbAdapter(Context context) {
 		this.context = context;
+		dbhelper = new IMrekDatabaseHelper(context);
+		database = dbhelper.getWritableDatabase();
 	}
 	
 	public IMrekChannelDbAdapter open() {

@@ -32,10 +32,6 @@ public class IMrekConversationManager {
 		
 		waitingMessages = new HashMap<String, Vector<String>>();
 		
-		// Just for testing data
-		channelList.add("channel 1");
-		channelList.add("channel 2");
-		channelList.add("channel 3");
 	}
 	
 	// Get singleton instance

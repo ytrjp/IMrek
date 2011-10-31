@@ -399,6 +399,12 @@ public class IMrekMain extends FragmentActivity implements TabHost.OnTabChangeLi
     }
     
     @Override
+    public void onDestroy() {
+    	super.onDestroy();
+    	doUnbindService();
+    }
+    
+    @Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.main, menu);

@@ -42,7 +42,7 @@ public class IMrekChannelDbAdapter {
 		long id = database.insert(DATABASE_TABLE, null, cv);
 //		this.close();
 		return id;
-	}
+	} 
 	
 	public synchronized boolean removeChannel(String channel_name) {
 //		if (!database.isOpen()) {
@@ -55,9 +55,10 @@ public class IMrekChannelDbAdapter {
 			// return false if we can't clear the messages for the channel
 			// this likely means that the channel doesn't actually exist and something
 			// is messed up.
-			return false;
+			//return false;
 		}
 		boolean ret = database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()}) > 0;
+		database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()});
 //		this.close();
 		return ret;
 	}

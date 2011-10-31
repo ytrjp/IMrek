@@ -343,6 +343,12 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
 		pager.setCurrentItem(index);
 		
     }
+    
+    @Override
+    public void onDestroy() {
+    	super.onDestroy();
+    	doUnbindService();
+    }
  
     @Override
 	public boolean onCreateOptionsMenu(Menu menu) {

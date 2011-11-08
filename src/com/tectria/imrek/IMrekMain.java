@@ -234,7 +234,7 @@ public class IMrekMain extends ListActivity {
 		intent.putExtra("index", position);
 		startActivity(intent);
 	}
-    
+	
     @Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();

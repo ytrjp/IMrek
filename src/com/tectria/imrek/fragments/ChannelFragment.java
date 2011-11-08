@@ -85,7 +85,8 @@ public class ChannelFragment extends ListFragment {
 			@Override
 			public void onClick(View v) {
 				if(sendtext.getText().toString() != "") {
-					((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString());
+					//TODO: adapt for new messaging protocol
+					//((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString());
 					sendtext.setText("");
 				}
 			}
@@ -95,7 +96,8 @@ public class ChannelFragment extends ListFragment {
 			@Override
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				if((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
-		        	((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString());
+		        	//TODO: adapt for new messaging protocol
+					//((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString());
 		        	sendtext.setText("");
 		        	imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
 		        	return true;

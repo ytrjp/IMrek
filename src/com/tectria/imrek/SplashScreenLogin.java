@@ -269,7 +269,7 @@ public class SplashScreenLogin extends Activity {
     	            public void onSuccess(String strdata) {
     	                try {
     	                	JSONObject data = new JSONObject(strdata);
-    	                	if(data.getInt("status") == 1) {
+    	                	if(data.getInt("status") == 1) { 
     	                		makeLoginDialog();
     	    					Toast toast = Toast.makeText(getApplicationContext(), "Error: " + data.getString("message"), Toast.LENGTH_LONG);
     	    					toast.show();

@@ -97,6 +97,7 @@ public class ChannelFragment extends ListFragment {
 				if((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
 		        	((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString());
 		        	sendtext.setText("");
+		        	imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
 		        	return true;
 		        }
 		        return false;

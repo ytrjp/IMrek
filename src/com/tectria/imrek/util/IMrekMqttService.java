@@ -256,6 +256,7 @@ public class IMrekMqttService extends Service {
             	Bundle bundle = new Bundle();
 	            bundle.putString("data1", data1);
 	            bundle.putString("data2", data2);
+	            message.setData(bundle);
                 clients.get(i).send(message);
             } catch (RemoteException e) {
                 clients.remove(i); //Client is dead, remove it
@@ -273,6 +274,7 @@ public class IMrekMqttService extends Service {
 	            bundle.putString("data1", data1);
 	            bundle.putString("data2", data2);
 	            bundle.putString("data3", data3);
+	            message.setData(bundle);
                 clients.get(i).send(message);
             } catch (RemoteException e) {
                 clients.remove(i); //Client is dead, remove it

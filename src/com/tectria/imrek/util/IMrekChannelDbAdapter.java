@@ -42,25 +42,22 @@ public class IMrekChannelDbAdapter {
 		long id = database.insert(DATABASE_TABLE, null, cv);
 //		this.close();
 		return id;
-	}
+	} 
 	
 	public synchronized boolean removeChannel(String channel_name) {
-//		if (!database.isOpen()) {
-//			this.open();
-//		}
 		IMrekMessageDbAdapter messageAdapter = new IMrekMessageDbAdapter(this.context);
 		messageAdapter.open();
 		long id = getChannelId(channel_name);
-		if (!messageAdapter.clearChannel(id)) {
+/*		if (!messageAdapter.clearChannel(id)) {
 			// return false if we can't clear the messages for the channel
 			// this likely means that the channel doesn't actually exist and something
 			// is messed up.
 			return false;
-		}
+		}*/
 		boolean ret = database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()}) > 0;
-//		this.close();
+		database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()});
 		return ret;
-	}
+	} 
 	
 	public synchronized Cursor getChannels() {
 //		if (!database.isOpen()) {

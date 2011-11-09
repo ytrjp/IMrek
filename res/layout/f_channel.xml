@@ -22,8 +22,7 @@
 			android:orientation="horizontal"
 			android:paddingTop="5dp">
 					
-			<ImageButton
-				android:id="@+id/newchannel" 
+			<ImageButton android:id="@+id/closechannel" 
 				android:scaleType="centerInside"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
@@ -38,7 +37,7 @@
 			<View android:layout_height="fill_parent"
 				android:layout_width="1dp"
 				android:background="#90AAAAAA"
-				android:layout_toRightOf="@id/newchannel" />
+				android:layout_toRightOf="@id/closechannel" />
 			
 			<TextView android:id="@+id/channel"
 				android:layout_width="wrap_content"
@@ -48,8 +47,7 @@
 				android:layout_weight="3"
 				android:layout_centerInParent="true" />
 			
-			<ImageButton 
-				android:id="@+id/removechannels"
+			<ImageButton android:id="@+id/clearmessages"
 				android:scaleType="centerInside"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
@@ -65,7 +63,7 @@
 				android:layout_width="1dp"
 				android:background="#90AAAAAA"
 				android:layout_weight="0.3"
-				android:layout_toLeftOf="@id/removechannels" />
+				android:layout_toLeftOf="@id/clearmessages" />
 		</RelativeLayout>
 		
 		<LinearLayout

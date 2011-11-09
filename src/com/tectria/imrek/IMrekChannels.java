@@ -13,7 +13,10 @@ import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.Window;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -37,6 +40,8 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
 	//Some Views
 	TextView status;
 	ImageView statusicon;
+	ImageButton closechannel;
+	ImageButton clearmessages;
 	
 	//Dialogs
 	private AlertDialog.Builder quitDialog;
@@ -74,13 +79,6 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
 		pager.setCurrentItem(index);
 	}
 	
-	public void addConvo(String name) {
-		channels.add(name);
-		bundle = new Bundle();
-		bundle.putString("topic", name);
-		fragments.add(Fragment.instantiate(this, ChannelFragment.class.getName(), bundle));
-	}
-	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,6 +95,33 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
         //Get views
         status = (TextView)findViewById(R.id.status);
         statusicon = (ImageView)findViewById(R.id.statusicon);
+        closechannel = (ImageButton)findViewById(R.id.closechannel);
+        clearmessages = (ImageButton)findViewById(R.id.clearmessages);
+        
+        closechannel.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				int cur = pager.getCurrentItem();
+				if(cur - 1 >= 0) {
+					pager.setCurrentItem(cur - 1);
+					IMrekConversationManager.getInstance(getBaseContext()).removeChannel(channels.get(cur));
+					channels.remove(cur);
+				} else if (cur + 1 < fragments.size()) {
+					pager.setCurrentItem(cur + 1);
+					channels.remove(cur);
+				} else {
+					IMrekConversationManager.getInstance(getBaseContext()).removeChannel(channels.get(cur));
+					finish();
+				}
+			}
+        });
+        
+        clearmessages.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				IMrekConversationManager.getInstance(getBaseContext()).clearChat(channels.get(pager.getCurrentItem()));
+			}
+        });
         
         //Get our preference manager
         prefs = IMrekPreferenceManager.getInstance(getBaseContext());

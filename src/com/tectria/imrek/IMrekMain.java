@@ -96,7 +96,9 @@ public class IMrekMain extends ListActivity {
         imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         context = this;
         
-      //If we aren't logged in,
+        //TODO: Wherever you initialize the broadcast receiver setup, you need to send a message telling the service to connect immediately after initialization.
+        
+        //If we aren't logged in,
         if(!prefs.getLoggedIn()) {
         	//Credentials aren't yet verified
         	prefs.setVerified(false);
@@ -169,55 +171,59 @@ public class IMrekMain extends ListActivity {
         newchannel.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				dialogview = inflater.inflate(R.layout.dialog_newchannel, null);
-		    	dialog = new AlertDialog.Builder(context);
-		    	dialog.setTitle("Create Channel");
-		    	dialog.setView(dialogview);
-		    	
-		    	final EditText channelname = (EditText)dialogview.findViewById(R.id.channelname);
-		    	
-		    	dialog.setPositiveButton("Create", new DialogInterface.OnClickListener() {
-		    		@Override
-					public void onClick(final DialogInterface dialog, int id) {
-		    			
-		    			boolean exists = false;
-		    			for(HashMap<String, String> map : items) {
-		    				if(map.get("channel").equals(channelname.getText().toString())) {
-		    					exists = true;
-		    					break;
-		    				}
-		    			}
-		    			
-		    			if(channelname.getText().toString() != "" && !exists) {
-		    				IMrekConversationManager.getInstance(getBaseContext()).addChannel(channelname.getText().toString());
-		    				HashMap<String, String> map = new HashMap<String, String>();
-		    				map.put("channel", channelname.getText().toString());
-		    				map.put("message", "");
-		    				items.add(map);
-		    				adapter.notifyDataSetChanged();
-		    			}
-		    			dialog.dismiss();
-		           }
-		        });
-		    	dialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-		    		@Override
-					public void onClick(final DialogInterface dialog, int id) {
-		    			dialog.dismiss();
-		           }
-		        });
-		    	
-		    	channelname.setOnKeyListener(new OnKeyListener() {
-					@Override
-					public boolean onKey(View v, int keyCode, KeyEvent event) {
-						if((event.getAction() == KeyEvent.ACTION_DOWN) && ((keyCode == KeyEvent.KEYCODE_ENTER) || (keyCode == KeyEvent.KEYCODE_TAB)
-								|| (keyCode == KeyEvent.KEYCODE_SPACE))) {
-				        	return true;
-				        }
-				        return false;
-					}
-				});
-		    	
-		    	dialog.show();
+				if(prefs.getIsConnected()) {
+					dialogview = inflater.inflate(R.layout.dialog_newchannel, null);
+			    	dialog = new AlertDialog.Builder(context);
+			    	dialog.setTitle("Join/Create Channel");
+			    	dialog.setView(dialogview);
+			    	
+			    	final EditText channelname = (EditText)dialogview.findViewById(R.id.channelname);
+			    	
+			    	dialog.setPositiveButton("Join/Create", new DialogInterface.OnClickListener() {
+			    		@Override
+						public void onClick(final DialogInterface dialog, int id) {
+			    			
+			    			boolean exists = false;
+			    			for(HashMap<String, String> map : items) {
+			    				if(map.get("channel").equals(channelname.getText().toString())) {
+			    					exists = true;
+			    					break;
+			    				}
+			    			}
+			    			
+			    			if(channelname.getText().toString() != "" && !exists) {
+			    				IMrekConversationManager.getInstance(getBaseContext()).addChannel(channelname.getText().toString());
+			    				HashMap<String, String> map = new HashMap<String, String>();
+			    				map.put("channel", channelname.getText().toString());
+			    				map.put("message", "");
+			    				items.add(map);
+			    				adapter.notifyDataSetChanged();
+			    			}
+			    			dialog.dismiss();
+			           }
+			        });
+			    	dialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+			    		@Override
+						public void onClick(final DialogInterface dialog, int id) {
+			    			dialog.dismiss();
+			           }
+			        });
+			    	
+			    	channelname.setOnKeyListener(new OnKeyListener() {
+						@Override
+						public boolean onKey(View v, int keyCode, KeyEvent event) {
+							if((event.getAction() == KeyEvent.ACTION_DOWN) && ((keyCode == KeyEvent.KEYCODE_ENTER) || (keyCode == KeyEvent.KEYCODE_TAB)
+									|| (keyCode == KeyEvent.KEYCODE_SPACE))) {
+					        	return true;
+					        }
+					        return false;
+						}
+					});
+			    	
+			    	dialog.show();
+				} else {
+					disconnectedDialog("Disconnected", "You cannot create a new channel while disconnected.");
+				}
 			}
         });
     }
@@ -304,6 +310,17 @@ public class IMrekMain extends ListActivity {
 		return true;
 	}
     
+	public final void disconnectedDialog(String title, String text) {
+        	dialog = new AlertDialog.Builder(this);
+            TextView dialogText = new TextView(this);
+            dialogText.setText(text);
+            dialogText.setPadding(10, 10, 10, 10);
+            dialog.setView(dialogText);
+            dialog.setTitle(title);
+            dialog.create();
+            dialog.show();
+    }
+	
 	public void setConnected() {
 		prefs.setIsConnected(true);
     	setUIConnected();

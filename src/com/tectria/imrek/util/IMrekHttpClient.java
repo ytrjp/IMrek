@@ -6,8 +6,7 @@ import com.loopj.android.http.RequestParams;
 
 public class IMrekHttpClient {
 	
-	private static final String base_url = "http://broker.wilhall.com/unstable/action.php";
-	private static final String keepalive_url = "http://broker.wilhall.com:port/keepalive/";
+	private static final String base_url = "http://broker.wilhall.com/action.php";
 	private static AsyncHttpClient client = new AsyncHttpClient();
 	
 	private static void get(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
@@ -50,6 +49,6 @@ public class IMrekHttpClient {
 		params.put("username", username);
 		params.put("password", token);
 		params.put("action", "3");
-		get(keepalive_url, params, null);
+		get(base_url, params, null);
 	}
 }

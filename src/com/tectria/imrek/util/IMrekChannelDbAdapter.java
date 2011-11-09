@@ -48,7 +48,6 @@ public class IMrekChannelDbAdapter {
 		IMrekMessageDbAdapter messageAdapter = new IMrekMessageDbAdapter(this.context);
 		messageAdapter.open();
 		long id = getChannelId(channel_name);
-<<<<<<< HEAD
 /*		if (!messageAdapter.clearChannel(id)) {
 			// return false if we can't clear the messages for the channel
 			// this likely means that the channel doesn't actually exist and something
@@ -57,25 +56,6 @@ public class IMrekChannelDbAdapter {
 		}*/
 		boolean ret = database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()}) > 0;
 		database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()});
-=======
-		boolean ret;
-		if (!messageAdapter.clearChannel(id)) {
-			// return false if we can't clear the messages for the channel
-			// this likely means that the channel doesn't actually exist and something
-			// is messed up.
-<<<<<<< HEAD
-			//return false;
-		}
-		boolean ret = database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()}) > 0;
-		database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()});
-//		this.close();
-=======
-			ret = false;
-		} else {
-			ret = database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()}) > 0;
-		}
->>>>>>> 366bb21055bf1faa845666f2d5216b042ecb4235
->>>>>>> 2e9697a6a44caeb9eaa595748b4203aaacfc4489
 		return ret;
 	} 
 	

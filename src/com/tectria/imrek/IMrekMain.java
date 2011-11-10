@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.view.ContextMenu;
@@ -34,6 +35,7 @@ import android.widget.TabHost;
 import android.widget.TextView;
 
 import com.tectria.imrek.util.IMrekConversationManager;
+import com.tectria.imrek.util.IMrekMqttService;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class IMrekMain extends ListActivity {
@@ -60,6 +62,9 @@ public class IMrekMain extends ListActivity {
 	private Bundle extras;
 	private String user;
 	private String pass;
+	private MainServiceReceiver svcReceiver;
+	private boolean svcReceiverRegistered;
+	private static final String MESSAGE_RECEIVER_ACTION = "com.tectria.imrek.MESSAGE";
 	
 	ImageButton newchannel;
 	AlertDialog.Builder dialog;
@@ -96,7 +101,8 @@ public class IMrekMain extends ListActivity {
         inflater = (LayoutInflater)this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         context = this;
-        
+        svcReceiver = new MainServiceReceiver();
+        svcReceiverRegistered = false;
         //TODO: Wherever you initialize the broadcast receiver setup, you need to send a message telling the service to connect immediately after initialization.
         
         //If we aren't logged in,
@@ -231,6 +237,22 @@ public class IMrekMain extends ListActivity {
     }
     
     @Override
+    public void onResume() {
+    	if (!svcReceiverRegistered) {
+    		registerReceiver(svcReceiver, new IntentFilter(MESSAGE_RECEIVER_ACTION));
+    		svcReceiverRegistered = true;
+    	}
+    }
+    
+    @Override
+    public void onPause() {
+    	if (svcReceiverRegistered) {
+    		unregisterReceiver(svcReceiver);
+    		svcReceiverRegistered = false;
+    	}
+    }
+    
+    @Override
     public void onDestroy() {
     	super.onDestroy();
     }
@@ -312,6 +334,16 @@ public class IMrekMain extends ListActivity {
 		return true;
 	}
     
+	private void sendMessage(String arg1, String arg2, String arg3) {
+		Intent i = new Intent(context, IMrekMqttService.class);
+		Bundle b = new Bundle();
+		b.putString("arg1", arg1);
+		b.putString("arg2", arg2);
+		b.putString("arg3", arg3);
+		i.putExtras(b);
+		startService(i);
+	}
+	
 	public final void disconnectedDialog(String title, String text) {
         	dialog = new AlertDialog.Builder(this);
             TextView dialogText = new TextView(this);
@@ -345,7 +377,7 @@ public class IMrekMain extends ListActivity {
     	statusicon.setImageResource(R.drawable.icon_disconnected);
 	}
     
-    public class MainServiceReceiver extends BroadcastReceiver {
+    public static class MainServiceReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {

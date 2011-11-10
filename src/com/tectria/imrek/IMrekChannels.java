@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -25,6 +26,7 @@ import android.widget.TextView;
 import com.tectria.imrek.fragments.ChannelFragment;
 import com.tectria.imrek.util.ChannelPagerAdapter;
 import com.tectria.imrek.util.IMrekConversationManager;
+import com.tectria.imrek.util.IMrekMqttService;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class IMrekChannels extends FragmentActivity {   
@@ -47,7 +49,8 @@ public class IMrekChannels extends FragmentActivity {
 	
 	//Dialogs
 	private AlertDialog.Builder quitDialog;
-	
+	private ChannelsServiceReceiver svcReceiver;
+	private boolean svcReceiverRegistered;
 	public void setUIConnected() {
     	status.setTextColor(getResources().getColor(R.color.connectedColor));
 		status.setText("Connected");
@@ -100,6 +103,9 @@ public class IMrekChannels extends FragmentActivity {
         closechannel = (ImageButton)findViewById(R.id.closechannel);
         clearmessages = (ImageButton)findViewById(R.id.clearmessages);
         
+        svcReceiver = new ChannelsServiceReceiver();
+        svcReceiverRegistered = false;
+        
         closechannel.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -135,6 +141,10 @@ public class IMrekChannels extends FragmentActivity {
     @Override
     public void onResume() {
     	super.onResume();
+    	if (!svcReceiverRegistered) {
+    		registerReceiver(svcReceiver, new IntentFilter("com.tectria.imrek.MESSAGE"));
+    		svcReceiverRegistered = true;
+    	}
     	Vector<String> newchannels = IMrekConversationManager.getInstance(getBaseContext()).getChannelList();
     	for(String chan : newchannels) {
     		if(!channels.contains(chan)) {
@@ -160,6 +170,15 @@ public class IMrekChannels extends FragmentActivity {
     public void onDestroy() {
     	super.onDestroy();
     }
+    
+    @Override
+    public void onPause() {
+    	if (svcReceiverRegistered) {
+    		unregisterReceiver(svcReceiver);
+    		svcReceiverRegistered = false;
+    	}
+    }
+    
  
     @Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -211,7 +230,17 @@ public class IMrekChannels extends FragmentActivity {
 		return true;
 	}
     
-    public class ChannelsServiceReceiver extends BroadcastReceiver {
+    private void sendMessage(String arg1, String arg2, String arg3) {
+		Intent i = new Intent(getApplicationContext(), IMrekMqttService.class);
+		Bundle b = new Bundle();
+		b.putString("arg1", arg1);
+		b.putString("arg2", arg2);
+		b.putString("arg3", arg3);
+		i.putExtras(b);
+		startService(i);
+	}
+    
+    public static class ChannelsServiceReceiver extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {

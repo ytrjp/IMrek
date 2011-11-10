@@ -236,9 +236,10 @@ public class IMrekChannels extends FragmentActivity {
 		return true;
 	}
     
-    private void sendMessage(String arg1, String arg2, String arg3) {
+    private void sendMessage(int message_type, String arg1, String arg2, String arg3) {
 		Intent i = new Intent(getApplicationContext(), IMrekMqttService.class);
 		Bundle b = new Bundle();
+		b.putInt("message_type", message_type);
 		b.putString("arg1", arg1);
 		b.putString("arg2", arg2);
 		b.putString("arg3", arg3);

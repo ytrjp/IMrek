@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -46,6 +47,8 @@ public class ChannelFragment extends ListFragment {
     ViewGroup viewContainer; //Allows us to access the main activity's window token, so save it
     Button sendbutton;
 	EditText sendtext;
+	ImageButton clearmessages;
+	ImageButton closechannel;
 	
     public void setConnected() {
     	sendbutton.setEnabled(true);
@@ -79,6 +82,11 @@ public class ChannelFragment extends ListFragment {
 		channel = (TextView)layout.findViewById(R.id.channel);
 		sendbutton = (Button)layout.findViewById(R.id.sendbutton);
 		sendtext = (EditText)layout.findViewById(R.id.sendtext);
+		closechannel = (ImageButton)layout.findViewById(R.id.closechannel);
+        clearmessages = (ImageButton)layout.findViewById(R.id.clearmessages);
+        
+        closechannel.setOnClickListener(((IMrekChannels)getActivity()).cclistener);
+        clearmessages.setOnClickListener(((IMrekChannels)getActivity()).cmlistener);
 		
 		//Set Some Handlers
 		sendbutton.setOnClickListener(new OnClickListener() {

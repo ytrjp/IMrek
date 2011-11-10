@@ -135,52 +135,37 @@ public class IMrekMqttService extends Service {
     	return true;
     }
     
-    //TODO: Adapt this function fpr new messaging system
-    /*private void getCredentialsForReconnect() {
-    	boolean sent = false;
-    	//Send the message to every client, and try to get a valid connection
-        for(int i=clients.size()-1; i>=0; i--) {
-        	//Try to send the message
-            try {
-                clients.get(i).send(Message.obtain(null, MSG_RECONNECT_CREDENTIALS, cmd, 0, null));
-                sent = true;
-            } catch (RemoteException e) {
-                clients.remove(i); //Client is dead, remove it
-            }
-        }
-        //If our message isn't sent, then all clients are dead and the service is on it's own.
-        if(!sent) {
-        	if(validTokenCred(prefs.getLastUser(), prefs.getLastToken())) {
-        		//Try and validate the last login token. If this fails in any way, fall back on a fresh login with old credentials if possible
-                IMrekHttpClient.reconnect(prefs.getLastUser(), prefs.getLastToken(), prefs.getDeviceId(), new AsyncHttpResponseHandler() {
-                	@Override
-                    public void onFailure(Throwable error) {
-                		tryFreshLogin();
+    private void getCredentialsForReconnect() {
+    	if(validTokenCred(prefs.getLastUser(), prefs.getLastToken())) {
+    		//Try and validate the last login token. If this fails in any way, fall back on a fresh login with old credentials if possible
+            IMrekHttpClient.reconnect(prefs.getLastUser(), prefs.getLastToken(), prefs.getDeviceId(), new AsyncHttpResponseHandler() {
+            	@Override
+                public void onFailure(Throwable error) {
+            		tryFreshLogin();
+                }
+    			
+    			@Override
+                public void onSuccess(String strdata) {
+                    try {
+                    	JSONObject data = new JSONObject(strdata);
+                    	if(data.getInt("status") == 1) {
+                    		tryFreshLogin();
+        					return;
+                    	} else {
+                    		//We have a valid user/token combo. Cool.
+                    		prefs.setLoggedIn(true);
+                    		connect(prefs.getLastUser(), prefs.getLastToken());
+                    		return;
+                    	}
+                    } catch(JSONException e) {
+                        tryFreshLogin();
                     }
-        			
-        			@Override
-                    public void onSuccess(String strdata) {
-                        try {
-                        	JSONObject data = new JSONObject(strdata);
-                        	if(data.getInt("status") == 1) {
-                        		tryFreshLogin();
-            					return;
-                        	} else {
-                        		//We have a valid user/token combo. Cool.
-                        		prefs.setLoggedIn(true);
-                        		connect(prefs.getLastUser(), prefs.getLastToken());
-                        		return;
-                        	}
-                        } catch(JSONException e) {
-                            tryFreshLogin();
-                        }
-                    }
-                });
-        	} else {
-        		tryFreshLogin();
-        	}
-        }
-    }*/
+                }
+            });
+    	} else {
+    		tryFreshLogin();
+    	}
+    }
     
     private void tryFreshLogin() {
     	//If autologin is set, we can try and get a valid user/pass from the preferences
@@ -238,8 +223,7 @@ public class IMrekMqttService extends Service {
 			isStarted = true;
 			stopKeepAlives(); 
 			//Try and send a message to get new login credentials
-			//TODO: Uncomment this function after it is fixed
-			//getCredentialsForReconnect();
+			getCredentialsForReconnect();
 		} else {
 			//We're started now, to set started to true
 			prefs.setWasStarted(true);
@@ -362,8 +346,7 @@ public class IMrekMqttService extends Service {
 		 */
 		@Override
 		public void connectionLost() throws Exception {
-			//TODO: Adapt this
-			//sendMessage(MQTT_CONNECTION_LOST, "Connection Lost");
+			sendMessage(MQTT_CONNECTION_LOST, "Connection Lost", null, null);
 			stopKeepAlives();
 			// null itself
 			client = null;
@@ -377,8 +360,7 @@ public class IMrekMqttService extends Service {
 		 */
 		@Override
 		public void publishArrived(String topicName, byte[] payload, int qos, boolean retained) {
-			//TODO: Adapt this
-			//sendMessage(MQTT_PUBLISH_ARRIVED, topicName, new String(payload));
+			sendMessage(MQTT_PUBLISH_ARRIVED, topicName, new String(payload), null);
 		}  
 		
 		public void connect(String user, String pass) {
@@ -390,8 +372,7 @@ public class IMrekMqttService extends Service {
         		this.client = MqttClient.createMqttClient(this.connSpec, MQTT_PERSISTENCE);
 				this.client.connect(clientid, MQTT_CLEAN_START, MQTT_KEEP_ALIVE, user, pass);
 			} catch (Exception e) {
-				//TODO: Adapt this
-				//sendMessage(MQTT_CONNECT_FAILED, clientid, user, pass);
+				sendMessage(MQTT_CONNECT_FAILED, clientid, user, pass);
 				this.disconnect();
 				return;
 			}
@@ -407,8 +388,7 @@ public class IMrekMqttService extends Service {
 			
 			//Start the keep-alives
 			startKeepAlives();
-			//TODO: Adapt this
-			//sendMessage(MQTT_CONNECTED, this.clientid, this.user, this.pass);
+			sendMessage(MQTT_CONNECTED, this.clientid, this.user, this.pass);
 		}
 		
 		// Disconnect
@@ -419,8 +399,7 @@ public class IMrekMqttService extends Service {
 			} catch (MqttPersistenceException e) {
 				//Oops
 			}
-			//TODO: Adapt this
-			//sendMessage(MQTT_DISCONNECTED, this.clientid, this.user, this.pass);
+			sendMessage(MQTT_DISCONNECTED, this.clientid, this.user, this.pass);
 		}
 		
 		/*
@@ -430,19 +409,16 @@ public class IMrekMqttService extends Service {
 		public void subscribe(String topicName) {
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
-				//TODO: Adapt this
-				//sendMessage(MQTT_NO_CONNECTION, topicName);
+				sendMessage(MQTT_NO_CONNECTION, topicName, null, null);
 			} else {									
 				String[] topics = { topicName };
 				this.topics.add(topicName);
 				try {
 					this.client.subscribe(topics, MQTT_QUALITIES_OF_SERVICE);
 				} catch (MqttException e) {
-					//TODO: Adapt this
-					//sendMessage(MQTT_SUBSCRIBE_FAILED, topicName);
+					sendMessage(MQTT_SUBSCRIBE_FAILED, topicName, null, null);
 				}
-				//TODO: Adapt this
-				//sendMessage(MQTT_SUBSCRIBE_SENT, topicName);
+				sendMessage(MQTT_SUBSCRIBE_SENT, topicName, null, null);
 			}
 		}
 		
@@ -453,8 +429,7 @@ public class IMrekMqttService extends Service {
 		public void unsubscribe(String topicName) {
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
-				//TODO: Adapt this
-				//sendMessage(MQTT_NO_CONNECTION, topicName);
+				sendMessage(MQTT_NO_CONNECTION, topicName, null, null);
 			} else {									
 				String[] topics = { topicName };
 				if(this.topics.contains(topicName)) {
@@ -463,11 +438,9 @@ public class IMrekMqttService extends Service {
 				try {
 					client.subscribe(topics, MQTT_QUALITIES_OF_SERVICE);
 				} catch (MqttException e) {
-					//TODO: Adapt this
-					//sendMessage(MQTT_UNSUBSCRIBE_FAILED, topicName);
+					sendMessage(MQTT_UNSUBSCRIBE_FAILED, topicName, null, null);
 				}
-				//TODO: Adapt this
-				//sendMessage(MQTT_UNSUBSCRIBE_SENT, topicName);
+				sendMessage(MQTT_UNSUBSCRIBE_SENT, topicName, null, null);
 			}
 		}	
 		
@@ -478,16 +451,13 @@ public class IMrekMqttService extends Service {
 		public void publish(String topicName, String message) {		
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
-				//TODO: Adapt this
-				//sendMessage(MQTT_NO_CONNECTION, topicName, message);
+				sendMessage(MQTT_NO_CONNECTION, topicName, message, null);
 			} else {
 				try {
 					this.client.publish(topicName, message.getBytes(), MQTT_QUALITY_OF_SERVICE, MQTT_RETAINED_PUBLISH);
-					//TODO: Adapt this
-					//sendMessage(MQTT_PUBLISH_SENT, topicName, message);
+					sendMessage(MQTT_PUBLISH_SENT, topicName, message, null);
 				} catch (Exception e) {
-					//TODO: Adapt this
-					//sendMessage(MQTT_PUBLISH_FAILED, topicName, message);
+					sendMessage(MQTT_PUBLISH_FAILED, topicName, message, null);
 				}
 			}
 		}		
@@ -497,8 +467,7 @@ public class IMrekMqttService extends Service {
 				client.ping();
 				this.publish(mqtt.clientid + "/keepalive", mqtt.clientid);
 			} catch (MqttException e) {
-				//TODO: Adapt this
-				//sendMessage(MQTT_KEEPALIVE_FAILED, clientid, user, pass);
+				sendMessage(MQTT_KEEPALIVE_FAILED, clientid, user, pass);
 			}
 		}		
 	}

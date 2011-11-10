@@ -171,7 +171,8 @@ public class IMrekMain extends ListActivity {
         newchannel.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if(prefs.getIsConnected()) {
+				//TODO: Remove ! to reverse login later
+				if(!prefs.getIsConnected()) {
 					dialogview = inflater.inflate(R.layout.dialog_newchannel, null);
 			    	dialog = new AlertDialog.Builder(context);
 			    	dialog.setTitle("Join/Create Channel");

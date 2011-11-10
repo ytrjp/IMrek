@@ -295,9 +295,10 @@ public class IMrekMqttService extends Service {
 		}
 	}
 
-	private void sendMessage(int broadcastListener, String arg1, String arg2, String arg3) {
+	private void sendMessage(int message_type, String arg1, String arg2, String arg3) {
 		Intent i = new Intent(MESSAGE_RECEIVER_ACTION);
 		Bundle b = new Bundle();
+		b.putInt("message_type", message_type);
 		b.putString("arg1", arg1);
 		b.putString("arg2", arg2);
 		b.putString("arg3", arg3);

@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -342,4 +343,16 @@ public class IMrekMain extends ListActivity {
 		status.setText("Disconnected");
     	statusicon.setImageResource(R.drawable.icon_disconnected);
 	}
+    
+    public class MainServiceReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			Bundle b = intent.getExtras();
+			switch (b.getInt("msgtype")) {
+			
+			}
+		}
+    	
+    }
 }

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Vector;
 
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -25,7 +27,7 @@ import com.tectria.imrek.util.ChannelPagerAdapter;
 import com.tectria.imrek.util.IMrekConversationManager;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 
- public class IMrekChannels extends FragmentActivity {   
+public class IMrekChannels extends FragmentActivity {   
 	
 	IMrekPreferenceManager prefs;
 	private ChannelPagerAdapter pageradapter;
@@ -208,4 +210,17 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
 		}
 		return true;
 	}
+    
+    public class ChannelsServiceReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			Bundle b = intent.getExtras();
+			switch (b.getInt("msgtype")) {
+			
+			}
+		}
+    	
+    }
+    
 }

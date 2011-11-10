@@ -28,11 +28,6 @@ import com.ibm.mqtt.MqttSimpleCallback;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 
 public class IMrekMqttService extends Service {
-	
-	//Messenger Service
-    ArrayList<Messenger> clients = new ArrayList<Messenger>();
-    int cmd = 0;
-    String response;
 
     //msg.what commands
     public static final int MSG_REGISTER_CLIENT = 1;
@@ -97,189 +92,9 @@ public class IMrekMqttService extends Service {
 	//Interval to send keepalives
 	private static final long KEEP_ALIVE_INTERVAL = 1000 * 60 * 28;
     
-    /**
-     * Target we publish for clients to send messages to IncomingHandler.
-     */
-    final Messenger msgr = new Messenger(new IncomingHandler());
-    
-    /**
-     * Return interface for the msgr when a client binds to the service
-     */
-    @Override
-    public IBinder onBind(Intent intent) {
-        return msgr.getBinder();
-    }
-    
-    /**
-     * Handler of incoming messages from clients.
-     */
-    class IncomingHandler extends Handler {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MSG_REGISTER_CLIENT:
-                    clients.add(msg.replyTo);
-                    break;
-                case MSG_UNREGISTER_CLIENT:
-                    clients.remove(msg.replyTo);
-                    break;
-                case MSG_COMMAND:
-                	//What kind of command?
-                	//Determine, and set our response accordingly
-                    cmd = msg.arg1;
-                    response = null;
-                    Bundle bundle = msg.getData();
-                    switch(cmd) {
-	                	case MSG_CONNECT:
-	                		connect(bundle.getString("data1"), bundle.getString("data2"));
-	            			break;
-	                	case MSG_DISCONNECT:
-	                		disconnect();
-	            			break;
-	                	case MSG_RECONNECT:
-	                		reconnect(bundle.getString("data1"), bundle.getString("data2"));
-	            			break;
-	                	case MSG_STOP:
-	                		stop();
-	                		break;
-	                	case MQTT_SUBSCRIBE:
-	                		mqtt.subscribe(bundle.getString("data1"));
-	                		break;
-	                	case MQTT_UNSUBSCRIBE:
-	                		mqtt.unsubscribe(bundle.getString("data1"));
-	                		break;
-	                	case MQTT_PUBLISH:
-	                		mqtt.publish(bundle.getString("data1"), bundle.getString("data2"));
-	                		break;
-	                	case MQTT_SEND_KEEPALIVE:
-	                		mqtt.keepalive();
-	                		break;
-	            	}
-                    //If we need to respond
-                    if(response != null) {
-                    	//Send the message to every client (We should only have one, but we need to handle dead connections)
-                        for(int i=clients.size()-1; i>=0; i--) {
-                        	//Try to send the message
-                            try {
-                            	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
-                            	Bundle rbundle = new Bundle();
-                	            rbundle.putString("data1", response);
-                	            message.setData(rbundle);
-                                clients.get(i).send(message);
-                            } catch (RemoteException e) {
-                                clients.remove(i); //Client is dead, remove it
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    super.handleMessage(msg);
-            }
-        }
-        
-        @SuppressWarnings("unused")
-        private void sendMessage(int command, String data1) {
-        	//Send the message to every client (We should only have one, but we need to handle dead connections)
-            for(int i=clients.size()-1; i>=0; i--) {
-            	//Try to send the message
-                try {
-                	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
-                	Bundle bundle = new Bundle();
-    	            bundle.putString("data1", data1);
-    	            message.setData(bundle);
-                    clients.get(i).send(message);
-                } catch (RemoteException e) {
-                    clients.remove(i); //Client is dead, remove it
-                }
-            }
-		}
-		
-        @SuppressWarnings("unused")
-        private void sendMessage(int command, String data1, String data2) {
-        	//Send the message to every client (We should only have one, but we need to handle dead connections)
-            for(int i=clients.size()-1; i>=0; i--) {
-            	//Try to send the message
-                try {
-                	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
-                	Bundle bundle = new Bundle();
-    	            bundle.putString("data1", data1);
-    	            bundle.putString("data2", data2);
-    	            message.setData(bundle);
-                    clients.get(i).send(message);
-                } catch (RemoteException e) {
-                    clients.remove(i); //Client is dead, remove it
-                }
-            }
-		}
-		
-        @SuppressWarnings("unused")
-        private void sendMessage(int command, String data1, String data2, String data3) {
-        	//Send the message to every client (We should only have one, but we need to handle dead connections)
-            for(int i=clients.size()-1; i>=0; i--) {
-            	//Try to send the message
-                try {
-                	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
-                	Bundle bundle = new Bundle();
-    	            bundle.putString("data1", data1);
-    	            bundle.putString("data2", data2);
-    	            bundle.putString("data3", data3);
-    	            message.setData(bundle);
-                    clients.get(i).send(message);
-                } catch (RemoteException e) {
-                    clients.remove(i); //Client is dead, remove it
-                }
-            }
-		}
-    }
-    
-    private void sendMessage(int command, String data1) {
-    	//Send the message to every client (We should only have one, but we need to handle dead connections)
-        for(int i=clients.size()-1; i>=0; i--) {
-        	//Try to send the message
-            try {
-            	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
-            	Bundle bundle = new Bundle();
-	            bundle.putString("data1", data1);
-                clients.get(i).send(message);
-            } catch (RemoteException e) {
-                clients.remove(i); //Client is dead, remove it
-            }
-        }
-	}
-	
-    private void sendMessage(int command, String data1, String data2) {
-    	//Send the message to every client (We should only have one, but we need to handle dead connections)
-        for(int i=clients.size()-1; i>=0; i--) {
-        	//Try to send the message
-            try {
-            	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
-            	Bundle bundle = new Bundle();
-	            bundle.putString("data1", data1);
-	            bundle.putString("data2", data2);
-	            message.setData(bundle);
-                clients.get(i).send(message);
-            } catch (RemoteException e) {
-                clients.remove(i); //Client is dead, remove it
-            }
-        }
-	}
-	
-    private void sendMessage(int command, String data1, String data2, String data3) {
-    	//Send the message to every client (We should only have one, but we need to handle dead connections)
-        for(int i=clients.size()-1; i>=0; i--) {
-        	//Try to send the message
-            try {
-            	Message message = Message.obtain(null, MSG_RESPONSE, cmd, 0, null);
-            	Bundle bundle = new Bundle();
-	            bundle.putString("data1", data1);
-	            bundle.putString("data2", data2);
-	            bundle.putString("data3", data3);
-	            message.setData(bundle);
-                clients.get(i).send(message);
-            } catch (RemoteException e) {
-                clients.remove(i); //Client is dead, remove it
-            }
-        }
+	@Override
+	public IBinder onBind(Intent arg0) {
+		return null;
 	}
     
     private boolean validCred(String user, String pass) {
@@ -318,7 +133,8 @@ public class IMrekMqttService extends Service {
     	return true;
     }
     
-    private void getCredentialsForReconnect() {
+    //TODO: Adapt this function fpr new messaging system
+    /*private void getCredentialsForReconnect() {
     	boolean sent = false;
     	//Send the message to every client, and try to get a valid connection
         for(int i=clients.size()-1; i>=0; i--) {
@@ -362,7 +178,7 @@ public class IMrekMqttService extends Service {
         		tryFreshLogin();
         	}
         }
-    }
+    }*/
     
     private void tryFreshLogin() {
     	//If autologin is set, we can try and get a valid user/pass from the preferences
@@ -420,7 +236,8 @@ public class IMrekMqttService extends Service {
 			isStarted = true;
 			stopKeepAlives(); 
 			//Try and send a message to get new login credentials
-			getCredentialsForReconnect();
+			//TODO: Uncomment this function after it is fixed
+			//getCredentialsForReconnect();
 		} else {
 			//We're started now, to set started to true
 			prefs.setWasStarted(true);
@@ -533,7 +350,8 @@ public class IMrekMqttService extends Service {
 		 */
 		@Override
 		public void connectionLost() throws Exception {
-			sendMessage(MQTT_CONNECTION_LOST, "Connection Lost");
+			//TODO: Adapt this
+			//sendMessage(MQTT_CONNECTION_LOST, "Connection Lost");
 			stopKeepAlives();
 			// null itself
 			client = null;
@@ -547,7 +365,8 @@ public class IMrekMqttService extends Service {
 		 */
 		@Override
 		public void publishArrived(String topicName, byte[] payload, int qos, boolean retained) {
-			sendMessage(MQTT_PUBLISH_ARRIVED, topicName, new String(payload));
+			//TODO: Adapt this
+			//sendMessage(MQTT_PUBLISH_ARRIVED, topicName, new String(payload));
 		}  
 		
 		public void connect(String user, String pass) {
@@ -559,7 +378,8 @@ public class IMrekMqttService extends Service {
         		this.client = MqttClient.createMqttClient(this.connSpec, MQTT_PERSISTENCE);
 				this.client.connect(clientid, MQTT_CLEAN_START, MQTT_KEEP_ALIVE, user, pass);
 			} catch (Exception e) {
-				sendMessage(MQTT_CONNECT_FAILED, clientid, user, pass);
+				//TODO: Adapt this
+				//sendMessage(MQTT_CONNECT_FAILED, clientid, user, pass);
 				this.disconnect();
 				return;
 			}
@@ -575,7 +395,8 @@ public class IMrekMqttService extends Service {
 			
 			//Start the keep-alives
 			startKeepAlives();
-			sendMessage(MQTT_CONNECTED, this.clientid, this.user, this.pass);
+			//TODO: Adapt this
+			//sendMessage(MQTT_CONNECTED, this.clientid, this.user, this.pass);
 		}
 		
 		// Disconnect
@@ -586,7 +407,8 @@ public class IMrekMqttService extends Service {
 			} catch (MqttPersistenceException e) {
 				//Oops
 			}
-			sendMessage(MQTT_DISCONNECTED, this.clientid, this.user, this.pass);
+			//TODO: Adapt this
+			//sendMessage(MQTT_DISCONNECTED, this.clientid, this.user, this.pass);
 		}
 		
 		/*
@@ -596,16 +418,19 @@ public class IMrekMqttService extends Service {
 		public void subscribe(String topicName) {
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
-				sendMessage(MQTT_NO_CONNECTION, topicName);
+				//TODO: Adapt this
+				//sendMessage(MQTT_NO_CONNECTION, topicName);
 			} else {									
 				String[] topics = { topicName };
 				this.topics.add(topicName);
 				try {
 					this.client.subscribe(topics, MQTT_QUALITIES_OF_SERVICE);
 				} catch (MqttException e) {
-					sendMessage(MQTT_SUBSCRIBE_FAILED, topicName);
+					//TODO: Adapt this
+					//sendMessage(MQTT_SUBSCRIBE_FAILED, topicName);
 				}
-				sendMessage(MQTT_SUBSCRIBE_SENT, topicName);
+				//TODO: Adapt this
+				//sendMessage(MQTT_SUBSCRIBE_SENT, topicName);
 			}
 		}
 		
@@ -616,7 +441,8 @@ public class IMrekMqttService extends Service {
 		public void unsubscribe(String topicName) {
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
-				sendMessage(MQTT_NO_CONNECTION, topicName);
+				//TODO: Adapt this
+				//sendMessage(MQTT_NO_CONNECTION, topicName);
 			} else {									
 				String[] topics = { topicName };
 				if(this.topics.contains(topicName)) {
@@ -625,9 +451,11 @@ public class IMrekMqttService extends Service {
 				try {
 					client.subscribe(topics, MQTT_QUALITIES_OF_SERVICE);
 				} catch (MqttException e) {
-					sendMessage(MQTT_UNSUBSCRIBE_FAILED, topicName);
+					//TODO: Adapt this
+					//sendMessage(MQTT_UNSUBSCRIBE_FAILED, topicName);
 				}
-				sendMessage(MQTT_UNSUBSCRIBE_SENT, topicName);
+				//TODO: Adapt this
+				//sendMessage(MQTT_UNSUBSCRIBE_SENT, topicName);
 			}
 		}	
 		
@@ -638,13 +466,16 @@ public class IMrekMqttService extends Service {
 		public void publish(String topicName, String message) {		
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
-				sendMessage(MQTT_NO_CONNECTION, topicName, message);
+				//TODO: Adapt this
+				//sendMessage(MQTT_NO_CONNECTION, topicName, message);
 			} else {
 				try {
 					this.client.publish(topicName, message.getBytes(), MQTT_QUALITY_OF_SERVICE, MQTT_RETAINED_PUBLISH);
-					sendMessage(MQTT_PUBLISH_SENT, topicName, message);
+					//TODO: Adapt this
+					//sendMessage(MQTT_PUBLISH_SENT, topicName, message);
 				} catch (Exception e) {
-					sendMessage(MQTT_PUBLISH_FAILED, topicName, message);
+					//TODO: Adapt this
+					//sendMessage(MQTT_PUBLISH_FAILED, topicName, message);
 				}
 			}
 		}		
@@ -654,7 +485,8 @@ public class IMrekMqttService extends Service {
 				client.ping();
 				this.publish(mqtt.clientid + "/keepalive", mqtt.clientid);
 			} catch (MqttException e) {
-				sendMessage(MQTT_KEEPALIVE_FAILED, clientid, user, pass);
+				//TODO: Adapt this
+				//sendMessage(MQTT_KEEPALIVE_FAILED, clientid, user, pass);
 			}
 		}		
 	}

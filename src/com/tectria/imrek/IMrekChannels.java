@@ -3,6 +3,7 @@ package com.tectria.imrek;
 import java.util.List;
 import java.util.Vector;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -62,6 +63,35 @@ public class IMrekChannels extends FragmentActivity {
 		status.setText("Disconnected");
     	statusicon.setImageResource(R.drawable.icon_disconnected);
 	}
+    
+    public OnClickListener cclistener = new OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			int cur = pager.getCurrentItem();
+			if(cur - 1 >= 0) {
+				pager.setCurrentItem(cur - 1);
+				IMrekConversationManager.getInstance(getBaseContext()).removeChannel(channels.get(cur));
+				channels.remove(cur);
+				fragments.remove(cur);
+				pageradapter.notifyDataSetChanged();
+			} else if (cur + 1 < fragments.size()) {
+				pager.setCurrentItem(cur + 1);
+				channels.remove(cur);
+				fragments.remove(cur);
+				pageradapter.notifyDataSetChanged();
+			} else {
+				IMrekConversationManager.getInstance(getBaseContext()).removeChannel(channels.get(cur));
+				finish();
+			}
+		}
+    };
+    
+    public OnClickListener cmlistener = new OnClickListener() {
+		@Override
+		public void onClick(View v) {
+			IMrekConversationManager.getInstance(getBaseContext()).clearChat(channels.get(pager.getCurrentItem()));
+		}
+    };
 	    
 	/**
 	 * Initialize the fragments to be paged
@@ -100,29 +130,6 @@ public class IMrekChannels extends FragmentActivity {
         //Get views
         status = (TextView)findViewById(R.id.status);
         statusicon = (ImageView)findViewById(R.id.statusicon);
-        closechannel = (ImageButton)findViewById(R.id.closechannel);
-        clearmessages = (ImageButton)findViewById(R.id.clearmessages);
-        
-        svcReceiver = new ChannelsServiceReceiver();
-        svcReceiverRegistered = false;
-        
-        closechannel.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				int cur = pager.getCurrentItem();
-				if(cur - 1 >= 0) {
-					pager.setCurrentItem(cur - 1);
-					IMrekConversationManager.getInstance(getBaseContext()).removeChannel(channels.get(cur));
-					channels.remove(cur);
-				} else if (cur + 1 < fragments.size()) {
-					pager.setCurrentItem(cur + 1);
-					channels.remove(cur);
-				} else {
-					IMrekConversationManager.getInstance(getBaseContext()).removeChannel(channels.get(cur));
-					finish();
-				}
-			}
-        });
         
         clearmessages.setOnClickListener(new OnClickListener() {
 			@Override
@@ -130,7 +137,6 @@ public class IMrekChannels extends FragmentActivity {
 				IMrekConversationManager.getInstance(getBaseContext()).clearChat(channels.get(pager.getCurrentItem()));
 			}
         });
-        
         //Get our preference manager
         prefs = IMrekPreferenceManager.getInstance(getBaseContext());
         

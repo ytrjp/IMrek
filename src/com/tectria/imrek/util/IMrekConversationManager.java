@@ -137,10 +137,11 @@ public class IMrekConversationManager {
 	
 	public synchronized void addChannel(String channel_name) {
 		channelAdapter.addChannel(channel_name);
-		this.updateChannelList();
+		channelList.add(channel_name);
 	}
 	
 	public synchronized boolean removeChannel(String channel_name) {
+		channelList.remove(channelList.indexOf(channel_name));
 		return channelAdapter.removeChannel(channel_name);
 	}
 }

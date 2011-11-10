@@ -55,7 +55,6 @@ public class IMrekChannelDbAdapter {
 			return false;
 		}*/
 		boolean ret = database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()}) > 0;
-		database.delete(DATABASE_TABLE, KEY_ID + " = ?", new String[]{((Long)id).toString()});
 		return ret;
 	} 
 	

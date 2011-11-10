@@ -3,7 +3,6 @@ package com.tectria.imrek;
 import java.util.List;
 import java.util.Vector;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -45,13 +44,14 @@ public class IMrekChannels extends FragmentActivity {
 	//Some Views
 	TextView status;
 	ImageView statusicon;
-	ImageButton closechannel;
-	ImageButton clearmessages;
 	
 	//Dialogs
 	private AlertDialog.Builder quitDialog;
-	private ChannelsServiceReceiver svcReceiver;
+	
+	private BroadcastReceiver svcReceiver;
 	private boolean svcReceiverRegistered;
+	static final String MESSAGE_RECEIVER_ACTION = "com.tectria.imrek.MESSAGE";
+	
 	public void setUIConnected() {
     	status.setTextColor(getResources().getColor(R.color.connectedColor));
 		status.setText("Connected");
@@ -131,12 +131,6 @@ public class IMrekChannels extends FragmentActivity {
         status = (TextView)findViewById(R.id.status);
         statusicon = (ImageView)findViewById(R.id.statusicon);
         
-        clearmessages.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				IMrekConversationManager.getInstance(getBaseContext()).clearChat(channels.get(pager.getCurrentItem()));
-			}
-        });
         //Get our preference manager
         prefs = IMrekPreferenceManager.getInstance(getBaseContext());
         
@@ -148,7 +142,55 @@ public class IMrekChannels extends FragmentActivity {
     public void onResume() {
     	super.onResume();
     	if (!svcReceiverRegistered) {
-    		registerReceiver(svcReceiver, new IntentFilter("com.tectria.imrek.MESSAGE"));
+    		svcReceiver = new BroadcastReceiver() {
+
+    			@Override
+    			public void onReceive(Context context, Intent intent) {
+    				Bundle bundle = intent.getExtras();
+    				switch(bundle.getInt("msgtype")) {
+    		        	case IMrekMqttService.MQTT_CONNECTED:
+    		        		setUIConnected();
+    		        		for(int i=0;i<fragments.size();i++) {
+    		        			((ChannelFragment) fragments.get(i)).setConnected();
+    		        		}
+    		        		break;
+    		        	case IMrekMqttService.MQTT_CONNECTION_LOST:
+    		        		setUIDisconnected();
+    		        		for(int i=0;i<fragments.size();i++) {
+    		        			((ChannelFragment) fragments.get(i)).setDisconnected();
+    		        		}
+    		        		break;
+    		        	case IMrekMqttService.MQTT_DISCONNECTED:
+    		        		setUIDisconnected();
+    		        		for(int i=0;i<fragments.size();i++) {
+    		        			((ChannelFragment) fragments.get(i)).setDisconnected();
+    		        		}
+    		        		break;
+    		        	case IMrekMqttService.MQTT_PUBLISH_ARRIVED:
+    		        		//Add message to appropriate conversation
+    		        		break;
+    		        	case IMrekMqttService.MQTT_PUBLISH_SENT:
+    		        		//Indicate message was sent?
+    		        		break;
+    		        	case IMrekMqttService.MQTT_SUBSCRIBE_SENT:
+    		        		//Add a fragment for the channel
+    		        		break;
+    		        	case IMrekMqttService.MQTT_UNSUBSCRIBE_SENT:
+    		        		//Remove fragment for the channel
+    		        		break;
+    		        	case IMrekMqttService.MQTT_PUBLISH_FAILED:
+    		        		//Turn the failed message red or something?
+    		        		break;
+    		        	case IMrekMqttService.MQTT_SUBSCRIBE_FAILED:
+    		        		//Remove fragment for channel
+    		        	case IMrekMqttService.MQTT_UNSUBSCRIBE_FAILED:
+    		        		//Don't try and re-add. Just fallback and make sure fragment is removed
+    		        		break;
+    		    	}
+    			}
+    	    	
+    	    };
+    		registerReceiver(svcReceiver, new IntentFilter(MESSAGE_RECEIVER_ACTION));
     		svcReceiverRegistered = true;
     	}
     	Vector<String> newchannels = IMrekConversationManager.getInstance(getBaseContext()).getChannelList();
@@ -179,6 +221,7 @@ public class IMrekChannels extends FragmentActivity {
     
     @Override
     public void onPause() {
+    	super.onPause();
     	if (svcReceiverRegistered) {
     		unregisterReceiver(svcReceiver);
     		svcReceiverRegistered = false;
@@ -207,8 +250,7 @@ public class IMrekChannels extends FragmentActivity {
 			finish();
 		}
 		else if(mi.getItemId() == R.id.reconnect) {
-			//TODO: Adapt for new message protocol
-			//sendMessage(IMrekMqttService.MSG_RECONNECT, "Reconnect");
+			sendMessage(IMrekMqttService.MSG_RECONNECT, "Reconnect", null, null);
 		}
 		else if(mi.getItemId() == R.id.quit) {
 			quitDialog = new AlertDialog.Builder(this);
@@ -216,8 +258,7 @@ public class IMrekChannels extends FragmentActivity {
 			quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					//TODO: Adapt for new message protocol
-					//sendMessage(IMrekMqttService.MSG_STOP, "Quitting");
+					sendMessage(IMrekMqttService.MSG_STOP, "Quitting", null, null);
 					for(int i=0;i<fragments.size();i++) {
             			((ChannelFragment) fragments.get(i)).setDisconnected();
             		}
@@ -236,27 +277,14 @@ public class IMrekChannels extends FragmentActivity {
 		return true;
 	}
     
-    private void sendMessage(int message_type, String arg1, String arg2, String arg3) {
-		Intent i = new Intent(getApplicationContext(), IMrekMqttService.class);
+    private void sendMessage(int msgtype, String arg1, String arg2, String arg3) {
+		Intent i = new Intent(IMrekMain.MESSAGE_RECEIVER_ACTION);
 		Bundle b = new Bundle();
-		b.putInt("message_type", message_type);
+		b.putInt("msgtype", msgtype);
 		b.putString("arg1", arg1);
 		b.putString("arg2", arg2);
 		b.putString("arg3", arg3);
 		i.putExtras(b);
-		startService(i);
+		sendBroadcast(i);
 	}
-    
-    public static class ChannelsServiceReceiver extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			Bundle b = intent.getExtras();
-			switch (b.getInt("msgtype")) {
-			
-			}
-		}
-    	
-    }
-    
 }

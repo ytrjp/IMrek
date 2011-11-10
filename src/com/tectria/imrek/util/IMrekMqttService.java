@@ -9,15 +9,14 @@ import org.json.JSONObject;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 
 import com.ibm.mqtt.IMqttClient;
 import com.ibm.mqtt.MqttClient;
@@ -26,6 +25,7 @@ import com.ibm.mqtt.MqttPersistence;
 import com.ibm.mqtt.MqttPersistenceException;
 import com.ibm.mqtt.MqttSimpleCallback;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.tectria.imrek.fragments.ChannelFragment;
 
 public class IMrekMqttService extends Service {
 
@@ -93,7 +93,11 @@ public class IMrekMqttService extends Service {
 	private static final long KEEP_ALIVE_INTERVAL = 1000 * 60 * 28;
 	
 	// Message Receiver
-    private static final String MESSAGE_RECEIVER_ACTION = "com.tectria.imrek.MESSAGE";
+	static final String MESSAGE_RECEIVER_ACTION = "com.tectria.imrek.MESSAGE";
+    
+    private BroadcastReceiver svcReceiver;
+	private boolean svcReceiverRegistered;
+	
 	@Override
 	public IBinder onBind(Intent arg0) {
 		return null;
@@ -295,10 +299,10 @@ public class IMrekMqttService extends Service {
 		}
 	}
 
-	private void sendMessage(int message_type, String arg1, String arg2, String arg3) {
+	private void sendMessage(int msgtype, String arg1, String arg2, String arg3) {
 		Intent i = new Intent(MESSAGE_RECEIVER_ACTION);
 		Bundle b = new Bundle();
-		b.putInt("message_type", message_type);
+		b.putInt("msgtype", msgtype);
 		b.putString("arg1", arg1);
 		b.putString("arg2", arg2);
 		b.putString("arg3", arg3);
@@ -308,6 +312,46 @@ public class IMrekMqttService extends Service {
 	
     @Override
     public void onCreate() {
+    	
+    	if (!svcReceiverRegistered) {
+    		svcReceiver = new BroadcastReceiver() {
+
+    			@Override
+    			public void onReceive(Context context, Intent intent) {
+    				Bundle bundle = intent.getExtras();
+    				switch(bundle.getInt("msgtype")) {
+	    				case MSG_CONNECT:
+	    	        		connect(bundle.getString("arg1"), bundle.getString("arg2"));
+	    	    			break;
+	    	        	case MSG_DISCONNECT:
+	    	        		disconnect();
+	    	    			break;
+	    	        	case MSG_RECONNECT:
+	    	        		reconnect(bundle.getString("arg1"), bundle.getString("arg2"));
+	    	    			break;
+	    	        	case MSG_STOP:
+	    	        		stop();
+	    	        		break;
+	    	        	case MQTT_SUBSCRIBE:
+	    	        		mqtt.subscribe(bundle.getString("arg1"));
+	    	        		break;
+	    	        	case MQTT_UNSUBSCRIBE:
+	    	        		mqtt.unsubscribe(bundle.getString("arg1"));
+	    	        		break;
+	    	        	case MQTT_PUBLISH:
+	    	        		mqtt.publish(bundle.getString("arg1"), bundle.getString("arg2"));
+	    	        		break;
+	    	        	case MQTT_SEND_KEEPALIVE:
+	    	        		mqtt.keepalive();
+	    	        		break;
+	    			}
+    			}
+    	    	
+    	    };
+    		registerReceiver(svcReceiver, new IntentFilter(MESSAGE_RECEIVER_ACTION));
+    		svcReceiverRegistered = true;
+		}
+    	
     	//Get our managers
     	prefs = IMrekPreferenceManager.getInstance(this);
     	conn = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);

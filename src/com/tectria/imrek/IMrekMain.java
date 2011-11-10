@@ -62,9 +62,10 @@ public class IMrekMain extends ListActivity {
 	private Bundle extras;
 	private String user;
 	private String pass;
-	private MainServiceReceiver svcReceiver;
+	private BroadcastReceiver svcReceiver;
 	private boolean svcReceiverRegistered;
-	private static final String MESSAGE_RECEIVER_ACTION = "com.tectria.imrek.MESSAGE";
+	static final String MESSAGE_RECEIVER_ACTION = "com.tectria.imrek.MESSAGE";
+	boolean serviceStarted = false;
 	
 	ImageButton newchannel;
 	AlertDialog.Builder dialog;
@@ -101,7 +102,6 @@ public class IMrekMain extends ListActivity {
         inflater = (LayoutInflater)this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         context = this;
-        svcReceiver = new MainServiceReceiver();
         svcReceiverRegistered = false;
         //TODO: Wherever you initialize the broadcast receiver setup, you need to send a message telling the service to connect immediately after initialization.
         
@@ -120,8 +120,7 @@ public class IMrekMain extends ListActivity {
             	if((user.equals("") || pass.equals("")) || (user.length() < 5 || pass.length() < 6)) {
             		//If we get here, then somehow we were passed an invalid user/pass combo from the login activity
             		//Disconnect and log out, clear the user/pass in the preferences, and return to the splash/login activity
-            		//TODO: Adapt for new message protocol
-            		//sendMessage(IMrekMqttService.MSG_STOP, "Logging Out");
+            		sendMessage(IMrekMqttService.MSG_STOP, "Logging Out", null, null);
             		prefs.setLoggedIn(false);
             		prefs.clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
@@ -139,8 +138,7 @@ public class IMrekMain extends ListActivity {
             	if((user.equals("") || pass.equals("")) || (user.length() < 5 || pass.length() < 6)) {
             		//If we get here, we somehow have an invalid user or password in the preferences.
             		//Disconnect and log out, clear the user/pass in the preferences, and return to the splash/login activity
-            		//TODO: Adapt for new message protocol
-            		//sendMessage(IMrekMqttService.MSG_STOP, "Logging Out");
+            		sendMessage(IMrekMqttService.MSG_STOP, "Logging Out", null, null);
             		prefs.setLoggedIn(false);
             		prefs.clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
@@ -238,14 +236,88 @@ public class IMrekMain extends ListActivity {
     
     @Override
     public void onResume() {
+    	super.onResume();
     	if (!svcReceiverRegistered) {
+    		svcReceiver = new BroadcastReceiver(){
+    			@Override
+    			public void onReceive(Context context, Intent intent) {
+    				Bundle bundle = intent.getExtras();
+    				switch (bundle.getInt("msgtype")) {
+    					case IMrekMqttService.MQTT_CONNECTED:
+    		        		setConnected();
+    		        		// TODO: Reconnect topics
+    		        		// TODO: load friends list
+    		        		break;
+    		        	case IMrekMqttService.MQTT_CONNECTION_LOST:
+    		        		setDisconnected();
+    		        		// TODO: Clear friends / conversation list
+    		        		break;
+    		        	case IMrekMqttService.MQTT_DISCONNECTED:
+    		        		setDisconnected();
+    		        		// TODO: Clear friends / conversation list
+    		        		break;
+    		        	case IMrekMqttService.MSG_RECONNECT_CREDENTIALS:
+    		        		//Call a reconnect with the most recent, most-probably-valid credentials we can.
+    		        		String u = prefs.getUsername();
+    		        		String t = prefs.getToken();
+    		        		if(u == "") {
+    		        			u = prefs.getLastUser();
+    		        		}
+    		        		if(t == "") {
+    		        			t = prefs.getLastToken();
+    		        		}
+    		        		sendMessage(IMrekMqttService.MSG_RECONNECT, u, t, null);
+    		        		break;
+    		        	case IMrekMqttService.MQTT_PUBLISH_ARRIVED:
+    		        		IMrekConversationManager.getInstance(getBaseContext()).newMessageReceived(bundle.getString("arg1"), bundle.getString("arg2"));
+    		        		break;
+    		        	case IMrekMqttService.MQTT_PUBLISH_SENT:
+    		        		// TODO: Check if we get an MQTT_PUBLISH_ARRIVED for our own messages
+    		        		break;
+    		        	case IMrekMqttService.MQTT_SUBSCRIBE_SENT:
+    		        		IMrekConversationManager.getInstance(getBaseContext()).addChannel(bundle.getString("arg1"));
+    		        		break;
+    		        	case IMrekMqttService.MQTT_UNSUBSCRIBE_SENT:
+    		        		IMrekConversationManager.getInstance(getBaseContext()).removeChannel(bundle.getString("arg1"));
+    		        		break;
+    		        	case IMrekMqttService.MQTT_PUBLISH_FAILED:
+    		        		// TODO: Call conversation manager functions
+    		        		// TODO: Retry
+    		        		break;
+    		        	case IMrekMqttService.MQTT_SUBSCRIBE_FAILED:
+    		        		// TODO: Retry?
+    		        	case IMrekMqttService.MQTT_UNSUBSCRIBE_FAILED:
+    		        		// TODO: Retry?
+    		        		break;
+    		        	case IMrekMqttService.MQTT_CONNECT_FAILED:
+    		        		// TODO: Call conversation manager functions
+    		        		// TODO: Retry
+    		        		break;
+    		        	case IMrekMqttService.MSG_PING:
+    		        		sendMessage(IMrekMqttService.MQTT_SEND_KEEPALIVE, "keepalive", null, null);
+    		        		break;
+    		        	case IMrekMqttService.MQTT_KEEPALIVE_FAILED:
+    		        		sendMessage(IMrekMqttService.MSG_PING, "ping", null, null);
+    		        		// set timeout to kill service? Don't kill if received ping
+    		        		break;
+    				}
+    			}
+    	    	
+    	    };
     		registerReceiver(svcReceiver, new IntentFilter(MESSAGE_RECEIVER_ACTION));
     		svcReceiverRegistered = true;
+    		if(!serviceStarted) {
+    			serviceStarted = true;
+    			Intent i = new Intent(context, IMrekMqttService.class);
+    			startService(i);
+    		}
+    		sendMessage(IMrekMqttService.MSG_CONNECT, prefs.getUsername(), prefs.getToken(), null);
     	}
     }
     
     @Override
     public void onPause() {
+    	super.onPause();
     	if (svcReceiverRegistered) {
     		unregisterReceiver(svcReceiver);
     		svcReceiverRegistered = false;
@@ -286,8 +358,7 @@ public class IMrekMain extends ListActivity {
 			finish();
 		}
 		else if(mi.getItemId() == R.id.reconnect) {
-			//TODO: Adapt for new message protocol
-			//sendMessage(IMrekMqttService.MSG_RECONNECT, "Reconnect");
+			sendMessage(IMrekMqttService.MSG_RECONNECT, "Reconnect", null, null);
 		}
 		else if(mi.getItemId() == R.id.quit) {
 			quitDialog = new AlertDialog.Builder(this);
@@ -295,8 +366,7 @@ public class IMrekMain extends ListActivity {
 			quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					//TODO: Adapt for new message protocol
-					//sendMessage(IMrekMqttService.MSG_STOP, "Quitting");
+					sendMessage(IMrekMqttService.MSG_STOP, "Quitting", null, null);
 					setDisconnected();
 					prefs.setLoggedIn(false);
 					finish();
@@ -325,7 +395,7 @@ public class IMrekMain extends ListActivity {
 	public boolean onContextItemSelected(MenuItem item) {
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 		if(item.getItemId() == R.id.close) {
-			boolean test = IMrekConversationManager.getInstance(getBaseContext()).removeChannel(items.get(info.position).get("channel"));
+			IMrekConversationManager.getInstance(getBaseContext()).removeChannel(items.get(info.position).get("channel"));
 			items.remove(info.position);
 			adapter.notifyDataSetChanged();
 		} else {
@@ -334,15 +404,15 @@ public class IMrekMain extends ListActivity {
 		return true;
 	}
     
-	private void sendMessage(int message_type, String arg1, String arg2, String arg3) {
-		Intent i = new Intent(context, IMrekMqttService.class);
+	private void sendMessage(int msgtype, String arg1, String arg2, String arg3) {
+		Intent i = new Intent(MESSAGE_RECEIVER_ACTION);
 		Bundle b = new Bundle();
-		b.putInt("message_type", message_type);
+		b.putInt("msgtype", msgtype);
 		b.putString("arg1", arg1);
 		b.putString("arg2", arg2);
 		b.putString("arg3", arg3);
 		i.putExtras(b);
-		startService(i);
+		sendBroadcast(i);
 	}
 	
 	public final void disconnectedDialog(String title, String text) {
@@ -377,16 +447,4 @@ public class IMrekMain extends ListActivity {
 		status.setText("Disconnected");
     	statusicon.setImageResource(R.drawable.icon_disconnected);
 	}
-    
-    public static class MainServiceReceiver extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			Bundle b = intent.getExtras();
-			switch (b.getInt("msgtype")) {
-			
-			}
-		}
-    	
-    }
 }

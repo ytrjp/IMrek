@@ -4,7 +4,12 @@
       android:versionCode="1"
       android:versionName="1.0">
     <uses-sdk android:minSdkVersion="8" />
-
+	<uses-permission android:name="android.permission.INTERNET" />
+	<uses-permission android:name="android.permission.VIBRATE" />	
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BROADCAST_STICKY" />
+    <uses-permission android:name="android.permission.SET_ALARM" />
+    
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@android:style/Theme.Black.NoTitleBar" android:debuggable="true">
         <activity android:name=".SplashScreenLogin"
 			android:label="@string/app_name"
@@ -14,19 +19,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".IMrekMain"
-        	android:theme="@style/IMrek"
-        	android:label="@string/app_name">
+        <activity android:name=".IMrekMain" android:theme="@style/IMrek" android:label="@string/app_name">
+            <intent-filter>
+				<action android:name="com.tectria.imrek.MESSAGE"></action>
+			</intent-filter>
         </activity>
         <activity android:name=".IMrekChannels" android:label="Channels" android:windowSoftInputMode="stateHidden" android:launchMode="singleTask" android:theme="@style/IMrek">
+        	<intent-filter>
+				<action android:name="com.tectria.imrek.MESSAGE"></action>
+			</intent-filter>
         </activity>
         <activity android:name=".PreferenceScreen" android:label="IMrek Preferences" android:theme="@style/IMrek">
         </activity>
-		<service android:name=".util.IMrekMqttService" android:label="IMrek MQTT Service"></service>
+		<service android:name=".util.IMrekMqttService" android:label="IMrek MQTT Service">
+		    <intent-filter>
+				<action android:name="com.tectria.imrek.MESSAGE"></action>
+			</intent-filter>
+		</service>
     </application>
-    <uses-permission android:name="android.permission.INTERNET" />
-	<uses-permission android:name="android.permission.VIBRATE" />	
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.BROADCAST_STICKY" />
-    <uses-permission android:name="android.permission.SET_ALARM" />
 </manifest>

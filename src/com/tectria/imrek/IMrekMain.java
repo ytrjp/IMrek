@@ -5,7 +5,6 @@ import java.util.HashMap;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -34,7 +33,6 @@ import android.widget.SimpleAdapter;
 import android.widget.TabHost;
 import android.widget.TextView;
 
-import com.tectria.imrek.util.CallbackBroadcastReceiver;
 import com.tectria.imrek.util.IMrekConversationManager;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 
@@ -46,6 +44,7 @@ public class IMrekMain extends ListActivity {
 	TabHost.TabSpec friend_spec;
 	TabHost.TabSpec convo_spec;
 	Intent tabintent;
+	boolean paused;
 	
 	//PreferenceManager + Preferences
 	private IMrekPreferenceManager prefs;
@@ -305,7 +304,6 @@ public class IMrekMain extends ListActivity {
     		        		break;
     				}
     			}
-    	    	
     	    };
     		registerReceiver(svcReceiver, new IntentFilter(MESSAGE_RECEIVER_ACTION));
     		svcReceiverRegistered = true;
@@ -315,11 +313,18 @@ public class IMrekMain extends ListActivity {
     			startService(i);
     		}
     	}
+    	
+    	if(paused) {
+    		items = IMrekConversationManager.getInstance(getBaseContext()).getChannelsLastMessages();
+	    	adapter.notifyDataSetChanged();
+	    	paused = false;
+    	}
     }
     
     @Override
     public void onPause() {
     	super.onPause();
+    	paused = true;
     	if (svcReceiverRegistered) {
     		unregisterReceiver(svcReceiver);
     		svcReceiverRegistered = false;
@@ -419,14 +424,14 @@ public class IMrekMain extends ListActivity {
 	}
 	
 	public final void disconnectedDialog(String title, String text) {
-        	dialog = new AlertDialog.Builder(this);
-            TextView dialogText = new TextView(this);
-            dialogText.setText(text);
-            dialogText.setPadding(10, 10, 10, 10);
-            dialog.setView(dialogText);
-            dialog.setTitle(title);
-            dialog.create();
-            dialog.show();
+    	dialog = new AlertDialog.Builder(this);
+        TextView dialogText = new TextView(this);
+        dialogText.setText(text);
+        dialogText.setPadding(10, 10, 10, 10);
+        dialog.setView(dialogText);
+        dialog.setTitle(title);
+        dialog.create();
+        dialog.show();
     }
 	
 	public void setConnected() {

@@ -9,7 +9,6 @@ import org.json.JSONObject;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -25,8 +24,6 @@ import com.ibm.mqtt.MqttPersistence;
 import com.ibm.mqtt.MqttPersistenceException;
 import com.ibm.mqtt.MqttSimpleCallback;
 import com.loopj.android.http.AsyncHttpResponseHandler;
-import com.tectria.imrek.fragments.ChannelFragment;
-import com.tectria.imrek.util.CallbackBroadcastReceiver;
 import com.tectria.imrek.util.IMrekHttpClient;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 

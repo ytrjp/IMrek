@@ -33,6 +33,7 @@ public class IMrekChannels extends FragmentActivity {
 	ViewPager pager;
 	Vector<String> channels;
 	List<Fragment> fragments;
+	List<String> fids;  
 	int index;
 	
 	//Bundle object to be reused
@@ -97,12 +98,13 @@ public class IMrekChannels extends FragmentActivity {
 		//Get a list of channels
 		//For now use this test list
 		channels = IMrekConversationManager.getInstance(getBaseContext()).getChannelList();
-		 
+		fids = new Vector<String>();
 		fragments = new Vector<Fragment>();
 		for(int i=0;i<channels.size();i++) {
 			bundle = new Bundle();
 			bundle.putString("topic", channels.get(i));
 			fragments.add(Fragment.instantiate(getBaseContext(), ChannelFragment.class.getName(), bundle));
+			fids.add(channels.get(i));
 		}
 		pageradapter  = new ChannelPagerAdapter(super.getSupportFragmentManager(), fragments);
 		pager = (ViewPager)super.findViewById(R.id.viewpager);
@@ -165,6 +167,7 @@ public class IMrekChannels extends FragmentActivity {
     		        		break;
     		        	case IMrekMqttService.MQTT_PUBLISH_ARRIVED:
     		        		//Add message to appropriate conversation
+    		        		((ChannelFragment)fragments.get(fids.indexOf(bundle.getString("arg1")))).publishMessage(bundle.getString("arg1"), bundle.getString("arg2"));
     		        		break;
     		        	case IMrekMqttService.MQTT_PUBLISH_SENT:
     		        		//Indicate message was sent?
@@ -197,11 +200,13 @@ public class IMrekChannels extends FragmentActivity {
     			bundle = new Bundle();
     			bundle.putString("topic", chan);
     			fragments.add(Fragment.instantiate(getBaseContext(), ChannelFragment.class.getName(), bundle));
+    			fids.add(chan);
     		}
     	} 
     	for(String chan : channels) {
     		if(!newchannels.contains(chan)) {
     			fragments.remove(channels.indexOf(chan));
+    			fids.remove(chan);
     			channels.remove(chan);
     		}
     	}
@@ -274,7 +279,7 @@ public class IMrekChannels extends FragmentActivity {
 		return true;
 	}
     
-    private void sendMessage(int msgtype, String arg1, String arg2, String arg3) {
+    public void sendMessage(int msgtype, String arg1, String arg2, String arg3) {
 		Intent i = new Intent(IMrekMain.MESSAGE_RECEIVER_ACTION);
 		Bundle b = new Bundle();
 		b.putInt("msgtype", msgtype);

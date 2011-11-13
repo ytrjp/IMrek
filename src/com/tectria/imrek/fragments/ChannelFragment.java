@@ -27,7 +27,6 @@ public class ChannelFragment extends ListFragment {
     
 	//Misc
 	Context context;
-	IMrekConversationManager cmanager;
 	InputMethodManager imm;
 	
 	//List Adapter Stuff
@@ -72,10 +71,8 @@ public class ChannelFragment extends ListFragment {
 		
 		//get the input method manager service
 		imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-		cmanager = IMrekConversationManager.getInstance(context);
 		
 		layout = inflater.inflate(R.layout.f_channel, container, false);
-		
 		//Get Views
 		channel = (TextView)layout.findViewById(R.id.channel);
 		sendbutton = (Button)layout.findViewById(R.id.sendbutton);
@@ -92,7 +89,7 @@ public class ChannelFragment extends ListFragment {
 			public void onClick(View v) {
 				if(sendtext.getText().toString() != "") {
 					//TODO: adapt for new messaging protocol
-					//((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString());
+					((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString(), null);
 					sendtext.setText("");
 				}
 			}
@@ -103,7 +100,7 @@ public class ChannelFragment extends ListFragment {
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				if((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
 		        	//TODO: adapt for new messaging protocol
-					//((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString());
+					((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString(), null);
 		        	sendtext.setText("");
 		        	imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
 		        	return true;
@@ -119,7 +116,7 @@ public class ChannelFragment extends ListFragment {
 		if(this.getListAdapter() == null) {
 	        
 	        //Get last 25 messages
-	        items = cmanager.openChannelMessages(topic);
+	        items = IMrekConversationManager.getInstance(context).openChannelMessages(topic);
 			
 			//Create the adapter
 			adapter = new SimpleAdapter(context, items, R.layout.item_message, to, from);
@@ -128,7 +125,7 @@ public class ChannelFragment extends ListFragment {
 		//if we have a list adapter
 		} else {
 			//Fetch a channel update
-			ArrayList<HashMap<String, String>> v = cmanager.getChannelUpdate(topic);
+			ArrayList<HashMap<String, String>> v = IMrekConversationManager.getInstance(context).getChannelUpdate(topic);
 			
 			//Loop through new messages and add them to items
 			for(HashMap<String, String> map : v) {
@@ -150,5 +147,13 @@ public class ChannelFragment extends ListFragment {
 		
 		//Hide the soft keyboard
 		imm.hideSoftInputFromWindow(viewContainer.getWindowToken(), 0);
+	}
+	
+	public void publishMessage(String channel, String message) {
+		String[] m = message.split(":");
+		HashMap<String, String> h = new HashMap<String, String>();
+		h.put(m[0],m[1]);
+		items.add(h);
+		IMrekConversationManager.getInstance(context).newMessageReceived(channel, message);
 	}
 }

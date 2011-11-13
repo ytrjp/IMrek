@@ -24,9 +24,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.tectria.imrek.fragments.ChannelFragment;
+import com.tectria.imrek.util.CallbackBroadcastReceiver;
 import com.tectria.imrek.util.ChannelPagerAdapter;
 import com.tectria.imrek.util.IMrekConversationManager;
-import com.tectria.imrek.util.IMrekMqttService;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class IMrekChannels extends FragmentActivity {   
@@ -48,7 +48,7 @@ public class IMrekChannels extends FragmentActivity {
 	//Dialogs
 	private AlertDialog.Builder quitDialog;
 	
-	private BroadcastReceiver svcReceiver;
+	private ChannelsBroadcastReceiver svcReceiver;
 	private boolean svcReceiverRegistered;
 	static final String MESSAGE_RECEIVER_ACTION = "com.tectria.imrek.MESSAGE";
 	
@@ -142,10 +142,10 @@ public class IMrekChannels extends FragmentActivity {
     public void onResume() {
     	super.onResume();
     	if (!svcReceiverRegistered) {
-    		svcReceiver = new BroadcastReceiver() {
+    		svcReceiver = new ChannelsBroadcastReceiver() {
 
     			@Override
-    			public void onReceive(Context context, Intent intent) {
+    			public void gotBroadcast(Context context, Intent intent) {
     				Bundle bundle = intent.getExtras();
     				switch(bundle.getInt("msgtype")) {
     		        	case IMrekMqttService.MQTT_CONNECTED:

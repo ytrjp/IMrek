@@ -1,4 +1,4 @@
-package com.tectria.imrek.util;
+package com.tectria.imrek;
 
 
 import java.util.ArrayList;
@@ -26,14 +26,17 @@ import com.ibm.mqtt.MqttPersistenceException;
 import com.ibm.mqtt.MqttSimpleCallback;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.tectria.imrek.fragments.ChannelFragment;
+import com.tectria.imrek.util.CallbackBroadcastReceiver;
+import com.tectria.imrek.util.IMrekHttpClient;
+import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class IMrekMqttService extends Service {
 
     //msg.what commands
-    public static final int MSG_REGISTER_CLIENT = 1;
-    public static final int MSG_UNREGISTER_CLIENT = 2;
-    public static final int MSG_COMMAND = 3;
-    public static final int MSG_RESPONSE = 4;
+    //public static final int MSG_REGISTER_CLIENT = 1;
+    //public static final int MSG_UNREGISTER_CLIENT = 2;
+    //public static final int MSG_COMMAND = 3;
+    //public static final int MSG_RESPONSE = 4;
     
     //arg1
     public static final int MSG_STOP = 5; //Stop the service
@@ -68,6 +71,8 @@ public class IMrekMqttService extends Service {
     
     //Ping the service
     public static final int MSG_PING = 25;
+    
+    public static final int SERVICE_READY = 28;
 	
     //Our Managers
     IMrekPreferenceManager prefs;
@@ -95,7 +100,7 @@ public class IMrekMqttService extends Service {
 	// Message Receiver
 	static final String MESSAGE_RECEIVER_ACTION = "com.tectria.imrek.MESSAGE";
     
-    private BroadcastReceiver svcReceiver;
+    private MainBroadcastReceiver svcReceiver;
 	private boolean svcReceiverRegistered;
 	
 	@Override
@@ -314,10 +319,10 @@ public class IMrekMqttService extends Service {
     public void onCreate() {
     	
     	if (!svcReceiverRegistered) {
-    		svcReceiver = new BroadcastReceiver() {
+    		svcReceiver = new MainBroadcastReceiver() {
 
     			@Override
-    			public void onReceive(Context context, Intent intent) {
+    			public void gotBroadcast(Context context, Intent intent) {
     				Bundle bundle = intent.getExtras();
     				switch(bundle.getInt("msgtype")) {
 	    				case MSG_CONNECT:
@@ -350,6 +355,7 @@ public class IMrekMqttService extends Service {
     	    };
     		registerReceiver(svcReceiver, new IntentFilter(MESSAGE_RECEIVER_ACTION));
     		svcReceiverRegistered = true;
+    		sendMessage(IMrekMqttService.SERVICE_READY, null, null, null);
 		}
     	
     	//Get our managers
@@ -426,7 +432,7 @@ public class IMrekMqttService extends Service {
 			
 			//Subscribe to a topic identical to our deviceid
 			//This will be where we recieve "commands"
-			this.subscribe(clientid);
+			//this.subscribe(clientid);
 	
 			//Save start time
 			startTime = System.currentTimeMillis();
@@ -481,7 +487,7 @@ public class IMrekMqttService extends Service {
 					this.topics.remove(topicName);
 				}
 				try {
-					client.subscribe(topics, MQTT_QUALITIES_OF_SERVICE);
+					client.unsubscribe(topics);
 				} catch (MqttException e) {
 					sendMessage(MQTT_UNSUBSCRIBE_FAILED, topicName, null, null);
 				}

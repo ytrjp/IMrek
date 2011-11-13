@@ -34,8 +34,8 @@ import android.widget.SimpleAdapter;
 import android.widget.TabHost;
 import android.widget.TextView;
 
+import com.tectria.imrek.util.CallbackBroadcastReceiver;
 import com.tectria.imrek.util.IMrekConversationManager;
-import com.tectria.imrek.util.IMrekMqttService;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class IMrekMain extends ListActivity {
@@ -62,7 +62,7 @@ public class IMrekMain extends ListActivity {
 	private Bundle extras;
 	private String user;
 	private String pass;
-	private BroadcastReceiver svcReceiver;
+	private MainBroadcastReceiver svcReceiver;
 	private boolean svcReceiverRegistered;
 	static final String MESSAGE_RECEIVER_ACTION = "com.tectria.imrek.MESSAGE";
 	boolean serviceStarted = false;
@@ -176,8 +176,7 @@ public class IMrekMain extends ListActivity {
         newchannel.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				//TODO: Remove ! to reverse login later
-				if(!prefs.getIsConnected()) {
+				if(prefs.getIsConnected()) {
 					dialogview = inflater.inflate(R.layout.dialog_newchannel, null);
 			    	dialog = new AlertDialog.Builder(context);
 			    	dialog.setTitle("Join/Create Channel");
@@ -204,6 +203,7 @@ public class IMrekMain extends ListActivity {
 			    				map.put("message", "");
 			    				items.add(map);
 			    				adapter.notifyDataSetChanged();
+			    				sendMessage(IMrekMqttService.MQTT_SUBSCRIBE, channelname.getText().toString(), null, null);
 			    			}
 			    			dialog.dismiss();
 			           }
@@ -238,9 +238,9 @@ public class IMrekMain extends ListActivity {
     public void onResume() {
     	super.onResume();
     	if (!svcReceiverRegistered) {
-    		svcReceiver = new BroadcastReceiver(){
+    		svcReceiver = new MainBroadcastReceiver(){
     			@Override
-    			public void onReceive(Context context, Intent intent) {
+    			public void gotBroadcast(Context context, Intent intent) {
     				Bundle bundle = intent.getExtras();
     				switch (bundle.getInt("msgtype")) {
     					case IMrekMqttService.MQTT_CONNECTED:
@@ -300,6 +300,9 @@ public class IMrekMain extends ListActivity {
     		        		sendMessage(IMrekMqttService.MSG_PING, "ping", null, null);
     		        		// set timeout to kill service? Don't kill if received ping
     		        		break;
+    		        	case IMrekMqttService.SERVICE_READY:
+    		        		sendMessage(IMrekMqttService.MSG_CONNECT, prefs.getUsername(), prefs.getToken(), null);
+    		        		break;
     				}
     			}
     	    	
@@ -311,7 +314,6 @@ public class IMrekMain extends ListActivity {
     			Intent i = new Intent(context, IMrekMqttService.class);
     			startService(i);
     		}
-    		sendMessage(IMrekMqttService.MSG_CONNECT, prefs.getUsername(), prefs.getToken(), null);
     	}
     }
     
@@ -396,6 +398,7 @@ public class IMrekMain extends ListActivity {
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 		if(item.getItemId() == R.id.close) {
 			IMrekConversationManager.getInstance(getBaseContext()).removeChannel(items.get(info.position).get("channel"));
+			sendMessage(IMrekMqttService.MQTT_UNSUBSCRIBE, items.get(info.position).get("channel"), null, null);
 			items.remove(info.position);
 			adapter.notifyDataSetChanged();
 		} else {

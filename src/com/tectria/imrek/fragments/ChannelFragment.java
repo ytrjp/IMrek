@@ -34,8 +34,8 @@ public class ChannelFragment extends ListFragment {
 	//List Adapter Stuff
 	public String topic;
 	ArrayList<HashMap<String, String>> items;
-	final String[] to = new String[]{"name", "message"};
-	final int[] from = new int[]{R.id.name, R.id.message};
+	final String[] from = new String[]{"name", "message"};
+	final int[] to = new int[]{R.id.name, R.id.message};
 	SimpleAdapter adapter;
     HashMap<String, String> map;
     
@@ -121,7 +121,7 @@ public class ChannelFragment extends ListFragment {
 	        items = IMrekConversationManager.getInstance(context).openChannelMessages(topic);
 			
 			//Create the adapter
-			adapter = new SimpleAdapter(context, items, R.layout.item_message, to, from);
+			adapter = new SimpleAdapter(context, items, R.layout.item_message, from, to);
 	        this.setListAdapter(adapter);
 			
 		//if we have a list adapter
@@ -154,8 +154,10 @@ public class ChannelFragment extends ListFragment {
 	public void publishMessage(String channel, String message) {
 		String[] m = message.split(":", 2);
 		HashMap<String, String> h = new HashMap<String, String>();
-		h.put(m[0],m[1]);
+		h.put("name", m[0]);
+		h.put("message", m[1]);
 		items.add(h);
+		adapter.notifyDataSetChanged();
 		IMrekConversationManager.getInstance(context).newMessageReceived(channel, message);
 	}
 }

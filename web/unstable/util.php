@@ -26,11 +26,16 @@ function addMqttUser($user, $pass) {
 	}
 
 	if(!$exists) {
-		$logins[] = implode(array($user, ':', $pass));
+		$login = implode(array($user, ':', $pass));
+		$file = fopen('/etc/mosquitto/pwfile.pwds', 'a');
+		fwrite($file, $login.'\n');
+		fclose($file);
+	} else {
+		$file = fopen('/etc/mosquitto/pwfile.pwds', 'w');
+		fwrite($file, implode('\n', $logins));
+		fclose($file);
 	}
-	$file = fopen('/etc/mosquitto/pwfile.pwds', 'a');
-	fwrite($file, implode($logins));
-	fclose($file);
+	
 	sendReloadSignal();
 }
 
@@ -49,8 +54,8 @@ function removeMqttUser($username) {
 	$file = fopen('/etc/mosquitto/pwfile.pwds', 'r');
 	$accum = array();
 	while (($line = fgets($file))!==false) {
-		$username = explode(':', $line);
-		if ($username == $username) {
+		$user = explode(':', $line);
+		if ($user[0] == $username) {
 			continue;
 		}
 		$accum[]=$line;

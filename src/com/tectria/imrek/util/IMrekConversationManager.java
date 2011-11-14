@@ -56,7 +56,6 @@ public class IMrekConversationManager {
 			v.add(payload);
 			waitingMessages.put(channel, v);
 		}
-		// TODO: add to conversation window
 	}
 	
 	// this should be called when a channel comes back into focus. Grabs messages
@@ -136,12 +135,18 @@ public class IMrekConversationManager {
 	} 
 	
 	public synchronized void addChannel(String channel_name) {
-		channelAdapter.addChannel(channel_name);
-		channelList.add(channel_name);
+		if (!channelList.contains(channel_name)) {
+			channelAdapter.addChannel(channel_name);
+			channelList.add(channel_name);
+		}
 	}
 	
 	public synchronized boolean removeChannel(String channel_name) {
-		channelList.remove(channelList.indexOf(channel_name));
-		return channelAdapter.removeChannel(channel_name);
+		boolean ret = false;
+		if (channelList.contains(channel_name)) {
+			channelList.remove(channelList.indexOf(channel_name));
+			ret = channelAdapter.removeChannel(channel_name);
+		}
+		return ret;
 	}
 }

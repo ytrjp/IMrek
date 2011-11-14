@@ -40,6 +40,9 @@ public class SplashScreenLogin extends Activity {
 	private CheckBox autologin;
 	private EditText confirm;
 	
+	private boolean authed;
+	private boolean atsplash;
+	
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
@@ -52,12 +55,28 @@ public class SplashScreenLogin extends Activity {
     	
     	makeProgressDialog();
     	prefs = IMrekPreferenceManager.getInstance(this);
+    	
+    	if(prefs.getCrashedLastClose()) {
+    		prefs.clearSavedUser();
+    		prefs.setCrashedLastClose(false);
+    	}
+    	
     	//Get our deviceid
     	inflater = (LayoutInflater)this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     	if(prefs.getAutoLogin() || prefs.getLoggedIn()) {
     		startMain();
     	} else {
     		makeHelloDialog();
+    	}
+    }
+    
+    @Override
+    public void onPause() {
+    	super.onPause();
+    	try {
+    		progressdialog.dismiss();
+    	} catch(Exception e) {
+    		//Nothing
     	}
     }
     
@@ -69,29 +88,45 @@ public class SplashScreenLogin extends Activity {
     
     @Override
     public void onBackPressed() {
-    	Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
-    	startActivity(intent);
-    	finish();
+    	if(!atsplash) {
+	    	Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
+	    	intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+	    	startActivity(intent);
+	    	finish();
+    	} else {
+    		finish();
+    	}
+    }
+    
+    @Override
+    public void onUserLeaveHint() {
+    	if(!authed) {
+    		finish();
+    	}
     }
     
     public void startMain() {
     	Intent intent = new Intent(getBaseContext(), IMrekMain.class);
+    	intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
     	startActivity(intent);
     }
     
     public void startMain(String user, String pass) {
     	Intent intent = new Intent(getBaseContext(), IMrekMain.class);
+    	intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
     	intent.putExtra("user", user);
     	intent.putExtra("pass", pass);
     	startActivity(intent);
     }
     
     public void makeProgressDialog() {
+    	atsplash = false;
     	progressdialog = ProgressDialog.show(this, "", "Loading. Please wait...", true);
     	progressdialog.getWindow().setGravity(Gravity.BOTTOM);
     }
     
     public void makeHelloDialog() {
+    	atsplash = true;
     	try {
 	    	if(progressdialog.isShowing()) {
 	    		progressdialog.dismiss();
@@ -115,6 +150,12 @@ public class SplashScreenLogin extends Activity {
     	   		dialog.dismiss();
     	   		makeLoginDialog();
     	   	}
+       }).setOnCancelListener(new OnCancelListener() {
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				dialog.dismiss();
+				finish();
+			}  
        });
     	AlertDialog dialogC = dialog.create();
     	dialogC.getWindow().setGravity(Gravity.BOTTOM);
@@ -122,6 +163,7 @@ public class SplashScreenLogin extends Activity {
     }
     
     public void makeRegistrationDialog() {
+    	atsplash = false;
     	if(progressdialog.isShowing()) {
     		progressdialog.dismiss();
     	}
@@ -191,6 +233,7 @@ public class SplashScreenLogin extends Activity {
     	    					toast.show();
     	    					return;
     	                	}
+    	                	authed = true;
     	                	prefs.setRememberMe(rememberme.isChecked());
     	                	prefs.setAutoLogin(autologin.isChecked());
     	                	prefs.setUsername(username.getText().toString());
@@ -227,6 +270,7 @@ public class SplashScreenLogin extends Activity {
     }
     
     public void makeLoginDialog() {
+    	atsplash = false;
     	if(progressdialog.isShowing()) {
     		progressdialog.dismiss();
     	}
@@ -275,6 +319,7 @@ public class SplashScreenLogin extends Activity {
     	    					toast.show();
     	    					return;
     	                	}
+    	                	authed = true;
     	                	prefs.setRememberMe(rememberme.isChecked());
     	                	prefs.setAutoLogin(autologin.isChecked());
     	                	prefs.setUsername(username.getText().toString());

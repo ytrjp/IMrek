@@ -10,6 +10,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnFocusChangeListener;
 import android.view.View.OnKeyListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -17,6 +18,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
 
 import com.tectria.imrek.IMrekChannels;
 import com.tectria.imrek.IMrekMqttService;
@@ -48,12 +50,20 @@ public class ChannelFragment extends ListFragment {
 	ImageButton clearmessages;
 	ImageButton closechannel;
 	
+	boolean connected;
+	
     public void setConnected() {
-    	sendbutton.setEnabled(true);
+    	if(sendbutton != null) {
+    		sendbutton.setEnabled(true);
+    	}
+    	connected = true;
     }
 	
     public void setDisconnected() {
-    	sendbutton.setEnabled(false);
+    	if(sendbutton != null) {
+    		sendbutton.setEnabled(false);
+    	}
+    	connected = false;
     }
     
 	@Override
@@ -97,6 +107,12 @@ public class ChannelFragment extends ListFragment {
 			}
 		});
 		
+		if(connected) {
+			setConnected();
+		} else {
+			setDisconnected();
+		}
+		
 		sendtext.setOnKeyListener(new OnKeyListener() {
 			@Override
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -108,6 +124,21 @@ public class ChannelFragment extends ListFragment {
 		        	return true;
 		        }
 		        return false;
+			}
+		});
+		
+		sendtext.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				getListView().setSelection(items.size()-1);
+			}
+		});
+		
+		sendtext.setOnEditorActionListener(new OnEditorActionListener() {
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				getListView().setSelection(items.size()-1);
+				return false;
 			}
 		});
 		
@@ -158,6 +189,7 @@ public class ChannelFragment extends ListFragment {
 		h.put("message", m[1]);
 		items.add(h);
 		adapter.notifyDataSetChanged();
+		getListView().setSelection(items.size()-1);
 		IMrekConversationManager.getInstance(context).newMessageReceived(channel, message);
 	}
 }

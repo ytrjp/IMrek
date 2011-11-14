@@ -36,6 +36,15 @@ public class IMrekPreferenceManager {
 		prefsEditor.commit();
 	}
 	
+	public synchronized boolean getCrashedLastClose() {
+		return appSharedPrefs.getBoolean("crashedlast", true);
+	}
+	
+	public synchronized void setCrashedLastClose(boolean crashed) {
+		prefsEditor.putBoolean("crashedlast", crashed);
+		prefsEditor.commit();
+	}
+	
 	public synchronized String getPassword() {
 		return appSharedPrefs.getString("pass", "");
 	}

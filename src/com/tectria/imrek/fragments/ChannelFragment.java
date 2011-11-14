@@ -20,6 +20,7 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import com.tectria.imrek.IMrekChannels;
+import com.tectria.imrek.IMrekMqttService;
 import com.tectria.imrek.R;
 import com.tectria.imrek.util.IMrekConversationManager;
 import com.tectria.imrek.util.IMrekPreferenceManager;

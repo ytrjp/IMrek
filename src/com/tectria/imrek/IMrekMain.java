@@ -244,7 +244,9 @@ public class IMrekMain extends ListActivity {
     				switch (bundle.getInt("msgtype")) {
     					case IMrekMqttService.MQTT_CONNECTED:
     		        		setConnected();
-    		        		// TODO: Reconnect topics
+    		        		for(HashMap<String, String> item : items) {
+    		        			sendMessage(IMrekMqttService.MQTT_SUBSCRIBE, item.get("channel"), null, null);
+    		        		}
     		        		// TODO: load friends list
     		        		break;
     		        	case IMrekMqttService.MQTT_CONNECTION_LOST:

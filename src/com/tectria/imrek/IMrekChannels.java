@@ -62,6 +62,20 @@ public class IMrekChannels extends FragmentActivity {
     	statusicon.setImageResource(R.drawable.icon_disconnected);
 	}
     
+    public void setConnected() {
+    	setUIConnected();
+    	for(Fragment fragment : fragments) {
+    		((ChannelFragment)fragment).setConnected();
+    	}
+    }
+    
+    public void setDisconnected() {
+    	setUIDisconnected();
+    	for(Fragment fragment : fragments) {
+    		((ChannelFragment)fragment).setDisconnected();
+    	}
+    }
+    
     public OnClickListener cclistener = new OnClickListener() {
 		@Override
 		public void onClick(View v) {
@@ -134,7 +148,11 @@ public class IMrekChannels extends FragmentActivity {
         prefs = IMrekPreferenceManager.getInstance(getBaseContext());
         
         initializePaging();
-        setUIDisconnected();
+        if(prefs.getIsConnected()) {
+        	setConnected();
+        } else {
+        	setDisconnected();
+        }
     }
     
     @Override
@@ -148,19 +166,19 @@ public class IMrekChannels extends FragmentActivity {
     				Bundle bundle = intent.getExtras();
     				switch(bundle.getInt("msgtype")) {
     		        	case IMrekMqttService.MQTT_CONNECTED:
-    		        		setUIConnected();
+    		        		setConnected();
     		        		for(int i=0;i<fragments.size();i++) {
     		        			((ChannelFragment) fragments.get(i)).setConnected();
     		        		}
     		        		break;
     		        	case IMrekMqttService.MQTT_CONNECTION_LOST:
-    		        		setUIDisconnected();
+    		        		setDisconnected();
     		        		for(int i=0;i<fragments.size();i++) {
     		        			((ChannelFragment) fragments.get(i)).setDisconnected();
     		        		}
     		        		break;
     		        	case IMrekMqttService.MQTT_DISCONNECTED:
-    		        		setUIDisconnected();
+    		        		setDisconnected();
     		        		for(int i=0;i<fragments.size();i++) {
     		        			((ChannelFragment) fragments.get(i)).setDisconnected();
     		        		}
@@ -230,57 +248,8 @@ public class IMrekChannels extends FragmentActivity {
     	}
     }
     
- 
-    @Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.main, menu);
-		return true;
-	}
-    
-    @Override
-	public boolean onOptionsItemSelected(MenuItem mi) {
-		if(mi.getItemId() == R.id.preferences) {
-			Intent prefIntent = new Intent(getBaseContext(), PreferenceScreen.class);
-			startActivity(prefIntent);
-		}
-		else if(mi.getItemId() == R.id.logout) {
-			prefs.setLoggedIn(false);
-			prefs.setAutoLogin(false);
-			Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
-			startActivity(intent);
-			finish();
-		}
-		else if(mi.getItemId() == R.id.reconnect) {
-			sendMessage(IMrekMqttService.MSG_RECONNECT, "Reconnect", null, null);
-		}
-		else if(mi.getItemId() == R.id.quit) {
-			quitDialog = new AlertDialog.Builder(this);
-			quitDialog.setMessage("Are you sure you want to quit? This will close IMrek and disconnect you from the server.");
-			quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					sendMessage(IMrekMqttService.MSG_STOP, "Quitting", null, null);
-					for(int i=0;i<fragments.size();i++) {
-            			((ChannelFragment) fragments.get(i)).setDisconnected();
-            		}
-					setUIDisconnected();
-					prefs.setLoggedIn(false);
-					finish();
-				}
-			}).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					dialog.dismiss();
-				}
-			});
-			quitDialog.show();	
-		}
-		return true;
-	}
-    
     public void sendMessage(int msgtype, String arg1, String arg2, String arg3) {
-		Intent i = new Intent(IMrekMain.MESSAGE_RECEIVER_ACTION);
+    	Intent i = new Intent(MESSAGE_RECEIVER_ACTION);
 		Bundle b = new Bundle();
 		b.putInt("msgtype", msgtype);
 		b.putString("arg1", arg1);

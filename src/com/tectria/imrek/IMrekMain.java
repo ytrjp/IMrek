@@ -102,7 +102,16 @@ public class IMrekMain extends ListActivity {
         imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         context = this;
         svcReceiverRegistered = false;
-        //TODO: Wherever you initialize the broadcast receiver setup, you need to send a message telling the service to connect immediately after initialization.
+        
+        if(prefs.getCrashedLastClose()) {
+        	sendMessage(IMrekMqttService.MSG_STOP, "Logging Out", null, null);
+    		prefs.setLoggedIn(false);
+    		prefs.clearSavedUser();
+    		Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
+    		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+			startActivity(intent);
+			finish();
+        }
         
         //If we aren't logged in,
         if(!prefs.getLoggedIn()) {
@@ -123,6 +132,7 @@ public class IMrekMain extends ListActivity {
             		prefs.setLoggedIn(false);
             		prefs.clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
+            		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         			startActivity(intent);
         			finish();
             	} else {
@@ -336,12 +346,18 @@ public class IMrekMain extends ListActivity {
     @Override
     public void onDestroy() {
     	super.onDestroy();
+    	if(!isFinishing()) {
+    		//We're crashing D:
+    		prefs.setCrashedLastClose(true);
+    		//Try and tell the service
+    		sendMessage(IMrekMqttService.MSG_STOP, "Crashing", null, null);
+    	}
     }
     
 	@Override
 	public void onListItemClick (ListView l, View v, int position, long id) {
 		Intent intent = new Intent(getBaseContext(), IMrekChannels.class);
-		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
 		intent.putExtra("index", position);
 		startActivity(intent);
 	}
@@ -362,12 +378,14 @@ public class IMrekMain extends ListActivity {
 		else if(mi.getItemId() == R.id.logout) {
 			prefs.setLoggedIn(false);
 			prefs.setAutoLogin(false);
+			sendMessage(IMrekMqttService.MSG_DISCONNECT, "Quitting", null, null);
 			Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
+			intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
 			startActivity(intent);
 			finish();
 		}
 		else if(mi.getItemId() == R.id.reconnect) {
-			sendMessage(IMrekMqttService.MSG_RECONNECT, "Reconnect", null, null);
+			sendMessage(IMrekMqttService.MSG_RECONNECT, prefs.getUsername(), prefs.getPassword(), null);
 		}
 		else if(mi.getItemId() == R.id.quit) {
 			quitDialog = new AlertDialog.Builder(this);

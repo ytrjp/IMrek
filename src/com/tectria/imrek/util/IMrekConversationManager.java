@@ -96,7 +96,7 @@ public class IMrekConversationManager {
 			//.add(0, c.getString(c.getColumnIndex("username")).toString() + ": " + c.getString(c.getColumnIndex("message")));
 			m.put("name", c.getString(c.getColumnIndex("username")).toString());
 			m.put("message", c.getString(c.getColumnIndex("message")).toString());
-			msgs.add(0, m);
+			msgs.add(m);
 		}
 		c.close();
 		return msgs;

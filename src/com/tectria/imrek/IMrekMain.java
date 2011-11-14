@@ -251,7 +251,7 @@ public class IMrekMain extends ListActivity {
     		        		break;
     		        	case IMrekMqttService.MQTT_CONNECTION_LOST:
     		        		setDisconnected();
-    		        		// TODO: Clear friends / conversation list
+    		        		sendMessage(IMrekMqttService.MSG_CONNECT, prefs.getUsername(), prefs.getPassword(), null);
     		        		break;
     		        	case IMrekMqttService.MQTT_DISCONNECTED:
     		        		setDisconnected();

@@ -241,9 +241,9 @@ public class IMrekMqttService extends Service {
 		}
 	}
 	
-	private void handleDisconnect() {
+	/*private void handleDisconnect() {
 		reconnect(prefs.getLastUser(), prefs.getLastToken());
-	}
+	}*/
 	
 	// Check if we are online
 	private boolean isNetworkAvailable() {
@@ -428,7 +428,7 @@ public class IMrekMqttService extends Service {
 			// null itself
 			client = null;
 			if(isNetworkAvailable() == true) {
-				handleDisconnect();
+				//handleDisconnect();
 			}
 		}		
 		

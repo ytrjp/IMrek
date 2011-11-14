@@ -16,7 +16,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import com.tectria.imrek.IMrekChannels;
@@ -24,6 +23,7 @@ import com.tectria.imrek.IMrekMqttService;
 import com.tectria.imrek.R;
 import com.tectria.imrek.util.IMrekConversationManager;
 import com.tectria.imrek.util.IMrekPreferenceManager;
+import com.tectria.imrek.util.SimpleMessageAdapter;
 
 public class ChannelFragment extends ListFragment {
     
@@ -36,7 +36,7 @@ public class ChannelFragment extends ListFragment {
 	ArrayList<HashMap<String, String>> items;
 	final String[] from = new String[]{"name", "message"};
 	final int[] to = new int[]{R.id.name, R.id.message};
-	SimpleAdapter adapter;
+	SimpleMessageAdapter adapter;
     HashMap<String, String> map;
     
     //Views
@@ -121,7 +121,7 @@ public class ChannelFragment extends ListFragment {
 	        items = IMrekConversationManager.getInstance(context).openChannelMessages(topic);
 			
 			//Create the adapter
-			adapter = new SimpleAdapter(context, items, R.layout.item_message, from, to);
+			adapter = new SimpleMessageAdapter(context, items, R.layout.item_message, from, to);
 	        this.setListAdapter(adapter);
 			
 		//if we have a list adapter

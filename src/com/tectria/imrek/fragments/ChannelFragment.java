@@ -25,6 +25,7 @@ import com.tectria.imrek.IMrekChannels;
 import com.tectria.imrek.IMrekMqttService;
 import com.tectria.imrek.R;
 import com.tectria.imrek.util.IMrekConversationManager;
+import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class ChannelFragment extends ListFragment {
     
@@ -91,7 +92,7 @@ public class ChannelFragment extends ListFragment {
 			public void onClick(View v) {
 				if(sendtext.getText().toString() != "") {
 					//TODO: adapt for new messaging protocol
-					((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString(), null);
+					((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, IMrekPreferenceManager.getInstance(context).getUsername()+":"+sendtext.getText().toString(), null);
 					sendtext.setText("");
 				}
 			}
@@ -102,7 +103,7 @@ public class ChannelFragment extends ListFragment {
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				if((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
 		        	//TODO: adapt for new messaging protocol
-					((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, sendtext.getText().toString(), null);
+					((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, IMrekPreferenceManager.getInstance(context).getUsername()+":"+sendtext.getText().toString(), null);
 		        	sendtext.setText("");
 		        	imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
 		        	return true;
@@ -152,7 +153,7 @@ public class ChannelFragment extends ListFragment {
 	}
 	
 	public void publishMessage(String channel, String message) {
-		String[] m = message.split(":");
+		String[] m = message.split(":", 2);
 		HashMap<String, String> h = new HashMap<String, String>();
 		h.put(m[0],m[1]);
 		items.add(h);

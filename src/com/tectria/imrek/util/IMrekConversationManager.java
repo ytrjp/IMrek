@@ -45,7 +45,7 @@ public class IMrekConversationManager {
 	// Call when a new message comes in
 	// Pass channel/topic, message payload, and whether the channel is currently in focus
 	public synchronized void newMessageReceived(String channel, String payload) {
-		String[] message = payload.split(":", 1);
+		String[] message = payload.split(":", 2);
 		long msgId = messageAdapter.addMessage(channelAdapter.getChannelId(channel), message[0], message[1]);
 		if (waitingMessages.containsKey(channel)) {
 			Vector<String> v = waitingMessages.get(channel);
@@ -67,7 +67,7 @@ public class IMrekConversationManager {
 			ArrayList<HashMap<String, String>> msgs = new ArrayList<HashMap<String, String>>();
 			for (String s : v) {
 				HashMap<String, String> m = new HashMap<String, String>();
-				String[] str = s.split(":");
+				String[] str = s.split(":", 2);
 				m.put("name", str[0]);
 				m.put("message", str[1]);
 				msgs.add(m);

@@ -74,6 +74,10 @@ public class IMrekMqttService extends Service {
     
     public static final int SERVICE_READY = 28;
 	
+    public static final int SERVICE_CONNECT_CHECK = 29;
+    public static final int SERVICE_CONNECT_TRUE = 30;
+    public static final int SERVICE_CONNECT_FALSE = 31;
+    
     //Our Managers
     IMrekPreferenceManager prefs;
 	ConnectivityManager conn;
@@ -84,7 +88,7 @@ public class IMrekMqttService extends Service {
 	public boolean isStarted;
 	
 	//MQTT
-	private MQTTConnection mqtt;
+	private MQTTConnection mqtt = null;
 	private static final String MQTT_HOST = "69.164.216.146";
 	private static int MQTT_BROKER_PORT_NUM = 1883;
 	private static MqttPersistence MQTT_PERSISTENCE = null;
@@ -349,6 +353,9 @@ public class IMrekMqttService extends Service {
 	    	        	case MQTT_SEND_KEEPALIVE:
 	    	        		mqtt.keepalive();
 	    	        		break;
+//	    	        	case SERVICE_CONNECT_CHECK:
+//	    	        		serviceConnectCheck();
+//	    	        		break;
 	    			}
     			}
     	    	
@@ -363,8 +370,10 @@ public class IMrekMqttService extends Service {
     	conn = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
     	
     	//Instantiate MQTTConnection
-    	mqtt = new MQTTConnection(MQTT_HOST);
-    	
+    	if (serviceConnectCheck() == false) {
+    		mqtt = new MQTTConnection(MQTT_HOST);
+    	}
+
     	handleCrashedService();
     }
 
@@ -375,6 +384,26 @@ public class IMrekMqttService extends Service {
 			stop();
 		}	
 	}
+    
+    private boolean serviceConnectCheck() {
+    	if (mqtt != null) {
+			if (mqtt.client != null) {
+				if (mqtt.client.isConnected()) {
+					sendMessage(SERVICE_CONNECT_TRUE, null, null, null);
+					return true;
+				} else {
+					sendMessage(SERVICE_CONNECT_FALSE, null, null, null);
+					return false;
+				}
+			} else {
+				sendMessage(SERVICE_CONNECT_FALSE, null, null, null);
+				return false;
+			}
+		} else {
+			sendMessage(SERVICE_CONNECT_FALSE, null, null, null);
+			return false;
+		}
+    }
     
 	// This inner class is a wrapper on top of MQTT client.
 	private class MQTTConnection implements MqttSimpleCallback {

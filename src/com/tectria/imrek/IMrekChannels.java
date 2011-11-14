@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Vector;
 
 import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -19,12 +18,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.tectria.imrek.fragments.ChannelFragment;
-import com.tectria.imrek.util.CallbackBroadcastReceiver;
 import com.tectria.imrek.util.ChannelPagerAdapter;
 import com.tectria.imrek.util.IMrekConversationManager;
 import com.tectria.imrek.util.IMrekPreferenceManager;

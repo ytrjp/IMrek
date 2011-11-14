@@ -2,7 +2,6 @@ package com.tectria.imrek.fragments;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Vector;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -17,12 +16,10 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import com.tectria.imrek.IMrekChannels;
-import com.tectria.imrek.IMrekMqttService;
 import com.tectria.imrek.R;
 import com.tectria.imrek.util.IMrekConversationManager;
 import com.tectria.imrek.util.IMrekPreferenceManager;
@@ -72,6 +69,7 @@ public class ChannelFragment extends ListFragment {
 		
 		//Save the container view so we can access the window token
 		viewContainer = container;
+		
 		//get the input method manager service
 		imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
 		

@@ -261,7 +261,7 @@ public class IMrekMain extends ListActivity {
     		        		break;
     		        	case IMrekMqttService.MQTT_CONNECTION_LOST:
     		        		setDisconnected();
-    		        		sendMessage(IMrekMqttService.MSG_CONNECT, prefs.getUsername(), prefs.getPassword(), null);
+    		        		sendMessage(IMrekMqttService.MSG_CONNECT, prefs.getUsername(), prefs.getToken(), null);
     		        		break;
     		        	case IMrekMqttService.MQTT_DISCONNECTED:
     		        		setDisconnected();

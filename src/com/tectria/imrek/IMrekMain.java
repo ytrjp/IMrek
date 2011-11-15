@@ -211,13 +211,14 @@ public class IMrekMain extends ListActivity {
 			    			}
 			    			
 			    			if(channelname.getText().toString() != "" && !exists) {
-			    				IMrekConversationManager.getInstance(getBaseContext()).addChannel(channelname.getText().toString());
+			    				String channame = channelname.getText().toString().replace(" ", "").replace("	", "");
+			    				IMrekConversationManager.getInstance(getBaseContext()).addChannel(channame);
 			    				HashMap<String, String> map = new HashMap<String, String>();
-			    				map.put("channel", channelname.getText().toString().replace(" ", "").replace("	", ""));
+			    				map.put("channel", channame);
 			    				map.put("message", "");
 			    				items.add(map);
 			    				adapter.notifyDataSetChanged();
-			    				sendMessage(IMrekMqttService.MQTT_SUBSCRIBE, channelname.getText().toString(), null, null);
+			    				sendMessage(IMrekMqttService.MQTT_SUBSCRIBE, channame, null, null);
 			    			}
 			    			dialog.dismiss();
 			           }

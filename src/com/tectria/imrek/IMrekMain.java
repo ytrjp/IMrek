@@ -213,7 +213,7 @@ public class IMrekMain extends ListActivity {
 			    			if(channelname.getText().toString() != "" && !exists) {
 			    				IMrekConversationManager.getInstance(getBaseContext()).addChannel(channelname.getText().toString());
 			    				HashMap<String, String> map = new HashMap<String, String>();
-			    				map.put("channel", channelname.getText().toString());
+			    				map.put("channel", channelname.getText().toString().replace(" ", "").replace("	", ""));
 			    				map.put("message", "");
 			    				items.add(map);
 			    				adapter.notifyDataSetChanged();
@@ -228,17 +228,6 @@ public class IMrekMain extends ListActivity {
 			    			dialog.dismiss();
 			           }
 			        });
-			    	
-			    	channelname.setOnKeyListener(new OnKeyListener() {
-						@Override
-						public boolean onKey(View v, int keyCode, KeyEvent event) {
-							if((event.getAction() == KeyEvent.ACTION_DOWN) && ((keyCode == KeyEvent.KEYCODE_ENTER) || (keyCode == KeyEvent.KEYCODE_TAB)
-									|| (keyCode == KeyEvent.KEYCODE_SPACE))) {
-					        	return true;
-					        }
-					        return false;
-						}
-					});
 			    	
 			    	dialog.show();
 				} else {

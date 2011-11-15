@@ -6,6 +6,8 @@ import java.util.HashMap;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,7 +15,6 @@ import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -98,10 +99,33 @@ public class ChannelFragment extends ListFragment {
 		sendbutton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if(sendtext.getText().toString() != "" && sendtext.getText().toString() != " ") {
+				if(sendtext.getText().toString().length() != 0) {
 					((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, IMrekPreferenceManager.getInstance(context).getUsername()+":"+sendtext.getText().toString(), null);
 					sendtext.setText("");
 				}
+			}
+		});
+		
+		sendtext.setOnKeyListener(new OnKeyListener() {
+			@Override
+			public boolean onKey(View v, int keycode, KeyEvent event) {
+				if(event.getAction() == KeyEvent.ACTION_DOWN) {
+					if(keycode == KeyEvent.KEYCODE_SPACE) {
+						if(sendtext.getText().toString().length() == 0) {
+							return true;
+						}
+					} else if(keycode == KeyEvent.KEYCODE_TAB) {
+						return true;
+					} else if(keycode == KeyEvent.KEYCODE_ENTER) {
+						if(sendtext.getText().toString().length() == 0) {
+							((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, IMrekPreferenceManager.getInstance(context).getUsername()+":"+sendtext.getText().toString(), null);
+							sendtext.setText("");
+						} else {
+							return true;
+						}
+					}
+				}
+				return false;
 			}
 		});
 		

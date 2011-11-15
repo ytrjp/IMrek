@@ -109,7 +109,7 @@
 			    android:layout_alignParentLeft="true"
 			    android:layout_toLeftOf="@+id/sendbutton"
 			    android:gravity="top|left"
-			    android:inputType="textMultiLine|textShortMessage|textCapSentences|textAutoCorrect" />
+			    android:inputType="textShortMessage|textCapSentences|textAutoCorrect" />
 			
 			<ImageButton android:id="@+id/sendbutton"
 			    android:layout_height="75dp"

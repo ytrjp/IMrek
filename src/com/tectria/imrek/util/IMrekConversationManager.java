@@ -112,7 +112,7 @@ public class IMrekConversationManager {
 			Cursor c = messageAdapter.getMessagesForChannel(channelAdapter.getChannelId(channel));
 			HashMap<String, String> m = new HashMap<String, String>();
 			m.put("channel", channel);
-			if (c.moveToFirst()) {
+			if (c.moveToLast()) {
 				m.put("message", c.getString(c.getColumnIndex("username")).toString() + ": "+c.getString(c.getColumnIndex("message")).toString());
 			} else {
 				m.put("message", "");

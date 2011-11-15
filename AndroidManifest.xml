@@ -14,17 +14,18 @@
     <application android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@android:style/Theme.Black.NoTitleBar" android:debuggable="true">
         <activity android:name=".SplashScreenLogin"
 			android:label="@string/app_name"
+			android:launchMode="singleInstance"
 			android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".IMrekMain" android:theme="@style/IMrek" android:label="@string/app_name">
+        <activity android:name=".IMrekMain" android:theme="@style/IMrek" android:launchMode="singleInstance" android:label="@string/app_name">
         </activity>
-        <activity android:name=".IMrekChannels" android:label="Channels" android:windowSoftInputMode="stateHidden" android:launchMode="singleTask" android:theme="@style/IMrek">
+        <activity android:name=".IMrekChannels" android:label="Channels" android:launchMode="singleInstance" android:windowSoftInputMode="stateHidden" android:theme="@style/IMrek">
         </activity>
-        <activity android:name=".PreferenceScreen" android:label="IMrek Preferences" android:theme="@style/IMrek">
+        <activity android:name=".PreferenceScreen" android:launchMode="singleInstance" android:label="IMrek Preferences" android:theme="@style/IMrek">
         </activity>
 		<service android:name=".IMrekMqttService" android:label="IMrek MQTT Service">
 		</service>

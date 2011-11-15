@@ -91,8 +91,8 @@ public class IMrekMqttService extends Service {
 	private static MqttPersistence MQTT_PERSISTENCE = null;
 	private static boolean MQTT_CLEAN_START = true;
 	private static short MQTT_KEEP_ALIVE = 60 * 15;
-	private static int[] MQTT_QUALITIES_OF_SERVICE = {2};
-	private static int MQTT_QUALITY_OF_SERVICE = 2;
+	private static int[] MQTT_QUALITIES_OF_SERVICE = { 2 } ;
+	private static int MQTT_QUALITY_OF_SERVICE   = 2;
 	private static boolean MQTT_RETAINED_PUBLISH = false;
 	
 	//Interval to send keepalives

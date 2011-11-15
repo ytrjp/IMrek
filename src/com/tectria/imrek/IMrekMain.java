@@ -402,6 +402,7 @@ public class IMrekMain extends ListActivity {
 		}
 		else if(mi.getItemId() == R.id.quit) {
 			quitDialog = new AlertDialog.Builder(this);
+			quitDialog.setTitle("Quit");
 			quitDialog.setIcon(R.drawable.ic_confirm);
 			quitDialog.setMessage("Are you sure you want to quit? This will close IMrek and disconnect you from the server.");
 			quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {

@@ -44,7 +44,7 @@ public class ChannelFragment extends ListFragment {
     View layout;
     TextView channel;
     ViewGroup viewContainer; //Allows us to access the main activity's window token, so save it
-    Button sendbutton;
+    ImageButton sendbutton;
 	EditText sendtext;
 	ImageButton clearmessages;
 	ImageButton closechannel;
@@ -86,7 +86,7 @@ public class ChannelFragment extends ListFragment {
 		layout = inflater.inflate(R.layout.f_channel, container, false);
 		//Get Views
 		channel = (TextView)layout.findViewById(R.id.channel);
-		sendbutton = (Button)layout.findViewById(R.id.sendbutton);
+		sendbutton = (ImageButton)layout.findViewById(R.id.sendbutton);
 		sendtext = (EditText)layout.findViewById(R.id.sendtext);
 		closechannel = (ImageButton)layout.findViewById(R.id.closechannel);
         clearmessages = (ImageButton)layout.findViewById(R.id.clearmessages);
@@ -98,7 +98,7 @@ public class ChannelFragment extends ListFragment {
 		sendbutton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if(sendtext.getText().toString() != "") {
+				if(sendtext.getText().toString() != "" && sendtext.getText().toString() != " ") {
 					((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, IMrekPreferenceManager.getInstance(context).getUsername()+":"+sendtext.getText().toString(), null);
 					sendtext.setText("");
 				}

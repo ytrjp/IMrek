@@ -8,7 +8,7 @@
 		<CheckBoxPreference
 			android:key="rememberme"
 			android:title="Remember Me"
-			android:summary="Remember the current username at the login screen" />
+			android:summary="Remember current username when logging in" />
 		
 		<CheckBoxPreference
 			android:key="autologin"
@@ -28,6 +28,31 @@
 			android:entries="@array/entries_qos"
 			android:entryValues="@array/values_qos"
 			android:dialogTitle="MQTT QoS" />
+
+	</PreferenceCategory>
+	
+	<PreferenceCategory
+		android:title="Notification Settings">
+		
+	    <CheckBoxPreference
+			android:key="shownotifications"
+			android:title="Show Notifications"
+			android:summary="Turn on/off notifications" />
+	    
+		<PreferenceScreen
+		    android:key="chan_notif_screen"
+		    android:title="Channel Notification Settings"
+		    android:summary="Enable/Disable notifications for individual channels"
+		    android:dependency="shownotifications">
+		    
+		    <PreferenceCategory
+		        android:key="chan_notif"
+				android:title="Channels"
+				android:summary="Enable/Disable notifications for individual channels">
+				
+			</PreferenceCategory>
+		    
+		</PreferenceScreen>
 
 	</PreferenceCategory>
 </PreferenceScreen>

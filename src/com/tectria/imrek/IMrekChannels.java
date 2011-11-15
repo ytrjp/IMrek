@@ -45,13 +45,13 @@ public class IMrekChannels extends FragmentActivity {
 	public void setUIConnected() {
     	status.setTextColor(getResources().getColor(R.color.connectedColor));
 		status.setText("Connected");
-    	statusicon.setImageResource(R.drawable.icon_connected);
+    	statusicon.setImageResource(R.drawable.ic_connected);
     }
     
     public void setUIDisconnected() {
 		status.setTextColor(getResources().getColor(R.color.disconnectedColor));
 		status.setText("Disconnected");
-    	statusicon.setImageResource(R.drawable.icon_disconnected);
+    	statusicon.setImageResource(R.drawable.ic_disconnected);
 	}
     
     public void setConnected() {
@@ -75,12 +75,7 @@ public class IMrekChannels extends FragmentActivity {
 			if(cur - 1 >= 0) {
 				pager.setCurrentItem(cur - 1);
 				IMrekConversationManager.getInstance(getBaseContext()).removeChannel(channels.get(cur));
-				channels.remove(cur);
-				fragments.remove(cur);
-				pageradapter.notifyDataSetChanged();
-			} else if (cur + 1 < fragments.size()) {
-				pager.setCurrentItem(cur + 1);
-				channels.remove(cur);
+				channels = IMrekConversationManager.getInstance(getBaseContext()).getChannelList();
 				fragments.remove(cur);
 				pageradapter.notifyDataSetChanged();
 			} else {
@@ -246,6 +241,7 @@ public class IMrekChannels extends FragmentActivity {
     @Override
     public void onBackPressed() {
     	switching = true;
+    	finish();
     }
     
     public void sendMessage(int msgtype, String arg1, String arg2, String arg3) {

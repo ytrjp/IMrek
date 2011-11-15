@@ -58,7 +58,7 @@ public class IMrekPreferenceManager {
 	}
 	
 	public synchronized int getQoS() {
-		return appSharedPrefs.getInt("qos", 2);
+		return Integer.parseInt(appSharedPrefs.getString("qos", "2"));
 	}
 	
 	public synchronized String getToken() {

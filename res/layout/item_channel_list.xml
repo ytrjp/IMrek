@@ -15,7 +15,7 @@
 	    <ImageView
 		    android:layout_height="wrap_content"
 		    android:layout_width="wrap_content"
-		    android:src="@drawable/ic_menu_start_conversation" />
+		    android:src="@drawable/ic_channel" />
     </LinearLayout>
     
     <LinearLayout
@@ -27,7 +27,8 @@
 	        android:textSize="16sp"
 	        android:textStyle="bold"
 	        android:layout_width="match_parent"
-	        android:layout_height="wrap_content" />
+	        android:layout_height="wrap_content"
+	        android:paddingTop="5dp" />
 	
 	    <TextView android:id="@+id/lastm"
 	        android:textSize="12sp"

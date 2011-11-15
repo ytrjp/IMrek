@@ -26,7 +26,7 @@
 				android:scaleType="centerInside"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:src="@drawable/ic_menu_comment"
+				android:src="@drawable/ic_close_channel"
 				android:paddingTop="0dp"
 				android:paddingLeft="2dp"
 				android:paddingRight="2dp"
@@ -51,7 +51,7 @@
 				android:scaleType="centerInside"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:src="@drawable/ic_menu_clear_playlist"
+				android:src="@drawable/ic_clear_messages"
 				android:paddingTop="0dp"
 				android:paddingLeft="2dp"
 				android:paddingRight="2dp"
@@ -108,11 +108,18 @@
 			    android:layout_height="75dp"
 			    android:layout_alignParentLeft="true"
 			    android:layout_toLeftOf="@+id/sendbutton"
-			    android:gravity="top|left" />
+			    android:gravity="top|left"
+			    android:inputType="textMultiLine|textShortMessage|textCapSentences|textAutoCorrect" />
 			
-			<Button android:id="@+id/sendbutton"
+			<ImageButton android:id="@+id/sendbutton"
 			    android:layout_height="75dp"
 			    android:layout_width="75dp"
+			    android:scaleType="centerInside"
+				android:src="@drawable/ic_send"
+				android:paddingTop="0dp"
+				android:paddingLeft="2dp"
+				android:paddingRight="2dp"
+				android:paddingBottom="5dp"
 			    android:text="Send" 
 			    android:layout_alignParentRight="true" />
 		</RelativeLayout>

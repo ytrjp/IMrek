@@ -113,7 +113,7 @@ public class IMrekConversationManager {
 			HashMap<String, String> m = new HashMap<String, String>();
 			m.put("channel", channel);
 			if (c.moveToFirst()) {
-				m.put("message", c.getString(c.getColumnIndex("username")).toString() + ":"+c.getString(c.getColumnIndex("message")).toString());
+				m.put("message", c.getString(c.getColumnIndex("username")).toString() + ": "+c.getString(c.getColumnIndex("message")).toString());
 			} else {
 				m.put("message", "");
 			}

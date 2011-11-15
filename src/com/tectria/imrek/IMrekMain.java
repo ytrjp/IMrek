@@ -67,6 +67,7 @@ public class IMrekMain extends ListActivity {
 	boolean switching;
 	
 	ImageButton newchannel;
+	TextView userinfo;
 	AlertDialog.Builder dialog;
 	View dialogview;
 	LayoutInflater inflater;
@@ -182,6 +183,9 @@ public class IMrekMain extends ListActivity {
         adapter.notifyDataSetChanged();
 		
         newchannel = (ImageButton)findViewById(R.id.newchannel);
+        userinfo = (TextView)findViewById(R.id.userinfo);
+        
+        userinfo.setText("Logged in as " + IMrekPreferenceManager.getInstance(getBaseContext()).getUsername());
         
         newchannel.setOnClickListener(new OnClickListener() {
 			@Override
@@ -326,7 +330,9 @@ public class IMrekMain extends ListActivity {
     	
     	if(paused) {
     		items = IMrekConversationManager.getInstance(getBaseContext()).getChannelsLastMessages();
-	    	adapter.notifyDataSetChanged();
+    		adapter = new SimpleAdapter(getBaseContext(), items, R.layout.item_channel_list, from, to);
+            setListAdapter(adapter);
+    		adapter.notifyDataSetChanged();
 	    	paused = false;
     	}
     }
@@ -377,6 +383,7 @@ public class IMrekMain extends ListActivity {
 	public boolean onOptionsItemSelected(MenuItem mi) {
 		if(mi.getItemId() == R.id.preferences) {
 			Intent prefIntent = new Intent(getBaseContext(), PreferenceScreen.class);
+			prefIntent.putExtra("channels", IMrekConversationManager.getInstance(getBaseContext()).getChannelList());
 			startActivity(prefIntent);
 		}
 		else if(mi.getItemId() == R.id.logout) {
@@ -393,6 +400,7 @@ public class IMrekMain extends ListActivity {
 		}
 		else if(mi.getItemId() == R.id.quit) {
 			quitDialog = new AlertDialog.Builder(this);
+			quitDialog.setIcon(R.drawable.ic_confirm);
 			quitDialog.setMessage("Are you sure you want to quit? This will close IMrek and disconnect you from the server.");
 			quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {
 				@Override
@@ -471,12 +479,12 @@ public class IMrekMain extends ListActivity {
     public void setUIConnected() {
     	status.setTextColor(getResources().getColor(R.color.connectedColor));
 		status.setText("Connected");
-    	statusicon.setImageResource(R.drawable.icon_connected);
+    	statusicon.setImageResource(R.drawable.ic_connected);
     }
     
     public void setUIDisconnected() {
 		status.setTextColor(getResources().getColor(R.color.disconnectedColor));
 		status.setText("Disconnected");
-    	statusicon.setImageResource(R.drawable.icon_disconnected);
+    	statusicon.setImageResource(R.drawable.ic_disconnected);
 	}
 }

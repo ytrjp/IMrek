@@ -27,7 +27,7 @@
 				android:scaleType="centerInside"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
-				android:src="@drawable/ic_menu_comment"
+				android:src="@drawable/ic_new_channel"
 				android:paddingTop="0dp"
 				android:paddingLeft="2dp"
 				android:paddingRight="2dp"
@@ -37,6 +37,14 @@
 			<View android:layout_height="fill_parent"
 				android:layout_width="1dp"
 				android:background="#90AAAAAA"/>
+			
+			<TextView android:id="@+id/userinfo"
+			    android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_gravity="center_vertical"
+				android:textSize="18sp"
+				android:textStyle="italic|bold"
+				android:paddingLeft="7dp" />
 		</LinearLayout>
 		
 		<LinearLayout

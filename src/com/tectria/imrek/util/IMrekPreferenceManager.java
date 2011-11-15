@@ -1,21 +1,24 @@
 package com.tectria.imrek.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 
 public class IMrekPreferenceManager {
 	
 	private static IMrekPreferenceManager instance = null;
-	private static final String APP_SHARED_PREFS = "com.tectria.imrek.util.IMrekPreferencesManager";
 	private SharedPreferences appSharedPrefs;
 	private Editor prefsEditor;
 	private Context context;
 	
 	protected IMrekPreferenceManager(Context ctx) {
-		this.appSharedPrefs = ctx.getSharedPreferences(APP_SHARED_PREFS, Activity.MODE_PRIVATE);
+		this.appSharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
 		this.prefsEditor = this.appSharedPrefs.edit();
 		this.context = ctx;
 	}
@@ -145,6 +148,14 @@ public class IMrekPreferenceManager {
 			prefsEditor.commit();
 		}
 		return id;
+	}
+	
+	public synchronized void addNotifChannel(String channel_name) {
+		String channels_string = appSharedPrefs.getString("notifChannels", "");
+		ArrayList<String> channels = (ArrayList<String>)Arrays.asList(channels_string.split(","));
+		if (!channels.contains(channel_name)) {
+			channels.add(channel_name);
+		}
 	}
 	
 	public synchronized void clearSavedUser() {

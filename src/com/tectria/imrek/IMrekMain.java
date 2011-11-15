@@ -34,6 +34,7 @@ import android.widget.TabHost;
 import android.widget.TextView;
 
 import com.tectria.imrek.util.IMrekConversationManager;
+import com.tectria.imrek.util.IMrekNotificationManager;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class IMrekMain extends ListActivity {
@@ -65,6 +66,7 @@ public class IMrekMain extends ListActivity {
 	private boolean svcReceiverRegistered;
 	static final String MESSAGE_RECEIVER_ACTION = "com.tectria.imrek.MESSAGE";
 	boolean serviceStarted = false;
+	boolean switching;
 	
 	ImageButton newchannel;
 	AlertDialog.Builder dialog;
@@ -109,6 +111,7 @@ public class IMrekMain extends ListActivity {
     		prefs.clearSavedUser();
     		Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
     		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+    		switching = true;
 			startActivity(intent);
 			finish();
         }
@@ -133,6 +136,7 @@ public class IMrekMain extends ListActivity {
             		prefs.clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
             		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            		switching = true;
         			startActivity(intent);
         			finish();
             	} else {
@@ -151,6 +155,7 @@ public class IMrekMain extends ListActivity {
             		prefs.setLoggedIn(false);
             		prefs.clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
+            		switching = true;
         			startActivity(intent);
         			finish();
             	} else {
@@ -246,6 +251,7 @@ public class IMrekMain extends ListActivity {
     @Override
     public void onResume() {
     	super.onResume();
+    	sendMessage(IMrekMqttService.SERVICE_STOP_FOREGROUND, null, null, null);
     	if (!svcReceiverRegistered) {
     		svcReceiver = new MainBroadcastReceiver(){
     			@Override
@@ -261,7 +267,7 @@ public class IMrekMain extends ListActivity {
     		        		break;
     		        	case IMrekMqttService.MQTT_CONNECTION_LOST:
     		        		setDisconnected();
-    		        		sendMessage(IMrekMqttService.MSG_CONNECT, prefs.getUsername(), prefs.getPassword(), null);
+    		        		sendMessage(IMrekMqttService.MSG_CONNECT, prefs.getUsername(), prefs.getToken(), null);
     		        		break;
     		        	case IMrekMqttService.MQTT_DISCONNECTED:
     		        		setDisconnected();
@@ -341,6 +347,11 @@ public class IMrekMain extends ListActivity {
     		unregisterReceiver(svcReceiver);
     		svcReceiverRegistered = false;
     	}
+    	if(!switching) {
+    		sendMessage(IMrekMqttService.SERVICE_START_FOREGROUND, null, null, null);
+    	} else {
+    		switching = false;
+    	}
     }
     
     @Override
@@ -359,6 +370,7 @@ public class IMrekMain extends ListActivity {
 		Intent intent = new Intent(getBaseContext(), IMrekChannels.class);
 		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
 		intent.putExtra("index", position);
+		switching = true;
 		startActivity(intent);
 	}
 	

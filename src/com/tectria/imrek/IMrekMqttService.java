@@ -25,6 +25,7 @@ import com.ibm.mqtt.MqttPersistenceException;
 import com.ibm.mqtt.MqttSimpleCallback;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.tectria.imrek.util.IMrekHttpClient;
+import com.tectria.imrek.util.IMrekNotificationManager;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class IMrekMqttService extends Service {
@@ -74,6 +75,9 @@ public class IMrekMqttService extends Service {
     public static final int SERVICE_CONNECT_CHECK = 29;
     public static final int SERVICE_CONNECT_TRUE = 30;
     public static final int SERVICE_CONNECT_FALSE = 31;
+    
+    public static final int SERVICE_START_FOREGROUND = 32;
+    public static final int SERVICE_STOP_FOREGROUND = 33;
     
     //Our Managers
     IMrekPreferenceManager prefs;
@@ -350,6 +354,11 @@ public class IMrekMqttService extends Service {
 	    	        	case MQTT_SEND_KEEPALIVE:
 	    	        		mqtt.keepalive();
 	    	        		break;
+	    	        	case SERVICE_START_FOREGROUND:
+	    	        		startForeground(7777, IMrekNotificationManager.getInstance(getBaseContext()).getNotificationObject("IMrek", "IMrek is running in the background.", IMrekMain.class));
+	    	        		break;
+	    	        	case SERVICE_STOP_FOREGROUND:
+	    	        		stopForeground(true);
 //	    	        	case SERVICE_CONNECT_CHECK:
 //	    	        		serviceConnectCheck();
 //	    	        		break;
@@ -365,6 +374,7 @@ public class IMrekMqttService extends Service {
     	//Get our managers
     	prefs = IMrekPreferenceManager.getInstance(this);
     	conn = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+    	
     	
     	//Instantiate MQTTConnection
     	if (serviceConnectCheck() == false) {

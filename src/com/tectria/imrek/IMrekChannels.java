@@ -35,6 +35,7 @@ public class IMrekChannels extends FragmentActivity {
 	List<Fragment> fragments;
 	List<String> fids;  
 	int index;
+	boolean switching;
 	
 	//Bundle object to be reused
 	Bundle bundle;
@@ -93,6 +94,7 @@ public class IMrekChannels extends FragmentActivity {
 				pageradapter.notifyDataSetChanged();
 			} else {
 				IMrekConversationManager.getInstance(getBaseContext()).removeChannel(channels.get(cur));
+				switching = true;
 				finish();
 			}
 		}
@@ -246,6 +248,16 @@ public class IMrekChannels extends FragmentActivity {
     		unregisterReceiver(svcReceiver);
     		svcReceiverRegistered = false;
     	}
+    	if(!switching) {
+    		sendMessage(IMrekMqttService.SERVICE_STOP_FOREGROUND, null, null, null);
+    	} else {
+    		switching = false;
+    	}
+    }
+    
+    @Override
+    public void onBackPressed() {
+    	switching = true;
     }
     
     public void sendMessage(int msgtype, String arg1, String arg2, String arg3) {

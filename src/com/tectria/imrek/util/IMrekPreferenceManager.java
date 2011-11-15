@@ -18,7 +18,7 @@ public class IMrekPreferenceManager {
 	private Context context;
 	
 	protected IMrekPreferenceManager(Context ctx) {
-		this.appSharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+		this.appSharedPrefs = PreferenceManager.getDefaultSharedPreferences(ctx);
 		this.prefsEditor = this.appSharedPrefs.edit();
 		this.context = ctx;
 	}

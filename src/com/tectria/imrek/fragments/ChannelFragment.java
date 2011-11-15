@@ -4,14 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.View.OnFocusChangeListener;
 import android.view.View.OnKeyListener;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -101,7 +99,6 @@ public class ChannelFragment extends ListFragment {
 			@Override
 			public void onClick(View v) {
 				if(sendtext.getText().toString() != "") {
-					//TODO: adapt for new messaging protocol
 					((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, IMrekPreferenceManager.getInstance(context).getUsername()+":"+sendtext.getText().toString(), null);
 					sendtext.setText("");
 				}
@@ -118,7 +115,6 @@ public class ChannelFragment extends ListFragment {
 			@Override
 			public boolean onKey(View v, int keyCode, KeyEvent event) {
 				if((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
-		        	//TODO: adapt for new messaging protocol
 					((IMrekChannels)getActivity()).sendMessage(IMrekMqttService.MQTT_PUBLISH, topic, IMrekPreferenceManager.getInstance(context).getUsername()+":"+sendtext.getText().toString(), null);
 		        	sendtext.setText("");
 		        	imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);

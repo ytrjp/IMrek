@@ -34,7 +34,6 @@ import android.widget.TabHost;
 import android.widget.TextView;
 
 import com.tectria.imrek.util.IMrekConversationManager;
-import com.tectria.imrek.util.IMrekNotificationManager;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class IMrekMain extends ListActivity {
@@ -48,7 +47,6 @@ public class IMrekMain extends ListActivity {
 	boolean paused;
 	
 	//PreferenceManager + Preferences
-	private IMrekPreferenceManager prefs;
 	InputMethodManager imm;
 	
 	//Views
@@ -98,17 +96,15 @@ public class IMrekMain extends ListActivity {
         //Actually set a custom title using our XML
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.window_title);
         
-        //Get our preference manager
-        prefs = IMrekPreferenceManager.getInstance(this);
         inflater = (LayoutInflater)this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         context = this;
         svcReceiverRegistered = false;
         
-        if(prefs.getCrashedLastClose()) {
+        if(IMrekPreferenceManager.getInstance(getBaseContext()).getCrashedLastClose()) {
         	sendMessage(IMrekMqttService.MSG_STOP, "Logging Out", null, null);
-    		prefs.setLoggedIn(false);
-    		prefs.clearSavedUser();
+    		IMrekPreferenceManager.getInstance(getBaseContext()).setLoggedIn(false);
+    		IMrekPreferenceManager.getInstance(getBaseContext()).clearSavedUser();
     		Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
     		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
     		switching = true;
@@ -117,9 +113,9 @@ public class IMrekMain extends ListActivity {
         }
         
         //If we aren't logged in,
-        if(!prefs.getLoggedIn()) {
+        if(!IMrekPreferenceManager.getInstance(getBaseContext()).getLoggedIn()) {
         	//Credentials aren't yet verified
-        	prefs.setVerified(false);
+        	IMrekPreferenceManager.getInstance(getBaseContext()).setVerified(false);
         	//Grab the intent extras
         	extras = this.getIntent().getExtras();
         	//If we're being passed a user/pass combo
@@ -132,34 +128,34 @@ public class IMrekMain extends ListActivity {
             		//If we get here, then somehow we were passed an invalid user/pass combo from the login activity
             		//Disconnect and log out, clear the user/pass in the preferences, and return to the splash/login activity
             		sendMessage(IMrekMqttService.MSG_STOP, "Logging Out", null, null);
-            		prefs.setLoggedIn(false);
-            		prefs.clearSavedUser();
+            		IMrekPreferenceManager.getInstance(getBaseContext()).setLoggedIn(false);
+            		IMrekPreferenceManager.getInstance(getBaseContext()).clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
             		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             		switching = true;
         			startActivity(intent);
         			finish();
             	} else {
-            		prefs.setVerified(true);
+            		IMrekPreferenceManager.getInstance(getBaseContext()).setVerified(true);
             	}
             //If there's no user/pass in the bundle
             } else {
             	//Default to the user/pass in the preferences
-            	user = prefs.getUsername();
-            	pass = prefs.getPassword();
+            	user = IMrekPreferenceManager.getInstance(getBaseContext()).getUsername();
+            	pass = IMrekPreferenceManager.getInstance(getBaseContext()).getPassword();
             	//If user/pass is blank and/or less than the required length
             	if((user.equals("") || pass.equals("")) || (user.length() < 5 || pass.length() < 6)) {
             		//If we get here, we somehow have an invalid user or password in the preferences.
             		//Disconnect and log out, clear the user/pass in the preferences, and return to the splash/login activity
             		sendMessage(IMrekMqttService.MSG_STOP, "Logging Out", null, null);
-            		prefs.setLoggedIn(false);
-            		prefs.clearSavedUser();
+            		IMrekPreferenceManager.getInstance(getBaseContext()).setLoggedIn(false);
+            		IMrekPreferenceManager.getInstance(getBaseContext()).clearSavedUser();
             		Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
             		switching = true;
         			startActivity(intent);
         			finish();
             	} else {
-            		prefs.setVerified(true);
+            		IMrekPreferenceManager.getInstance(getBaseContext()).setVerified(true);
             	}
             }
         }
@@ -173,7 +169,7 @@ public class IMrekMain extends ListActivity {
         
         //Let the service know it doesn't have to reconnect
         //The service won't reconnect if it doesn't think it was previously started
-        prefs.setWasStarted(false);
+        IMrekPreferenceManager.getInstance(getBaseContext()).setWasStarted(false);
         
         //Get channels
         items = IMrekConversationManager.getInstance(getBaseContext()).getChannelsLastMessages();
@@ -190,7 +186,7 @@ public class IMrekMain extends ListActivity {
         newchannel.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if(prefs.getIsConnected()) {
+				if(IMrekPreferenceManager.getInstance(getBaseContext()).getIsConnected()) {
 					dialogview = inflater.inflate(R.layout.dialog_newchannel, null);
 			    	dialog = new AlertDialog.Builder(context);
 			    	dialog.setTitle("Join/Create Channel");
@@ -263,25 +259,23 @@ public class IMrekMain extends ListActivity {
     		        		for(HashMap<String, String> item : items) {
     		        			sendMessage(IMrekMqttService.MQTT_SUBSCRIBE, item.get("channel"), null, null);
     		        		}
-    		        		// TODO: load friends list
     		        		break;
     		        	case IMrekMqttService.MQTT_CONNECTION_LOST:
     		        		setDisconnected();
-    		        		sendMessage(IMrekMqttService.MSG_CONNECT, prefs.getUsername(), prefs.getToken(), null);
+    		        		sendMessage(IMrekMqttService.MSG_CONNECT, IMrekPreferenceManager.getInstance(getBaseContext()).getUsername(), IMrekPreferenceManager.getInstance(getBaseContext()).getToken(), null);
     		        		break;
     		        	case IMrekMqttService.MQTT_DISCONNECTED:
     		        		setDisconnected();
-    		        		// TODO: Clear friends / conversation list
     		        		break;
     		        	case IMrekMqttService.MSG_RECONNECT_CREDENTIALS:
     		        		//Call a reconnect with the most recent, most-probably-valid credentials we can.
-    		        		String u = prefs.getUsername();
-    		        		String t = prefs.getToken();
+    		        		String u = IMrekPreferenceManager.getInstance(getBaseContext()).getUsername();
+    		        		String t = IMrekPreferenceManager.getInstance(getBaseContext()).getToken();
     		        		if(u == "") {
-    		        			u = prefs.getLastUser();
+    		        			u = IMrekPreferenceManager.getInstance(getBaseContext()).getLastUser();
     		        		}
     		        		if(t == "") {
-    		        			t = prefs.getLastToken();
+    		        			t = IMrekPreferenceManager.getInstance(getBaseContext()).getLastToken();
     		        		}
     		        		sendMessage(IMrekMqttService.MSG_RECONNECT, u, t, null);
     		        		break;
@@ -289,7 +283,7 @@ public class IMrekMain extends ListActivity {
     		        		IMrekConversationManager.getInstance(getBaseContext()).newMessageReceived(bundle.getString("arg1"), bundle.getString("arg2"));
     		        		break;
     		        	case IMrekMqttService.MQTT_PUBLISH_SENT:
-    		        		// TODO: Check if we get an MQTT_PUBLISH_ARRIVED for our own messages
+    		        		
     		        		break;
     		        	case IMrekMqttService.MQTT_SUBSCRIBE_SENT:
     		        		IMrekConversationManager.getInstance(getBaseContext()).addChannel(bundle.getString("arg1"));
@@ -298,17 +292,15 @@ public class IMrekMain extends ListActivity {
     		        		IMrekConversationManager.getInstance(getBaseContext()).removeChannel(bundle.getString("arg1"));
     		        		break;
     		        	case IMrekMqttService.MQTT_PUBLISH_FAILED:
-    		        		// TODO: Call conversation manager functions
-    		        		// TODO: Retry
+    		        		
     		        		break;
     		        	case IMrekMqttService.MQTT_SUBSCRIBE_FAILED:
-    		        		// TODO: Retry?
+    		        		
     		        	case IMrekMqttService.MQTT_UNSUBSCRIBE_FAILED:
-    		        		// TODO: Retry?
+    		        		
     		        		break;
     		        	case IMrekMqttService.MQTT_CONNECT_FAILED:
-    		        		// TODO: Call conversation manager functions
-    		        		// TODO: Retry
+    		        		
     		        		break;
     		        	case IMrekMqttService.MSG_PING:
     		        		sendMessage(IMrekMqttService.MQTT_SEND_KEEPALIVE, "keepalive", null, null);
@@ -318,7 +310,7 @@ public class IMrekMain extends ListActivity {
     		        		// set timeout to kill service? Don't kill if received ping
     		        		break;
     		        	case IMrekMqttService.SERVICE_READY:
-    		        		sendMessage(IMrekMqttService.MSG_CONNECT, prefs.getUsername(), prefs.getToken(), null);
+    		        		sendMessage(IMrekMqttService.MSG_CONNECT, IMrekPreferenceManager.getInstance(getBaseContext()).getUsername(), IMrekPreferenceManager.getInstance(getBaseContext()).getToken(), null);
     		        		break;
     				}
     			}
@@ -359,7 +351,7 @@ public class IMrekMain extends ListActivity {
     	super.onDestroy();
     	if(!isFinishing()) {
     		//We're crashing D:
-    		prefs.setCrashedLastClose(true);
+    		IMrekPreferenceManager.getInstance(getBaseContext()).setCrashedLastClose(true);
     		//Try and tell the service
     		sendMessage(IMrekMqttService.MSG_STOP, "Crashing", null, null);
     	}
@@ -388,8 +380,8 @@ public class IMrekMain extends ListActivity {
 			startActivity(prefIntent);
 		}
 		else if(mi.getItemId() == R.id.logout) {
-			prefs.setLoggedIn(false);
-			prefs.setAutoLogin(false);
+			IMrekPreferenceManager.getInstance(getBaseContext()).setLoggedIn(false);
+			IMrekPreferenceManager.getInstance(getBaseContext()).setAutoLogin(false);
 			sendMessage(IMrekMqttService.MSG_DISCONNECT, "Quitting", null, null);
 			Intent intent = new Intent(getBaseContext(), SplashScreenLogin.class);
 			intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -397,7 +389,7 @@ public class IMrekMain extends ListActivity {
 			finish();
 		}
 		else if(mi.getItemId() == R.id.reconnect) {
-			sendMessage(IMrekMqttService.MSG_RECONNECT, prefs.getUsername(), prefs.getPassword(), null);
+			sendMessage(IMrekMqttService.MSG_RECONNECT, IMrekPreferenceManager.getInstance(getBaseContext()).getUsername(), IMrekPreferenceManager.getInstance(getBaseContext()).getPassword(), null);
 		}
 		else if(mi.getItemId() == R.id.quit) {
 			quitDialog = new AlertDialog.Builder(this);
@@ -407,7 +399,7 @@ public class IMrekMain extends ListActivity {
 				public void onClick(DialogInterface dialog, int which) {
 					sendMessage(IMrekMqttService.MSG_STOP, "Quitting", null, null);
 					setDisconnected();
-					prefs.setLoggedIn(false);
+					IMrekPreferenceManager.getInstance(getBaseContext()).setLoggedIn(false);
 					finish();
 				}
 			}).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -467,12 +459,12 @@ public class IMrekMain extends ListActivity {
     }
 	
 	public void setConnected() {
-		prefs.setIsConnected(true);
+		IMrekPreferenceManager.getInstance(getBaseContext()).setIsConnected(true);
     	setUIConnected();
 	}
 	
 	public void setDisconnected() {
-		prefs.setIsConnected(false);
+		IMrekPreferenceManager.getInstance(getBaseContext()).setIsConnected(false);
     	setUIDisconnected();
 	}
     

@@ -54,6 +54,10 @@ public class IMrekPreferenceManager {
 		prefsEditor.commit();
 	}
 	
+	public synchronized int getQoS() {
+		return appSharedPrefs.getInt("qos", 2);
+	}
+	
 	public synchronized String getToken() {
 		return appSharedPrefs.getString("token", "");
 	}

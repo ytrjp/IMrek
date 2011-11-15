@@ -80,7 +80,6 @@ public class IMrekMqttService extends Service {
     public static final int SERVICE_STOP_FOREGROUND = 33;
     
     //Our Managers
-    IMrekPreferenceManager prefs;
 	ConnectivityManager conn;
 	//NotificationManager notifMan;
 	
@@ -150,9 +149,9 @@ public class IMrekMqttService extends Service {
     }
     
     private void getCredentialsForReconnect() {
-    	if(validTokenCred(prefs.getLastUser(), prefs.getLastToken())) {
+    	if(validTokenCred(IMrekPreferenceManager.getInstance(getBaseContext()).getLastUser(), IMrekPreferenceManager.getInstance(getBaseContext()).getLastToken())) {
     		//Try and validate the last login token. If this fails in any way, fall back on a fresh login with old credentials if possible
-            IMrekHttpClient.reconnect(prefs.getLastUser(), prefs.getLastToken(), prefs.getDeviceId(), new AsyncHttpResponseHandler() {
+            IMrekHttpClient.reconnect(IMrekPreferenceManager.getInstance(getBaseContext()).getLastUser(), IMrekPreferenceManager.getInstance(getBaseContext()).getLastToken(), IMrekPreferenceManager.getInstance(getBaseContext()).getDeviceId(), new AsyncHttpResponseHandler() {
             	@Override
                 public void onFailure(Throwable error) {
             		tryFreshLogin();
@@ -167,8 +166,8 @@ public class IMrekMqttService extends Service {
         					return;
                     	} else {
                     		//We have a valid user/token combo. Cool.
-                    		prefs.setLoggedIn(true);
-                    		connect(prefs.getLastUser(), prefs.getLastToken());
+                    		IMrekPreferenceManager.getInstance(getBaseContext()).setLoggedIn(true);
+                    		connect(IMrekPreferenceManager.getInstance(getBaseContext()).getLastUser(), IMrekPreferenceManager.getInstance(getBaseContext()).getLastToken());
                     		return;
                     	}
                     } catch(JSONException e) {
@@ -183,9 +182,9 @@ public class IMrekMqttService extends Service {
     
     private void tryFreshLogin() {
     	//If autologin is set, we can try and get a valid user/pass from the preferences
-    	if(prefs.getAutoLogin()) {
-    		if(validCred(prefs.getUsername(), prefs.getPassword())) {
-    			IMrekHttpClient.login(prefs.getUsername(), prefs.getPassword(), prefs.getDeviceId(), new AsyncHttpResponseHandler() {
+    	if(IMrekPreferenceManager.getInstance(getBaseContext()).getAutoLogin()) {
+    		if(validCred(IMrekPreferenceManager.getInstance(getBaseContext()).getUsername(), IMrekPreferenceManager.getInstance(getBaseContext()).getPassword())) {
+    			IMrekHttpClient.login(IMrekPreferenceManager.getInstance(getBaseContext()).getUsername(), IMrekPreferenceManager.getInstance(getBaseContext()).getPassword(), IMrekPreferenceManager.getInstance(getBaseContext()).getDeviceId(), new AsyncHttpResponseHandler() {
         			
         			@Override
                     public void onSuccess(String strdata) {
@@ -194,9 +193,9 @@ public class IMrekMqttService extends Service {
                         	//We have a valid user/pass combo. Cool.
                         	if(data.getInt("status") == 0) {
                         		//Get the token
-                        		prefs.setToken(data.getJSONObject("data").getString("token"));
-                        		prefs.setLoggedIn(true);
-                        		connect(prefs.getUsername(), prefs.getToken());
+                        		IMrekPreferenceManager.getInstance(getBaseContext()).setToken(data.getJSONObject("data").getString("token"));
+                        		IMrekPreferenceManager.getInstance(getBaseContext()).setLoggedIn(true);
+                        		connect(IMrekPreferenceManager.getInstance(getBaseContext()).getUsername(), IMrekPreferenceManager.getInstance(getBaseContext()).getToken());
                         		return;
                         	}
                         } catch(JSONException e) {
@@ -231,22 +230,22 @@ public class IMrekMqttService extends Service {
 	 */
 	private void handleCrashedService() {
 		//If it was started before, it must have crashed (oops)
-		if(prefs.getWasStarted()) {
+		if(IMrekPreferenceManager.getInstance(getBaseContext()).getWasStarted()) {
 			//We're started now, to set started to true
-			prefs.setWasStarted(true);
+			IMrekPreferenceManager.getInstance(getBaseContext()).setWasStarted(true);
 			isStarted = true;
 			stopKeepAlives(); 
 			//Try and send a message to get new login credentials
 			getCredentialsForReconnect();
 		} else {
 			//We're started now, to set started to true
-			prefs.setWasStarted(true);
+			IMrekPreferenceManager.getInstance(getBaseContext()).setWasStarted(true);
 			isStarted = true;
 		}
 	}
 	
 	/*private void handleDisconnect() {
-		reconnect(prefs.getLastUser(), prefs.getLastToken());
+		reconnect(IMrekPreferenceManager.getInstance(getBaseContext()).getLastUser(), IMrekPreferenceManager.getInstance(getBaseContext()).getLastToken());
 	}*/
 	
 	// Check if we are online
@@ -290,8 +289,8 @@ public class IMrekMqttService extends Service {
 	private void connect(String user, String token) {
 		if(isStarted && mqtt.client == null) {
 			//Update last_ preferences
-			prefs.setLastUser(user);
-			prefs.setLastToken(token);
+			IMrekPreferenceManager.getInstance(getBaseContext()).setLastUser(user);
+			IMrekPreferenceManager.getInstance(getBaseContext()).setLastToken(token);
 			mqtt.connect(user, token);
 		}
 	}
@@ -320,9 +319,15 @@ public class IMrekMqttService extends Service {
 		sendBroadcast(i);
 	}
 	
+	private void updateQoS() {
+		int qos = IMrekPreferenceManager.getInstance(getBaseContext()).getQoS();
+		MQTT_QUALITIES_OF_SERVICE = new int[]{qos};
+		MQTT_QUALITY_OF_SERVICE = qos;
+	}
+	
 	@Override
     public void onCreate() {
-    	
+		
     	if (!svcReceiverRegistered) {
     		svcReceiver = new MainBroadcastReceiver() {
 
@@ -372,9 +377,9 @@ public class IMrekMqttService extends Service {
 		}
     	
     	//Get our managers
-    	prefs = IMrekPreferenceManager.getInstance(this);
     	conn = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
     	
+    	updateQoS();
     	
     	//Instantiate MQTTConnection
     	if (serviceConnectCheck() == false) {
@@ -387,7 +392,7 @@ public class IMrekMqttService extends Service {
     @Override
 	public void onDestroy() {
 		//Stop service if started
-		if (prefs.getWasStarted() == true) {
+		if (IMrekPreferenceManager.getInstance(getBaseContext()).getWasStarted() == true) {
 			stop();
 		}	
 	}
@@ -433,6 +438,7 @@ public class IMrekMqttService extends Service {
 		 */
 		@Override
 		public void connectionLost() throws Exception {
+			updateQoS();
 			sendMessage(MQTT_CONNECTION_LOST, "Connection Lost", null, null);
 			stopKeepAlives();
 			// null itself
@@ -447,10 +453,12 @@ public class IMrekMqttService extends Service {
 		 */
 		@Override
 		public void publishArrived(String topicName, byte[] payload, int qos, boolean retained) {
+			updateQoS();
 			sendMessage(MQTT_PUBLISH_ARRIVED, topicName, new String(payload), null);
 		}  
 		
 		public void connect(String user, String pass) {
+			updateQoS();
         	this.clientid = user;
         	this.user = user;
         	this.pass = pass;
@@ -479,7 +487,8 @@ public class IMrekMqttService extends Service {
 		}
 		
 		// Disconnect
-		public void disconnect() {		
+		public void disconnect() {
+			updateQoS();
 			stopKeepAlives();
 			try {
 				this.client.disconnect();
@@ -494,6 +503,7 @@ public class IMrekMqttService extends Service {
 		 *  the specified topic name. Wildcards are allowed.	
 		 */
 		public void subscribe(String topicName) {
+			updateQoS();
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
 				sendMessage(MQTT_NO_CONNECTION, topicName, null, null);
@@ -514,6 +524,7 @@ public class IMrekMqttService extends Service {
 		 *  the specified topic name. Wildcards are allowed.	
 		 */
 		public void unsubscribe(String topicName) {
+			updateQoS();
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
 				sendMessage(MQTT_NO_CONNECTION, topicName, null, null);
@@ -535,7 +546,8 @@ public class IMrekMqttService extends Service {
 		 * Sends a message to the message broker, requesting that it be published
 		 *  to the specified topic.
 		 */
-		public void publish(String topicName, String message) {		
+		public void publish(String topicName, String message) {
+			updateQoS();
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
 				sendMessage(MQTT_NO_CONNECTION, topicName, message, null);

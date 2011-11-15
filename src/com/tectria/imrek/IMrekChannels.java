@@ -3,18 +3,13 @@ package com.tectria.imrek;
 import java.util.List;
 import java.util.Vector;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -28,7 +23,6 @@ import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class IMrekChannels extends FragmentActivity {   
 	
-	IMrekPreferenceManager prefs;
 	private ChannelPagerAdapter pageradapter;
 	ViewPager pager;
 	Vector<String> channels;
@@ -43,9 +37,6 @@ public class IMrekChannels extends FragmentActivity {
 	//Some Views
 	TextView status;
 	ImageView statusicon;
-	
-	//Dialogs
-	private AlertDialog.Builder quitDialog;
 	
 	private ChannelsBroadcastReceiver svcReceiver;
 	private boolean svcReceiverRegistered;
@@ -146,11 +137,8 @@ public class IMrekChannels extends FragmentActivity {
         status = (TextView)findViewById(R.id.status);
         statusicon = (ImageView)findViewById(R.id.statusicon);
         
-        //Get our preference manager
-        prefs = IMrekPreferenceManager.getInstance(getBaseContext());
-        
         initializePaging();
-        if(prefs.getIsConnected()) {
+        if(IMrekPreferenceManager.getInstance(getBaseContext()).getIsConnected()) {
         	setConnected();
         } else {
         	setDisconnected();

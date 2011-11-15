@@ -333,6 +333,9 @@ public class IMrekMain extends ListActivity {
     		adapter = new SimpleAdapter(getBaseContext(), items, R.layout.item_channel_list, from, to);
             setListAdapter(adapter);
     		adapter.notifyDataSetChanged();
+    		if(IMrekPreferenceManager.getInstance(getBaseContext()).getIsConnected()) {
+    			setConnected();
+    		}
 	    	paused = false;
     	}
     }

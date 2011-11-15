@@ -4,7 +4,10 @@ require_once 'config.php';
 require_once 'BCrypt.class.php';
 
 function sendReloadSignal() {
-	$pid = shell_exec('/bin/sh -c "/usr/bin/pkill -SIGHUP mosquitto" 2>&1');
+	$pid = shell_exec('/bin/sh -c "sudo /usr/bin/pkill -SIGHUP mosquitto" 2>&1');
+	$file = fopen("debug.txt", "w");
+	fwrite($file, $pid);
+	fclose($file);
 	sleep(1);
 }
 
@@ -28,15 +31,15 @@ function addMqttUser($user, $pass) {
 	if(!$exists) {
 		$login = implode(array($user, ':', $pass));
 		$file = fopen('/etc/mosquitto/pwfile.pwds', 'a');
-		fwrite($file, $login.'\n');
+		fwrite($file, $login."\n");
 		fclose($file);
 	} else {
 		$file = fopen('/etc/mosquitto/pwfile.pwds', 'w');
-		fwrite($file, implode('\n', $logins));
+		fwrite($file, implode("\n", $logins));
 		fclose($file);
 	}
 	
-	sendReloadSignal();
+	//sendReloadSignal();
 }
 
 // Generate a session token
@@ -63,9 +66,9 @@ function removeMqttUser($username) {
 	}
 	fclose($file);
 	$file = fopen('/etc/mosquitto/pwfile.pwds', 'w');
-	fwrite($file, implode('\n', $accum));
+	fwrite($file, implode("\n", $accum));
 	fclose($file);
-	sendReloadSignal();
+	//sendReloadSignal();
 }
 
 // Generate a token and store it, creating a session for a user
@@ -85,6 +88,7 @@ function startSessionForUser($username, &$db) {
 
 		// No errors, session token successfully stored, add user
 		addMqttUser($username, $token);
+		sendReloadSignal();
 		return array("status"=>0, "message"=>"Session started", "data"=>array("token"=>$token));
 
 	} catch (PDOException $e) {

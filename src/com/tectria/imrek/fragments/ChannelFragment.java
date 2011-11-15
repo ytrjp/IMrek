@@ -155,13 +155,13 @@ public class ChannelFragment extends ListFragment {
 		//if we have a list adapter
 		} else {
 			//Fetch a channel update
-			ArrayList<HashMap<String, String>> v = IMrekConversationManager.getInstance(context).getChannelUpdate(topic);
+			//ArrayList<HashMap<String, String>> v = IMrekConversationManager.getInstance(context).getChannelUpdate(topic);
 			
 			//Loop through new messages and add them to items
-			for(HashMap<String, String> map : v) {
-				items.add(map);
-			}
-			
+//			for(HashMap<String, String> map : v) {
+//				items.add(map);
+//			}
+			//items = v;
 			//Notify the adapter that we added messages
 			adapter.notifyDataSetChanged();
 		}

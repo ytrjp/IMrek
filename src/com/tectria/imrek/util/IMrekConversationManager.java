@@ -62,7 +62,7 @@ public class IMrekConversationManager {
 	// from the database that have been added since the channel was last in focus. 
 	public synchronized ArrayList<HashMap<String, String>> getChannelUpdate(String channel) {
 		if (waitingMessages.containsKey(channel)){
-			Vector<String> v = waitingMessages.get(channel);
+			Vector<String> v = waitingMessages.remove(channel);
 			ArrayList<HashMap<String, String>> msgs = new ArrayList<HashMap<String, String>>();
 			for (String s : v) {
 				HashMap<String, String> m = new HashMap<String, String>();
@@ -71,7 +71,6 @@ public class IMrekConversationManager {
 				m.put("message", str[1]);
 				msgs.add(m);
 			}
-			waitingMessages.remove(channel);
 			return msgs;
 		}
 		return new ArrayList<HashMap<String, String>>();

@@ -91,8 +91,8 @@ public class IMrekMqttService extends Service {
 	private static MqttPersistence MQTT_PERSISTENCE = null;
 	private static boolean MQTT_CLEAN_START = true;
 	private static short MQTT_KEEP_ALIVE = 60 * 15;
-	private static int[] MQTT_QUALITIES_OF_SERVICE = { 2 } ;
-	private static int MQTT_QUALITY_OF_SERVICE   = 2;
+	private static int[] MQTT_QUALITIES_OF_SERVICE = { 0 } ;
+	private static int MQTT_QUALITY_OF_SERVICE   = 0;
 	private static boolean MQTT_RETAINED_PUBLISH = false;
 	
 	//Interval to send keepalives
@@ -447,7 +447,7 @@ public class IMrekMqttService extends Service {
         	
         	try {
         		this.client = MqttClient.createMqttClient(this.connSpec, MQTT_PERSISTENCE);
-				this.client.connect(clientid, MQTT_CLEAN_START, MQTT_KEEP_ALIVE, user, pass);
+				this.client.connect(this.clientid, MQTT_CLEAN_START, MQTT_KEEP_ALIVE, this.user, this.pass);
 			} catch (Exception e) {
 				sendMessage(MQTT_CONNECT_FAILED, clientid, user, pass);
 				this.disconnect();

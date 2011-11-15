@@ -146,7 +146,6 @@ switch(intval($_POST['action'])) {
 			echo json_encode(array("status"=>1, "message"=>"Malformed device id"));
 			exit;
 		}
-
 		// Information in valid format -- we can check the pass hash hit the database now, yeah, hit it!
 
 		try {

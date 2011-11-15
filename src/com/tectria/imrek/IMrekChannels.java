@@ -90,6 +90,7 @@ public class IMrekChannels extends FragmentActivity {
 		@Override
 		public void onClick(View v) {
 			IMrekConversationManager.getInstance(getBaseContext()).clearChat(channels.get(pager.getCurrentItem()));
+			((ChannelFragment)fragments.get(pager.getCurrentItem())).clearMessages();
 		}
     };
 	    

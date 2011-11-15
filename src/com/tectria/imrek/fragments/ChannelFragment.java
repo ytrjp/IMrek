@@ -66,6 +66,17 @@ public class ChannelFragment extends ListFragment {
     	connected = false;
     }
     
+    public void clearMessages() {
+    	//Get last 25 messages
+        items = IMrekConversationManager.getInstance(context).openChannelMessages(topic);
+		
+		//Create the adapter
+		adapter = new SimpleMessageAdapter(context, items, R.layout.item_message, from, to);
+        this.setListAdapter(adapter);
+        
+        adapter.notifyDataSetChanged();
+    }
+    
 	@Override
 	public void onCreate(Bundle savedInstance) {
 		super.onCreate(savedInstance);

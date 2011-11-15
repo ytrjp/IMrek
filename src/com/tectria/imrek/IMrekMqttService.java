@@ -355,7 +355,7 @@ public class IMrekMqttService extends Service {
 	    	        		mqtt.keepalive();
 	    	        		break;
 	    	        	case SERVICE_START_FOREGROUND:
-	    	        		startForeground(7777, IMrekNotificationManager.getInstance(getBaseContext()).getNotificationObject("IMrek", "IMrek is running in the background.", IMrekMqttService.class));
+	    	        		startForeground(7777, IMrekNotificationManager.getInstance(getBaseContext()).getNotificationObject("IMrek", "IMrek is running in the background.", IMrekMain.class));
 	    	        		break;
 	    	        	case SERVICE_STOP_FOREGROUND:
 	    	        		stopForeground(true);
@@ -375,7 +375,6 @@ public class IMrekMqttService extends Service {
     	prefs = IMrekPreferenceManager.getInstance(this);
     	conn = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
     	
-    	//startForeground(7777, IMrekNotificationManager.getInstance(getBaseContext()).getNotificationObject("IMrek", "IMrek is running in the background.", IMrekMqttService.class));
     	
     	//Instantiate MQTTConnection
     	if (serviceConnectCheck() == false) {

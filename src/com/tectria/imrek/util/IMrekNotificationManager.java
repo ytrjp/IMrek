@@ -67,7 +67,9 @@ public class IMrekNotificationManager {
 		n.icon = com.tectria.imrek.R.drawable.icon;
 		n.when = System.currentTimeMillis();
 		
-		PendingIntent pi = PendingIntent.getActivity(context, 0,  new Intent(context, intentClass), 0);
+		Intent intent = new Intent(context, intentClass);
+		intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+		PendingIntent pi = PendingIntent.getActivity(context, 0, intent, 0);
 		n.setLatestEventInfo(context, title, text, pi);
 		
 		return n;

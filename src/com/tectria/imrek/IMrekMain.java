@@ -211,13 +211,14 @@ public class IMrekMain extends ListActivity {
 			    			}
 			    			
 			    			if(channelname.getText().toString() != "" && !exists) {
-			    				IMrekConversationManager.getInstance(getBaseContext()).addChannel(channelname.getText().toString());
+			    				String channame = channelname.getText().toString().replace(" ", "").replace("	", "");
+			    				IMrekConversationManager.getInstance(getBaseContext()).addChannel(channame);
 			    				HashMap<String, String> map = new HashMap<String, String>();
-			    				map.put("channel", channelname.getText().toString());
+			    				map.put("channel", channame);
 			    				map.put("message", "");
 			    				items.add(map);
 			    				adapter.notifyDataSetChanged();
-			    				sendMessage(IMrekMqttService.MQTT_SUBSCRIBE, channelname.getText().toString(), null, null);
+			    				sendMessage(IMrekMqttService.MQTT_SUBSCRIBE, channame, null, null);
 			    			}
 			    			dialog.dismiss();
 			           }
@@ -228,17 +229,6 @@ public class IMrekMain extends ListActivity {
 			    			dialog.dismiss();
 			           }
 			        });
-			    	
-			    	channelname.setOnKeyListener(new OnKeyListener() {
-						@Override
-						public boolean onKey(View v, int keyCode, KeyEvent event) {
-							if((event.getAction() == KeyEvent.ACTION_DOWN) && ((keyCode == KeyEvent.KEYCODE_ENTER) || (keyCode == KeyEvent.KEYCODE_TAB)
-									|| (keyCode == KeyEvent.KEYCODE_SPACE))) {
-					        	return true;
-					        }
-					        return false;
-						}
-					});
 			    	
 			    	dialog.show();
 				} else {
@@ -412,6 +402,7 @@ public class IMrekMain extends ListActivity {
 		}
 		else if(mi.getItemId() == R.id.quit) {
 			quitDialog = new AlertDialog.Builder(this);
+			quitDialog.setTitle("Quit");
 			quitDialog.setIcon(R.drawable.ic_confirm);
 			quitDialog.setMessage("Are you sure you want to quit? This will close IMrek and disconnect you from the server.");
 			quitDialog.setPositiveButton("Quit", new DialogInterface.OnClickListener() {

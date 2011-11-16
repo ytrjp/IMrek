@@ -11,11 +11,14 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -136,7 +139,12 @@ public class SplashScreenLogin extends Activity {
     	}
     	
     	dialog = new AlertDialog.Builder(this);
-    	
+    	LinearLayout v = new LinearLayout(getBaseContext());
+    	LayoutParams params = new LayoutParams(0, 0);
+    	v.setLayoutParams(params);
+    	v.setPadding(0,0,0,0);
+    	v.setVisibility(View.GONE);
+    	dialog.setView(v);
     	dialog.setPositiveButton("Register", new DialogInterface.OnClickListener() {
     		@Override
 			public void onClick(final DialogInterface dialog, int id) {
@@ -157,9 +165,11 @@ public class SplashScreenLogin extends Activity {
 				finish();
 			}  
        });
+    	
     	AlertDialog dialogC = dialog.create();
     	dialogC.getWindow().setGravity(Gravity.BOTTOM);
     	dialogC.show();
+    	dialogC.getWindow().setLayout(400, 205);
     }
     
     public void makeRegistrationDialog() {
@@ -170,6 +180,7 @@ public class SplashScreenLogin extends Activity {
     	dialogview = inflater.inflate(R.layout.dialog_registration, null);
     	dialog = new AlertDialog.Builder(this);
     	dialog.setTitle("Registration");
+    	dialog.setIcon(R.drawable.ic_registration);
     	dialog.setView(dialogview);
     	
     	username = (EditText)dialogview.findViewById(R.id.username);
@@ -277,6 +288,7 @@ public class SplashScreenLogin extends Activity {
     	dialogview = inflater.inflate(R.layout.dialog_login, null);
     	dialog = new AlertDialog.Builder(this);
     	dialog.setTitle("Login");
+    	dialog.setIcon(R.drawable.ic_login);
     	dialog.setView(dialogview);
     	
     	username = (EditText)dialogview.findViewById(R.id.username);

@@ -155,11 +155,25 @@ public class IMrekPreferenceManager {
 	}
 	
 	public synchronized void addNotifChannel(String channel_name) {
-		String channels_string = appSharedPrefs.getString("notifChannels", "");
-		ArrayList<String> channels = (ArrayList<String>)Arrays.asList(channels_string.split(","));
-		if (!channels.contains(channel_name)) {
-			channels.add(channel_name);
-		}
+		prefsEditor.putBoolean("channel_" + channel_name, true);
+		prefsEditor.commit();
+	}
+	
+	public synchronized void removeNotifChannel(String channel_name) {
+		prefsEditor.remove("channel_"+channel_name);
+		prefsEditor.commit();
+	}
+	
+	public synchronized boolean getNotifChannel(String channel_name) {
+		return appSharedPrefs.getBoolean("channel_"+channel_name, false);
+	}
+	
+	public synchronized void setOpenChannel(String channel_name) {
+		prefsEditor.putString("open_channel", channel_name);
+	}
+	
+	public synchronized String getOpenChannel() {
+		return appSharedPrefs.getString("open_channel", "");
 	}
 	
 	public synchronized void clearSavedUser() {

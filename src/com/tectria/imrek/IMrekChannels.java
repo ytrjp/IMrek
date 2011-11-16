@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -111,7 +112,25 @@ public class IMrekChannels extends FragmentActivity {
 		pageradapter  = new ChannelPagerAdapter(super.getSupportFragmentManager(), fragments);
 		pager = (ViewPager)super.findViewById(R.id.viewpager);
 		pager.setAdapter(pageradapter);
-		
+		pager.setOnPageChangeListener(new OnPageChangeListener() {
+
+			@Override
+			public void onPageScrollStateChanged(int arg0) {
+				
+			}
+
+			@Override
+			public void onPageScrolled(int arg0, float arg1, int arg2) {
+				
+			}
+
+			@Override
+			public void onPageSelected(int arg0) {
+				String channel_name = channels.get(arg0);
+				IMrekPreferenceManager.getInstance(getApplicationContext()).setOpenChannel(channel_name);
+			}
+			
+		});
 		pager.setCurrentItem(index);
 	}
 	

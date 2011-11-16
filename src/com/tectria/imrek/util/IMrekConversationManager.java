@@ -44,7 +44,7 @@ public class IMrekConversationManager {
 	
 	// Call when a new message comes in
 	// Pass channel/topic, message payload, and whether the channel is currently in focus
-	public synchronized void newMessageReceived(String channel, String payload) {
+	public synchronized void newMessageReceived(int channel_id, String channel, String payload) {
 		String[] message = payload.split(":", 2);
 		long msgId = messageAdapter.addMessage(channelAdapter.getChannelId(channel), message[0], message[1]);
 		if (waitingMessages.containsKey(channel)) {
@@ -56,6 +56,7 @@ public class IMrekConversationManager {
 			v.add(payload);
 			waitingMessages.put(channel, v);
 		}
+		IMrekNotificationManager.getInstance(context).notifyNewMessage(channel, channel_id);
 	}
 	
 	// this should be called when a channel comes back into focus. Grabs messages
@@ -137,6 +138,7 @@ public class IMrekConversationManager {
 		if (!channelList.contains(channel_name)) {
 			channelAdapter.addChannel(channel_name);
 			channelList.add(channel_name);
+			IMrekPreferenceManager.getInstance(context).addNotifChannel(channel_name);
 		}
 	}
 	
@@ -145,6 +147,7 @@ public class IMrekConversationManager {
 		if (channelList.contains(channel_name)) {
 			channelList.remove(channelList.indexOf(channel_name));
 			ret = channelAdapter.removeChannel(channel_name);
+			IMrekPreferenceManager.getInstance(context).removeNotifChannel(channel_name);
 		}
 		return ret;
 	}

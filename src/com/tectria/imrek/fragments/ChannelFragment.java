@@ -222,6 +222,6 @@ public class ChannelFragment extends ListFragment {
 		items.add(h);
 		adapter.notifyDataSetChanged();
 		getListView().setSelection(items.size()-1);
-		IMrekConversationManager.getInstance(context).newMessageReceived(channel, message);
+		//IMrekConversationManager.getInstance(context).newMessageReceived(IMrekConversationManager.getInstance(context).getChannelList().indexOf(channel),channel, message);
 	}
 }

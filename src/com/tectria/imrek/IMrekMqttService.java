@@ -24,6 +24,7 @@ import com.ibm.mqtt.MqttPersistence;
 import com.ibm.mqtt.MqttPersistenceException;
 import com.ibm.mqtt.MqttSimpleCallback;
 import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.tectria.imrek.util.IMrekConversationManager;
 import com.tectria.imrek.util.IMrekHttpClient;
 import com.tectria.imrek.util.IMrekNotificationManager;
 import com.tectria.imrek.util.IMrekPreferenceManager;
@@ -455,6 +456,12 @@ public class IMrekMqttService extends Service {
 		public void publishArrived(String topicName, byte[] payload, int qos, boolean retained) {
 			updateQoS();
 			sendMessage(MQTT_PUBLISH_ARRIVED, topicName, new String(payload), null);
+			int channel_id = IMrekConversationManager.getInstance(getBaseContext()).getChannelList().indexOf(topicName);
+			IMrekConversationManager.getInstance(getBaseContext()).newMessageReceived(channel_id,topicName, new String(payload));
+			if ((new String(payload)).split(":")[0] != IMrekPreferenceManager.getInstance(getBaseContext()).getUsername()) {
+				IMrekNotificationManager.getInstance(getBaseContext()).notifyNewMessage(topicName, channel_id);
+			}
+			
 		}  
 		
 		public void connect(String user, String pass) {

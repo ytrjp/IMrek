@@ -56,7 +56,10 @@ public class IMrekConversationManager {
 			v.add(payload);
 			waitingMessages.put(channel, v);
 		}
-		IMrekNotificationManager.getInstance(context).notifyNewMessage(channel, channel_id);
+		//if (message[0] != IMrekPreferenceManager.getInstance(context).getUsername()) {
+			//IMrekNotificationManager.getInstance(context).notifyNewMessage(channel, channel_id);
+		//}
+		
 	}
 	
 	// this should be called when a channel comes back into focus. Grabs messages

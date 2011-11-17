@@ -20,6 +20,7 @@ import android.widget.TextView;
 import com.tectria.imrek.fragments.ChannelFragment;
 import com.tectria.imrek.util.ChannelPagerAdapter;
 import com.tectria.imrek.util.IMrekConversationManager;
+import com.tectria.imrek.util.IMrekNotificationManager;
 import com.tectria.imrek.util.IMrekPreferenceManager;
 
 public class IMrekChannels extends FragmentActivity {   
@@ -232,6 +233,12 @@ public class IMrekChannels extends FragmentActivity {
     			fids.remove(chan);
     			channels.remove(chan);
     		}
+    	}
+    	
+    	int i = getIntent().getIntExtra("channel_id", -1);
+    	if (i != -1) {
+    		index = i;
+    		IMrekNotificationManager.getInstance(getBaseContext()).removeNotif(index);
     	}
     	pageradapter.notifyDataSetChanged();
 		pager.refreshDrawableState();

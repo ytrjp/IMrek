@@ -274,7 +274,7 @@ public class IMrekMain extends ListActivity {
     		        		sendMessage(IMrekMqttService.MSG_RECONNECT, u, t, null);
     		        		break;
     		        	case IMrekMqttService.MQTT_PUBLISH_ARRIVED:
-    		        		IMrekConversationManager.getInstance(getBaseContext()).newMessageReceived(bundle.getString("arg1"), bundle.getString("arg2"));
+    		        		IMrekConversationManager.getInstance(getBaseContext()).newMessageReceived(IMrekConversationManager.getInstance(getBaseContext()).getChannelList().indexOf(bundle.getString("arg1")), bundle.getString("arg1"), bundle.getString("arg2"));
     		        		break;
     		        	case IMrekMqttService.MQTT_PUBLISH_SENT:
     		        		

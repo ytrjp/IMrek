@@ -8,3 +8,4 @@ Textral/
 gen/
 *.cfg
 *.properties
+web/unstable/config.php

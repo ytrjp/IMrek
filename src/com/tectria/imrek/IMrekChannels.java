@@ -259,9 +259,11 @@ public class IMrekChannels extends FragmentActivity {
     		svcReceiverRegistered = false;
     	}
     	if(!switching) {
-    		sendMessage(IMrekMqttService.SERVICE_STOP_FOREGROUND, null, null, null);
+    		sendMessage(IMrekMqttService.SERVICE_START_FOREGROUND, null, null, null);
+    		finish();
     	} else {
     		switching = false;
+    		finish();
     	}
     }
     

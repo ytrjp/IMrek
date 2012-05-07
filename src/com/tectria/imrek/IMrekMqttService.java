@@ -17,12 +17,16 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.IBinder;
 
-import com.ibm.mqtt.IMqttClient;
-import com.ibm.mqtt.MqttClient;
-import com.ibm.mqtt.MqttException;
-import com.ibm.mqtt.MqttPersistence;
-import com.ibm.mqtt.MqttPersistenceException;
-import com.ibm.mqtt.MqttSimpleCallback;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttDefaultFilePersistence;
+import org.eclipse.paho.client.mqttv3.MqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
+import org.eclipse.paho.client.mqttv3.MqttTopic;
+
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.tectria.imrek.util.IMrekConversationManager;
 import com.tectria.imrek.util.IMrekHttpClient;
@@ -92,7 +96,7 @@ public class IMrekMqttService extends Service {
 	private MQTTConnection mqtt = null;
 	private static final String MQTT_HOST = "69.164.216.146";
 	private static int MQTT_BROKER_PORT_NUM = 1883;
-	private static MqttPersistence MQTT_PERSISTENCE = null;
+	//private static MqttPersistence MQTT_PERSISTENCE = null;
 	private static boolean MQTT_CLEAN_START = true;
 	private static short MQTT_KEEP_ALIVE = 60 * 15;
 	private static int[] MQTT_QUALITIES_OF_SERVICE = { 0 } ;
@@ -418,10 +422,10 @@ public class IMrekMqttService extends Service {
 		}
     }
     
-	// This inner class is a wrapper on top of MQTT client.
-	private class MQTTConnection implements MqttSimpleCallback {
-		IMqttClient client = null;
-		String connSpec;
+    private class MQTTConnection implements MqttCallback {
+    	
+    	MqttClient client = null;
+    	String connSpec;
 		ArrayList<String> topics;
 		String clientid;
 		String user;
@@ -434,36 +438,6 @@ public class IMrekMqttService extends Service {
 	    	this.topics = new ArrayList<String>();
 		}
 		
-		/*
-		 * Called if the application loses it's connection to the message broker.
-		 */
-		@Override
-		public void connectionLost() throws Exception {
-			updateQoS();
-			sendMessage(MQTT_CONNECTION_LOST, "Connection Lost", null, null);
-			stopKeepAlives();
-			// null itself
-			client = null;
-			if(isNetworkAvailable() == true) {
-				//handleDisconnect();
-			}
-		}		
-		
-		/*
-		 * Called when we receive a message from the message broker. 
-		 */
-		@Override
-		public void publishArrived(String topicName, byte[] payload, int qos, boolean retained) {
-			updateQoS();
-			sendMessage(MQTT_PUBLISH_ARRIVED, topicName, new String(payload), null);
-			int channel_id = IMrekConversationManager.getInstance(getBaseContext()).getChannelList().indexOf(topicName);
-			IMrekConversationManager.getInstance(getBaseContext()).newMessageReceived(channel_id,topicName, new String(payload));
-			if ((new String(payload)).split(":")[0] != IMrekPreferenceManager.getInstance(getBaseContext()).getUsername()) {
-				IMrekNotificationManager.getInstance(getBaseContext()).notifyNewMessage(topicName, channel_id);
-			}
-			
-		}  
-		
 		public void connect(String user, String pass) {
 			updateQoS();
         	this.clientid = user;
@@ -471,19 +445,22 @@ public class IMrekMqttService extends Service {
         	this.pass = pass;
         	
         	try {
-        		this.client = MqttClient.createMqttClient(this.connSpec, MQTT_PERSISTENCE);
-				this.client.connect(this.clientid, MQTT_CLEAN_START, MQTT_KEEP_ALIVE, this.user, this.pass);
-			} catch (Exception e) {
+        		this.client = new MqttClient(this.connSpec, clientid);
+        		client.setCallback(this);
+        		
+        		MqttConnectOptions options = new MqttConnectOptions();
+        		options.setUserName(user);
+        		options.setPassword(pass.toCharArray());
+        		options.setKeepAliveInterval((int)KEEP_ALIVE_INTERVAL);
+        		options.setCleanSession(MQTT_CLEAN_START);
+        		
+        		client.connect(options);
+        		
+    		} catch (MqttException e) {
 				sendMessage(MQTT_CONNECT_FAILED, clientid, user, pass);
 				this.disconnect();
 				return;
-			}
-        	
-        	client.registerSimpleHandler(this);
-			
-			//Subscribe to a topic identical to our deviceid
-			//This will be where we recieve "commands"
-			//this.subscribe(clientid);
+		}
 	
 			//Save start time
 			startTime = System.currentTimeMillis();
@@ -499,16 +476,12 @@ public class IMrekMqttService extends Service {
 			stopKeepAlives();
 			try {
 				this.client.disconnect();
-			} catch (MqttPersistenceException e) {
+			} catch (MqttException e) {
 				//Oops
 			}
 			sendMessage(MQTT_DISCONNECTED, this.clientid, this.user, this.pass);
 		}
-		
-		/*
-		 * Send a request to the message broker to be sent messages published with 
-		 *  the specified topic name. Wildcards are allowed.	
-		 */
+		 
 		public void subscribe(String topicName) {
 			updateQoS();
 			if ((this.client == null) || (this.client.isConnected() == false)) {
@@ -524,12 +497,8 @@ public class IMrekMqttService extends Service {
 				}
 				sendMessage(MQTT_SUBSCRIBE_SENT, topicName, null, null);
 			}
-		}
-		
-		/*
-		 * Send a request to the message broker to be sent messages published with 
-		 *  the specified topic name. Wildcards are allowed.	
-		 */
+		}	
+		 
 		public void unsubscribe(String topicName) {
 			updateQoS();
 			if ((this.client == null) || (this.client.isConnected() == false)) {
@@ -548,33 +517,59 @@ public class IMrekMqttService extends Service {
 				sendMessage(MQTT_UNSUBSCRIBE_SENT, topicName, null, null);
 			}
 		}	
-		
-		/*
-		 * Sends a message to the message broker, requesting that it be published
-		 *  to the specified topic.
-		 */
+		 
 		public void publish(String topicName, String message) {
 			updateQoS();
 			if ((this.client == null) || (this.client.isConnected() == false)) {
 				//We don't have a connection.
 				sendMessage(MQTT_NO_CONNECTION, topicName, message, null);
 			} else {
+				MqttTopic topic = client.getTopic(topicName);
+				MqttMessage msg = new MqttMessage(message.getBytes());
+				msg.setQos(MQTT_QUALITY_OF_SERVICE);
 				try {
-					this.client.publish(topicName, message.getBytes(), MQTT_QUALITY_OF_SERVICE, MQTT_RETAINED_PUBLISH);
-					sendMessage(MQTT_PUBLISH_SENT, topicName, message, null);
+					topic.publish(msg);
 				} catch (Exception e) {
 					sendMessage(MQTT_PUBLISH_FAILED, topicName, message, null);
+					return;
 				}
+				sendMessage(MQTT_PUBLISH_SENT, topicName, message, null);
 			}
 		}		
 		
 		public void keepalive() {
-			try {
-				client.ping();
-				this.publish(mqtt.clientid + "/keepalive", mqtt.clientid);
-			} catch (MqttException e) {
-				sendMessage(MQTT_KEEPALIVE_FAILED, clientid, user, pass);
-			}
+			//this.client.ping();
+			this.publish(mqtt.clientid + "/keepalive", mqtt.clientid);
 		}		
-	}
+		
+		/* Callbacks */
+		
+		@Override
+		public void connectionLost(Throwable cause) {
+			updateQoS();
+			sendMessage(MQTT_CONNECTION_LOST, "Connection Lost", null, null);
+			stopKeepAlives();
+			// null itself
+			client = null;
+			if(isNetworkAvailable() == true) {
+				//handleDisconnect();
+			}
+		}
+
+		@Override
+		public void messageArrived(MqttTopic topic, MqttMessage message) throws Exception {
+			updateQoS();
+			sendMessage(MQTT_PUBLISH_ARRIVED, topic.getName(), new String(message.getPayload()), null);
+			int channel_id = IMrekConversationManager.getInstance(getBaseContext()).getChannelList().indexOf(topic.getName());
+			IMrekConversationManager.getInstance(getBaseContext()).newMessageReceived(channel_id,topic.getName(), new String(message.getPayload()));
+			if ((new String(message.getPayload())).split(":")[0] != IMrekPreferenceManager.getInstance(getBaseContext()).getUsername()) {
+				IMrekNotificationManager.getInstance(getBaseContext()).notifyNewMessage(topic.getName(), channel_id);
+			}
+		}
+
+		@Override
+		public void deliveryComplete(MqttDeliveryToken token) {
+			//TODO: Something here?
+		}
+    }
 }
